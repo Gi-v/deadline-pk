@@ -1591,7 +1591,7 @@ function auth(interactive){return loadGIS().then(function(){return new Promise(f
   error_callback:function(e){rej(new Error((e&&e.type)||"popup"))}});
  tc.requestAccessToken({prompt:ld(SKEY,{}).connected?"":"consent"})})})}
 function req(method,path,body){return fetch("https://www.googleapis.com/calendar/v3"+path,{method:method,headers:{Authorization:"Bearer "+token,"Content-Type":"application/json"},body:body?JSON.stringify(body):undefined})
- .then(function(r){if(!r.ok){var e=new Error("Google "+r.status);e.status=r.status;throw e}return r.text()}).then(function(t){return t?JSON.parse(t):null})}
+ .then(function(r){if(!r.ok){return r.text().then(function(t){var e=new Error("Google "+r.status),m="";try{m=JSON.parse(t).error.message||""}catch(x){}e.status=r.status;e.detail=m;throw e})}return r.text()}).then(function(t){return t?JSON.parse(t):null})}
 function sync(interactive){if(busy)return;
  if(!cid()){$("settings").hidden=false;$("settingsBtn").setAttribute("aria-expanded","true");var g=$("gcid");g.scrollIntoView({behavior:"smooth",block:"center"});g.focus();say("Add a Google Client ID first (steps are in the box above).",false);return}
  busy=true;say("Connecting to Google… a sign-in window should open (allow pop-ups for this site if nothing appears).");$("gSync").disabled=true;
@@ -1602,7 +1602,7 @@ function sync(interactive){if(busy)return;
   var s=r.stats;busy=false;paint();say("Synced: "+s.created+" added, "+s.updated+" updated, "+s.deleted+" removed"+(s.failed?", "+s.failed+" failed (try again)":"")+". Open Google Calendar → “DeadlinePK”.",!s.failed)})
  .catch(function(e){var m=String(e&&e.message||e),c=e&&e.status;
   if(c===401){token=null;say("Google session expired — press Sync again.",false)}
-  else if(c===403)say("Google refused access (403). In Google Cloud: enable the Google Calendar API and add your account as a test user.",false)
+  else if(c===403)say("Google refused access (403)"+(e.detail?": "+e.detail:"")+". Usually: the Google Calendar API isn’t enabled in your Google Cloud project, or the calendar.app.created scope wasn’t added.",false)
   else if(m==="offline")say("Can’t reach Google — check your internet.",false)
   else if(m==="needs-consent"){say("Press Connect to sign in.",false)}
   else if(/popup|denied|access_denied/.test(m))say("Sign-in cancelled.",false)
