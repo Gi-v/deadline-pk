@@ -313,8 +313,33 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   } catch (e) {
     text = '⚠️ Could not save deadline';
   }
-  if (tab && tab.id != null) chrome.tabs.sendMessage(tab.id, { action: 'toast', text }).catch(() => {});
+  // No content script on most pages now (it is opt-in), so fall back to a system notification.
+  const note = () => chrome.notifications.create('pin:' + Date.now(), { type: 'basic', iconUrl: 'icons/icon128.png', title: 'DeadlinePinPK', message: text });
+  if (tab && tab.id != null) {
+    try { await chrome.tabs.sendMessage(tab.id, { action: 'toast', text }); } catch (e) { note(); }
+  } else note();
 });
+
+/* Optional "show the pin button on every site": the user grants the permission in Settings; we then register the content script. */
+const ALL_SITES = ['https://*/*', 'http://*/*'];
+async function setAllSites(on) {
+  try {
+    const have = await chrome.scripting.getRegisteredContentScripts({ ids: ['dpk-all'] });
+    if (on) {
+      if (!have.length) {
+        await chrome.scripting.registerContentScripts([{
+          id: 'dpk-all', matches: ALL_SITES, excludeMatches: ['https://web.whatsapp.com/*'],
+          js: ['core.js', 'content.js'], css: ['styles.css'], runAt: 'document_idle', persistAcrossSessions: true,
+        }]);
+      }
+    } else if (have.length) {
+      await chrome.scripting.unregisterContentScripts({ ids: ['dpk-all'] });
+    }
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: String((e && e.message) || e) };
+  }
+}
 
 async function testApi(s) {
   const settings = Object.assign({}, DEFAULT_SETTINGS, s || {});
@@ -333,6 +358,10 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     handlePin(msg).then(sendResponse, (e) => sendResponse({ ok: false, error: String((e && e.message) || e) }));
     return true;
   }
+  if (msg.action === 'setAllSites') {
+    setAllSites(!!msg.on).then(sendResponse);
+    return true;
+  }
   if (msg.action === 'testApi') {
     testApi(msg.settings).then(sendResponse);
     return true;
@@ -341,6 +370,6 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 });
 
 // Test hook (harmless in the browser).
-self.DPK = { handlePin, reconcile, remindersFor, mergeAI, preParseUrdu, buildSystemPrompt, testApi, digestText, ensureDigestAlarm, sendDigest };
+self.DPK = { handlePin, reconcile, remindersFor, mergeAI, preParseUrdu, buildSystemPrompt, testApi, digestText, ensureDigestAlarm, sendDigest, setAllSites };
 reconcile();
 ensureDigestAlarm();

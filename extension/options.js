@@ -28,6 +28,27 @@
     $('#digestHour').value = Number.isInteger(+s.digestHour) ? s.digestHour : 8;
   });
 
+  const ORIGINS = { origins: ['https://*/*', 'http://*/*'] };
+  chrome.permissions.contains(ORIGINS).then((on) => { $('#allSites').checked = !!on; });
+  $('#allSites').addEventListener('change', async (e) => {
+    const want = e.target.checked;
+    try {
+      if (want) {
+        const granted = await chrome.permissions.request(ORIGINS); // must run inside this click
+        if (!granted) { e.target.checked = false; return say('Permission not granted, so the button stays off.', 'err'); }
+      } else {
+        await chrome.permissions.remove(ORIGINS);
+      }
+      chrome.runtime.sendMessage({ action: 'setAllSites', on: want }, (res) => {
+        if (chrome.runtime.lastError || !res || !res.ok) { e.target.checked = !want; return say('Could not change that: ' + ((res && res.error) || 'unknown error'), 'err'); }
+        say(want ? 'On. Reload open tabs to see the 📌 button.' : 'Off.', 'ok');
+      });
+    } catch (err) {
+      e.target.checked = !want;
+      say(String((err && err.message) || err), 'err');
+    }
+  });
+
   $('#save').addEventListener('click', async () => {
     await chrome.storage.local.set({ settings: read() });
     say('Saved ✓', 'ok');

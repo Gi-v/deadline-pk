@@ -1,14 +1,15 @@
 {
   "manifest_version": 3,
   "name": "DeadlinePinPK",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Highlight any deadline text — in Urdu, Roman Urdu or English — and pin it. Works on WhatsApp Web.",
-  "permissions": ["contextMenus", "storage", "notifications", "alarms"],
-  "host_permissions": ["<all_urls>"],
+  "permissions": ["contextMenus", "storage", "notifications", "alarms", "activeTab", "scripting"],
+  "host_permissions": ["https://web.whatsapp.com/*", "https://api.anthropic.com/*"],
+  "optional_host_permissions": ["https://*/*", "http://*/*"],
   "background": { "service_worker": "background.js" },
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
+      "matches": ["https://web.whatsapp.com/*"],
       "js": ["core.js", "content.js"],
       "css": ["styles.css"],
       "run_at": "document_idle"

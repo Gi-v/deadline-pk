@@ -33,7 +33,13 @@ function makeEnv({ fetch } = {}) {
     },
     action: { async setBadgeText({ text }) { badge.text = text; }, async setBadgeBackgroundColor() {} },
     notifications: { create(id, o) { notes.push({ id, ...o }); }, clear() {}, onClicked: { addListener() {} } },
-    contextMenus: { removeAll(cb) { cb && cb(); }, create() {}, onClicked: { addListener() {} } },
+    contextMenus: { removeAll(cb) { cb && cb(); }, create() {}, onClicked: { addListener(f) { handlers.menu = f; } } },
+    scripting: {
+      registered: [],
+      async getRegisteredContentScripts({ ids }) { return this.registered.filter((s) => !ids || ids.includes(s.id)); },
+      async registerContentScripts(l) { this.registered.push(...l); },
+      async unregisterContentScripts({ ids }) { this.registered = this.registered.filter((s) => !ids.includes(s.id)); },
+    },
     runtime: { onInstalled: { addListener() {} }, onStartup: { addListener() {} }, onMessage: { addListener(f) { handlers.message = f; } } },
     tabs: { create() {}, async sendMessage() {} },
   };
@@ -57,6 +63,33 @@ t('manifest is valid MV3 and every referenced file exists', () => {
     ...Object.values(m.icons), ...Object.values(m.action.default_icon)];
   files.forEach((f) => assert.ok(existsSync(join(ext, f)), 'missing ' + f));
   ['contextMenus', 'storage', 'notifications', 'alarms'].forEach((p) => assert.ok(m.permissions.includes(p), p));
+});
+
+t('manifest asks for narrow access: no all-sites host permission, content script only on WhatsApp Web', () => {
+  const m = JSON.parse(readFileSync(join(ext, 'manifest.json'), 'utf8'));
+  const broad = (x) => /^(<all_urls>|\*:\/\/\*\/\*|https?:\/\/\*\/\*)$/.test(x);
+  assert.ok(!m.host_permissions.some(broad), 'host_permissions must not be all sites');
+  m.content_scripts.forEach((c) => assert.ok(!c.matches.some(broad), 'content script must not match all sites'));
+  assert.ok(m.content_scripts.some((c) => c.matches.includes('https://web.whatsapp.com/*')));
+  assert.ok(m.optional_host_permissions.some(broad), 'all-sites stays available as an opt-in');
+  ['activeTab', 'scripting'].forEach((p) => assert.ok(m.permissions.includes(p), p));
+});
+
+t('opt-in all-sites script registers once, excludes WhatsApp (already covered), and can be removed', async () => {
+  const { chrome, DPK } = (() => { const e = makeEnv(); return { chrome: e.ctx.chrome, DPK: e.DPK }; })();
+  assert.equal((await DPK.setAllSites(true)).ok, true);
+  await DPK.setAllSites(true);
+  assert.equal(chrome.scripting.registered.length, 1);
+  assert.deepEqual([...chrome.scripting.registered[0].excludeMatches], ['https://web.whatsapp.com/*']);
+  assert.equal((await DPK.setAllSites(false)).ok, true);
+  assert.equal(chrome.scripting.registered.length, 0);
+});
+
+t('right-click pin on a page without the content script falls back to a notification', async () => {
+  const e = makeEnv();
+  e.ctx.chrome.tabs.sendMessage = async () => { throw new Error('Receiving end does not exist'); };
+  await e.handlers.menu({ menuItemId: 'dpk-pin', selectionText: 'Quiz kal 9 baje' }, { id: 5, url: 'https://example.com/', title: 'x' });
+  assert.ok(e.notes.some((n) => /Pinned/.test(n.message)), JSON.stringify(e.notes));
 });
 
 t('every extension script parses', () => {
