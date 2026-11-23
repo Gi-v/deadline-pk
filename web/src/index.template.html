@@ -138,7 +138,13 @@ h1,h2,h3,#mineTitle{font-family:Georgia,"Iowan Old Style","Times New Roman",seri
 #saveMineBtn{border:2px solid var(--ink)!important;background:#fff3a6!important;color:var(--ink)!important}
 #settings{background:#fffdf6!important;border:2px solid var(--ink);border-radius:14px!important}
 #app footer{border-top:2px solid var(--ink)!important;color:var(--ink2)}
-@media(max-width:700px){#mine{padding:14px;box-shadow:4px 4px 0 var(--ink)}}
+@media(max-width:700px){#mine{padding:14px;box-shadow:4px 4px 0 var(--ink)}
+/* comfortable thumb targets (44px) */
+#app button:not(.sr-only),#app a.rounded-lg,#app summary,#app label.rounded-lg,#app input[type=date],#app input[type=time],#app select{min-height:44px}
+#mineList li a.rounded-lg,#mineList li button:last-child{min-width:44px;display:inline-flex;align-items:center;justify-content:center}
+#pasteBtn,#sampleBtn,#mineExample,#app footer a{display:inline-block;padding:12px 6px;min-height:44px}
+#lpIn{padding:8px 0}#lpOut .lp-btn{height:44px!important}
+#mineList li button:first-child{min-width:34px;min-height:34px}}
 @media(prefers-reduced-motion:reduce){#mineList li,#confirm,#saveNote{animation:none!important}html{scroll-behavior:auto}}
 </style>
 <section class="lp" aria-label="Introduction">
@@ -361,7 +367,7 @@ h1,h2,h3,#mineTitle{font-family:Georgia,"Iowan Old Style","Times New Roman",seri
 
   <footer class="mt-12 border-t border-gray-200 pt-4 text-center text-sm text-gray-500">
     Free forever. No login. Built for Pakistani students.<br>
-    <a class="underline" href="#privacy">Privacy</a> · <a class="underline" href="https://github.com/Gi-v/deadline-pk/issues/new" target="_blank" rel="noopener">Report a problem</a> · <a class="underline" href="https://github.com/Gi-v/deadline-pk" target="_blank" rel="noopener">Open source (MIT)</a><br>
+    <a class="underline" href="privacy.html">Privacy</a> · <a class="underline" href="https://github.com/Gi-v/deadline-pk/issues/new" target="_blank" rel="noopener">Report a problem</a> · <a class="underline" href="https://github.com/Gi-v/deadline-pk" target="_blank" rel="noopener">Open source (MIT)</a><br>
     <span id="privacy" class="mx-auto mt-2 block max-w-xl text-xs">Privacy: your deadlines are saved only on this device. The messages you paste are read by code in your browser and are never uploaded. There are no accounts and no ads. If you add an AI key or connect Google Calendar, only then does data go to Anthropic or Google, and only what you choose to send.</span><span id="app-ext">Want it on WhatsApp Web? <a class="underline" href="DeadlinePinPK.zip" download>Download the DeadlinePinPK extension (.zip)</a>, unzip it, then open <code>chrome://extensions</code>, turn on Developer mode, Load unpacked, choose the unzipped folder. (When running from GitHub Pages the zip is there; if you opened this file from disk, the folder is <code>extension</code>.)</span>
   </footer>
 </div>
@@ -917,7 +923,11 @@ function propose(found){
   var tm=el("input","rounded-lg border border-gray-300 px-2 py-1.5");tm.type="time";tm.value=it.time||"";tm.setAttribute("aria-label","Time (optional)");
   var hint=el("span","self-center text-xs "+(it._assumed||it.confidence==="low"?"text-yellow-800":"text-gray-500"),it._assumed?"⚠ No date in the message — I used today. Please check.":DC.describeDate(it.date));
   d.addEventListener("input",function(){hint.textContent=d.value?DC.describeDate(d.value):"Pick a date"});
-  row.appendChild(d);row.appendChild(tm);row.appendChild(hint);r.appendChild(t);r.appendChild(row);box.appendChild(r);rows.push({it:it,t:t,d:d,tm:tm})});
+  row.appendChild(d);row.appendChild(tm);row.appendChild(hint);r.appendChild(t);r.appendChild(row);
+  (it.alternatives||[]).forEach(function(a){if(!DC.isValidISO(a))return;
+   var alt=el("button","mt-2 mr-2 rounded-full border-2 border-gray-800 bg-white px-3 py-1 text-xs font-semibold","Did you mean "+DC.describeDate(a)+"?");alt.type="button";
+   alt.onclick=function(){var cur=d.value;d.value=a;hint.textContent=DC.describeDate(a);hint.className="self-center text-xs text-gray-500";alt.textContent="Switched ✓ (undo)";alt.onclick=function(){d.value=cur;hint.textContent=DC.describeDate(cur);alt.remove()}};r.appendChild(alt)});
+  box.appendChild(r);rows.push({it:it,t:t,d:d,tm:tm})});
  var act=el("div","flex gap-2");
  var ok=el("button","rounded-xl bg-brand px-5 py-2.5 font-bold text-white hover:bg-brand-dark","Save"+(items.length>1?" all":""));ok.type="button";
  var no=el("button","rounded-xl border border-gray-300 bg-white px-4 py-2.5 font-semibold","Cancel");no.type="button";

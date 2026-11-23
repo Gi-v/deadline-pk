@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy — DeadlineSync PK</title>
+<meta name="description" content="DeadlineSync PK keeps your deadlines on your device. No accounts, no ads, no tracking.">
+<style>
+body{margin:0;background:#f6f1e4;color:#1d1b16;font:17px/1.6 system-ui,sans-serif}
+main{max-width:42rem;margin:0 auto;padding:32px 20px 64px}
+h1,h2{font-family:Georgia,serif;line-height:1.2}
+h1{font-size:2.2rem;margin:0 0 4px}
+h2{font-size:1.3rem;margin:32px 0 6px}
+a{color:#1f7a4d}
+.card{background:#fffdf6;border:2px solid #1d1b16;border-radius:14px;padding:16px 18px;box-shadow:4px 4px 0 #cfc5ac;margin:18px 0}
+li{margin:6px 0}
+small{color:#5b564a}
+</style>
+</head>
+<body>
+<main>
+<p><a href="./">← Back to the app</a></p>
+<h1>Privacy</h1>
+<small>Last updated 23 November 2026 · applies to the DeadlineSync PK website and the DeadlinePinPK Chrome extension</small>
+
+<div class="card"><strong>Short version:</strong> your deadlines stay on your device. We have no accounts, no server that stores your messages, no ads and no tracking.</div>
+
+<h2>What stays on your device</h2>
+<ul>
+<li>The deadlines you save, your settings and any backup you download are stored in your browser (localStorage / extension storage) on your own phone or computer.</li>
+<li>Messages you paste or share into the app are read by code running in your browser. They are not sent to us.</li>
+<li>The WhatsApp Web helper in the Chrome extension only reads a message when you click its pin button.</li>
+</ul>
+
+<h2>When data leaves your device (only if you choose)</h2>
+<ul>
+<li><strong>Add to calendar</strong> opens Google Calendar with the event filled in, or downloads an .ics file. Google then handles it under its own policy.</li>
+<li><strong>Connect Google Calendar (optional):</strong> you sign in with Google. The app asks only for permission to create and manage its own "DeadlinePK" calendar (scope <code>calendar.app.created</code>); it cannot read your other calendars. The sign-in token stays in your browser. Disconnect any time in More tools.</li>
+<li><strong>AI key (optional):</strong> if you paste your own Claude API key, text you ask it to read (a PDF, photo or messages) is sent to Anthropic using your key. Without a key, nothing is sent.</li>
+<li><strong>Sharing:</strong> the WhatsApp buttons create a message and link; you decide who receives it. A shared deadline link contains the title and date inside the link itself.</li>
+<li><strong>Reporting a wrong date:</strong> the "Wrong date? Tell us" link opens a GitHub issue form pre-filled with the message. Nothing is sent until you press submit. Remove names first if you like.</li>
+</ul>
+
+<h2>What we don't do</h2>
+<ul>
+<li>No accounts, no sign-up, no ads, no selling data.</li>
+<li>No analytics or tracking cookies on this site.</li>
+<li>No access to your contacts, location or WhatsApp account.</li>
+</ul>
+
+<h2>Your control</h2>
+<p>Clear your browser's site data (or uninstall the extension) to delete everything. Use More tools → Download backup before you do if you want to keep your list.</p>
+
+<h2>Hosting and source</h2>
+<p>The site is hosted on GitHub Pages, which may log ordinary web-server data such as IP addresses under <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement">GitHub's privacy statement</a>. The code is open source (MIT): <a href="https://github.com/Gi-v/deadline-pk">github.com/Gi-v/deadline-pk</a>.</p>
+
+<h2>Contact</h2>
+<p>Questions or a request? Open an issue at <a href="https://github.com/Gi-v/deadline-pk/issues">github.com/Gi-v/deadline-pk/issues</a>.</p>
+</main>
+</body>
+</html>

@@ -12,7 +12,17 @@ const P = (s, o = {}) => C.parseDeadline(s, { today, ...o });
 
 // ---- Roman Urdu relative days
 t('kal + baje', () => { const r = P('Quiz kal hai 9 baje'); assert.equal(r.date, '2026-11-24'); assert.equal(r.time, '09:00'); assert.equal(r.type, 'Quiz'); assert.equal(r.title, 'Quiz'); assert.equal(r.confidence, 'high'); });
-t('share link round trip', () => {
+t('"next Thursday" offers the other reading', () => {
+  const r = P('Lab test next Thursday');
+  assert.equal(r.date, '2026-11-26'); assert.deepEqual(r.alternatives, ['2026-12-03']);
+  assert.deepEqual(P('next Monday quiz').alternatives, []);
+  assert.deepEqual(P('Quiz kal 9 baje').alternatives, []);
+  assert.equal(C.extractFromText('Lab test next Thursday', { today: new Date(2026, 10, 23) })[0].alternatives[0], '2026-12-03');
+});
+t('postponed: weekday is the new date, not "kal"', () => { const r = P('kal ka quiz postpone ho gaya hai, ab Thursday ko hoga'); assert.equal(r.date, '2026-11-26'); });
+t('day-part + bare hour is a time', () => { const r = P('Quiz tomorrow evening 6'); assert.equal(r.date, '2026-11-24'); assert.equal(r.time, '18:00'); assert.equal(P('Marks morning 10 questions hain').time, null); });
+t('jumay spelling', () => { assert.equal(P('jumay ko 2 baje seminar hai').date, '2026-11-27'); });
+t('share link round trip',() => {
   const items = [{ title: 'Quiz, Physics | Ch 3', date: '2026-11-24', time: '09:00', type: 'Quiz' }, { title: 'اسائنمنٹ', date: '2026-11-27', time: null, type: 'Assignment' }];
   const url = new URL(C.shareLink('https://x.test/app/', items));
   const back = C.decodeShare(url.searchParams.get('add'));

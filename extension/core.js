@@ -102,7 +102,7 @@
     2: ['tuesday', 'tues', 'tue', 'mangal', 'mangalwar', 'mangl', 'منگل'],
     3: ['wednesday', 'wed', 'budh', 'budhwar', 'budhar', 'بدھ'],
     4: ['thursday', 'thurs', 'thur', 'thu', 'jumerat', 'jumeraat', 'jummerat', 'jumarat', 'jumayrat', 'جمعرات'],
-    5: ['friday', 'fri', 'jumma', 'jummah', 'jumah', 'juma', 'jumu', 'جمعہ', 'جمعه'],
+    5: ['friday', 'fri', 'jumma', 'jummah', 'jumah', 'juma', 'jumay', 'jumaay', 'jume', 'jumu', 'جمعہ', 'جمعه'],
     6: ['saturday', 'sat', 'hafta', 'haftah', 'sanichar', 'ہفتہ', 'ہفته'],
   };
   const WORD_TO_WD = {};
@@ -145,6 +145,8 @@
     tBare: new RegExp(
       B1 + '(?:at|by|@|ko|hai|he|hy|hay|hain|kal|aaj|parson|today|tomorrow|tonight|until|till)\\s*(\\d{1,2})(?![\\p{N}:./\\/-])' +
         '(?=\\s*(?:$|[.,;!?)]|-\\s|(?:tak|tk|sharp|se|ko|hai|he|hy|hay|hain|ho|ga|gi|ka|ki|ke|par|pe|baad|subah|shaam|raat|dopahar)(?![\\p{L}])))', 'gimu'),
+    // "evening 6", "shaam 5", "subah 9": a day-part word directly followed by an hour that ends the phrase.
+    tDP: new RegExp(B1 + '(' + DP_ALT + ')\\s*(\\d{1,2})(?![\\p{N}:./\\/-])(?=\\s*(?:$|[.,;!?)]|-\\s|(?:tak|tk|sharp|se|ko|hai|he|hy|hay|hain|ho|ga|gi|ka|ki|ke|par|pe|baad)(?![\\p{L}])))', 'giu'),
     tWord: new RegExp(B1 + '(eod|end of day|cob|midnight|noon)' + B2, 'giu'),
     // absolute dates
     iso: new RegExp('(?<![\\p{N}])(\\d{4})[-/.](\\d{1,2})[-/.](\\d{1,2})(?![\\p{N}])', 'gu'),
@@ -244,6 +246,13 @@
       cands.push({ i: m.index, e: m.index + m[0].length, h: w === 'noon' ? 12 : 23, mm: w === 'noon' ? 0 : 59, assumed: false });
     }
     if (!cands.length) {
+      m = firstMatch(RE.tDP, s, (x) => +x[2] >= 1 && +x[2] <= 12);
+      if (m) {
+        const r = to24(+m[2], null, dayPartOf(m[1]));
+        cands.push({ i: m.index + m[1].length, e: m.index + m[0].length, h: r.h, mm: 0, assumed: r.assumed });
+      }
+    }
+    if (!cands.length) {
       m = firstMatch(RE.tBare, s, (x) => +x[1] >= 1 && +x[1] <= 12);
       if (m) {
         const r = to24(+m[1], null, null);
@@ -333,10 +342,20 @@
       return { i: m.index, e: end, date: addDays(mondayOf(today), 4), kind: 'this-week', conf: 'medium' };
     }
     m = firstMatch(RE.nextWd, s);
-    if (m) return { i: m.index, e: m.index + m[0].length, date: nextStrictlyAfter(today, WORD_TO_WD[m[1].toLowerCase()]), kind: 'next-weekday', conf: 'medium' };
+    if (m) {
+      // "next Thursday" is read both ways by people: the coming one, or the one after. Offer the other as an alternative.
+      const dt = nextStrictlyAfter(today, WORD_TO_WD[m[1].toLowerCase()]);
+      // (Only when the coming one is under a week away; a full 7 days out there is nothing else to mean.)
+      const soon = (dt - today) / 864e5 < 7;
+      return { i: m.index, e: m.index + m[0].length, date: dt, kind: 'next-weekday', conf: 'medium', alt: soon ? [addDays(dt, 7)] : [] };
+    }
     m = firstMatch(RE.lastWd, s);
     if (m) return { i: m.index, e: m.index + m[0].length, date: prevStrictlyBefore(today, WORD_TO_WD[m[1].toLowerCase()]), kind: 'last-weekday', conf: 'low' };
 
+    // "kal ka quiz postpone ho gaya, ab Thursday ko hoga": the weekday is the NEW date; "kal" names the old one.
+    if (wdTok && /(?<![\p{L}])(?:postpone[d]?|reschedule[d]?|re-?schedule[d]?|shift(?:ed)?|moved|preponed)(?![\p{L}])|(?<![\p{L}])ab\s/iu.test(s)) {
+      return { i: wdTok.index, e: wdTok.index + wdTok[0].length, date: nextStrictlyAfter(today, wd), kind: 'weekday-moved', conf: 'medium' };
+    }
     m = firstMatch(RE.dayAfter, s);
     if (m) return { i: m.index, e: m.index + m[0].length, date: addDays(today, pastWord ? -2 : 2), kind: 'day-after-tomorrow', conf: pastWord ? 'low' : 'high' };
     m = firstMatch(RE.in3, s);
@@ -466,6 +485,7 @@
       kind: d ? d.kind : t ? 'time-only' : 'none',
       relative: d && d.relative ? d.relative : null,
       timeAssumed: !!(t && t.assumed),
+      alternatives: d && d.alt ? d.alt.map(toISO) : [],
     };
   }
 
@@ -515,7 +535,7 @@
             out.push({
               title: r.title, date: r.date || (r.relative ? 'RELATIVE: ' + r.relative : 'UNKNOWN'),
               time: r.time, type: r.type, confidence: r.confidence,
-              original: r.original,
+              original: r.original, alternatives: r.alternatives,
             });
           }
         });
