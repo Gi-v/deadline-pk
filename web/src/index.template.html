@@ -62,6 +62,32 @@
 @keyframes lpfloat{to{transform:translate(60px,-40px) scale(1.15)}}
 @media(max-width:700px){.lp-demo{grid-template-columns:1fr}}
 @media(prefers-reduced-motion:reduce){.lp-blob,.lp-lab i,.lp-pop{animation:none}}
+
+/* Dark glass theme for the whole tool, matching the hero */
+body{background:radial-gradient(ellipse at 50% 0%,#0a3d20 0%,#04110a 38%,#020805 100%) fixed!important;color:#e8f3ec!important}
+#app{max-width:44rem}
+#app .bg-white,#app .bg-gray-50{background:rgba(255,255,255,.055)!important}
+#app .bg-gray-100{background:rgba(255,255,255,.07)!important}
+#app .bg-green-50{background:rgba(34,197,94,.12)!important}
+#app [class*="border-gray"]{border-color:rgba(255,255,255,.16)!important}
+#app .text-gray-900,#app .text-gray-800{color:#f3f8f5!important}
+#app .text-gray-700,#app .text-gray-600{color:#c5d3c9!important}
+#app .text-gray-500,#app .text-gray-400{color:#8ea396!important}
+#app .text-green-900{color:#bbf7d0!important}
+#app .text-yellow-800{color:#fde68a!important}
+#app input,#app textarea,#app select{background:rgba(255,255,255,.08)!important;color:#fff!important;border-color:rgba(255,255,255,.22)!important;color-scheme:dark}
+#app input::placeholder,#app textarea::placeholder{color:#8ea396!important}
+#app .hover\:bg-gray-100:hover{background:rgba(255,255,255,.12)!important}
+#app button,#app a.rounded-lg,#app a.rounded-xl{transition:transform .15s,box-shadow .25s,background .2s}
+#app button:active{transform:scale(.97)}
+#app .bg-brand:hover{box-shadow:0 0 22px rgba(34,197,94,.5)}
+#mine{background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.12);border-radius:26px;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.35);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+#mineList li{box-shadow:0 2px 14px rgba(0,0,0,.25)}
+#mineTitle{font-size:1.6rem;letter-spacing:-.03em}
+#app details,#app #extractor{border-color:rgba(255,255,255,.14)!important}
+#app summary{color:#f3f8f5}
+#app footer{border-color:rgba(255,255,255,.12)!important}
+@media(max-width:700px){#mine{padding:14px;border-radius:20px}}
 </style>
 <section class="lp" aria-label="Introduction">
   <span class="lp-blob lp-b1"></span><span class="lp-blob lp-b2"></span>
@@ -89,8 +115,8 @@
   <!-- Header -->
   <header class="mb-6 flex items-start justify-between gap-3">
     <div>
-      <h1 class="text-3xl font-extrabold tracking-tight text-brand sm:text-4xl">DeadlineSync</h1>
-      <p class="mt-1 text-base text-gray-600">Drop your syllabus. Get your calendar.</p>
+      <h1 class="text-2xl font-extrabold tracking-tight text-brand">DeadlineSync <span class="text-base font-medium text-gray-500">PK</span></h1>
+      <p class="sr-only">Drop your syllabus. Get your calendar.</p>
     </div>
     <button id="settingsBtn" type="button" aria-expanded="false" aria-controls="settings"
       class="shrink-0 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 focus-visible:outline-2 focus-visible:outline-brand">
