@@ -136,7 +136,7 @@
   const RE = {
     // times
     tBaje: new RegExp(
-      B1 + '(?:(' + DP_ALT + ')\\s*(?:ko\\s*)?)?(\\d{1,2})(?::(\\d{2}))?\\s*(?:baje|bje|bajay|بجے|o\'clock)' + B2 +
+      B1 + '(?:(' + DP_ALT + ')\\s*(?:ko\\s*)?)?(\\d{1,2})(?::(\\d{2}))?\\s*(?:baje|bje|bajay|bajey|bajy|بجے|o\'clock)' + B2 +
         '(?:\\s*(?:ko\\s*)?(' + DP_ALT + ')' + B2 + ')?', 'giu'),
     tColon: new RegExp(B1 + '(\\d{1,2})([:.])(\\d{2})(?!\\d)(?:\\s*(am|pm|a\\.m\\.|p\\.m\\.)(?![\\p{L}]))?', 'giu'),
     tMer: new RegExp(B1 + '(\\d{1,2})\\s*(am|pm|a\\.m\\.|p\\.m\\.)(?![\\p{L}])', 'giu'),

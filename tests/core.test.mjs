@@ -12,7 +12,8 @@ const P = (s, o = {}) => C.parseDeadline(s, { today, ...o });
 
 // ---- Roman Urdu relative days
 t('kal + baje', () => { const r = P('Quiz kal hai 9 baje'); assert.equal(r.date, '2026-11-24'); assert.equal(r.time, '09:00'); assert.equal(r.type, 'Quiz'); assert.equal(r.title, 'Quiz'); assert.equal(r.confidence, 'high'); });
-t('kal past tense', () => { const r = P('Quiz kal tha'); assert.equal(r.date, '2026-11-22'); assert.equal(r.confidence, 'low'); });
+t('bajey spelling', () => { const r = P('paper kal subha 9 bajey'); assert.equal(r.date, '2026-11-24'); assert.equal(r.time, '09:00'); });
+t('kal past tense',() => { const r = P('Quiz kal tha'); assert.equal(r.date, '2026-11-22'); assert.equal(r.confidence, 'low'); });
 t('parson', () => assert.equal(P('Lab report parson submit karo').date, '2026-11-25'));
 t('narsoon', () => assert.equal(P('Viva narsoon').date, '2026-11-26'));
 t('aaj', () => assert.equal(P('Assignment aaj raat 11 baje tak').date, '2026-11-23'));
