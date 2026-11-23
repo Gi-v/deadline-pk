@@ -164,7 +164,7 @@
     inN2: new RegExp(B1 + '(\\d{1,2})\\s*(?:din|days?)\\s*(?:baad|bad|mein|me|later)' + B2, 'giu'),
     weekN: new RegExp(B1 + '(?:week|wk|hafta|haftah)\\s*#?\\s*(\\d{1,2})(?![\\p{N}])', 'giu'),
     wd: new RegExp(B1 + '(' + WD_ALT + ')' + B2, 'giu'),
-    past: new RegExp(B1 + '(?:tha|thi|hua|hui|huwa|gaya|gayi|chuka|chuki|was|were|yesterday)' + B2, 'iu'),
+    past: new RegExp(B1 + '(?:tha|thi|hua|hui|huwa|chuka|chuki|was|were|yesterday)' + B2, 'iu'),
   };
 
   function firstMatch(re, s, accept) {
@@ -362,8 +362,19 @@
       return Object.assign(span, { date: dt, kind: 'week-n', conf: 'medium', relative: 'Week ' + n, wdBlank: wdb });
     }
 
+    m = firstMatch(/(?<![\p{L}\p{N}:./-])(\d{1,2})(?:st|nd|rd|th)(?![\p{L}\p{N}])/giu, s, (x) => +x[1] >= 1 && +x[1] <= 31);
+    if (m) {
+      let c = null;
+      for (let k = 0; k < 3 && !c; k++) {
+        const t = validDate(today.getFullYear(), today.getMonth() + k, +m[1]);
+        if (t && t >= today) c = t;
+      }
+      if (c) return { i: m.index, e: m.index + m[0].length, date: c, kind: 'day-of-month', conf: 'medium' };
+    }
+
     if (wdTok) {
-      const dt = nextOnOrAfter(today, wd);
+      // Said on a Monday, "Monday" means next Monday (today's would be "aaj").
+      const dt = nextStrictlyAfter(today, wd);
       return { i: wdTok.index, e: wdTok.index + wdTok[0].length, date: dt, kind: 'weekday', conf: 'medium' };
     }
     return null;
@@ -388,7 +399,7 @@
   }
 
   const FILLERS = alt([
-    'he', 'hy', 'hn', 'kaha', 'to', 'extended', 'moved', 'postponed', 'preponed', 'rescheduled', 'shifted', 'karo', 'karna', 'krna', 'kro', 'kardo', 'karen', 'karein', 'kijiye', 'karni', 'karnay', 'hai', 'hain', 'hay', 'hoga',
+    'he', 'hy', 'hn', 'jama', 'karwana', 'karwao', 'karwani', 'shift', 'gayi', 'gaya', 'morning', 'evening', 'afternoon', 'kaha', 'to', 'extended', 'moved', 'postponed', 'preponed', 'rescheduled', 'shifted', 'karo', 'karna', 'krna', 'kro', 'kardo', 'karen', 'karein', 'kijiye', 'karni', 'karnay', 'hai', 'hain', 'hay', 'hoga',
     'hogi', 'hongay', 'hoon', 'ho', 'ga', 'gi', 'tak', 'by', 'on', 'at', 'due', 'submit', 'submitted', 'submission',
     'submissions', 'deadline', 'before', 'until', 'till', 'the', 'is', 'are', 'will', 'be', 'ka', 'ki', 'ke', 'ko', 'ne',
     'se', 'mein', 'me', 'pe', 'par', 'aur', 'sab', 'sabko', 'please', 'plz', 'pls', 'reminder', 'note', 'dear', 'students',

@@ -5,6 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>DeadlineSync PK — Drop your syllabus. Get your calendar.</title>
 <meta name="description" content="Free, no-login tool that extracts every deadline from a university syllabus (scanned PDF, WhatsApp image, Urdu or English) and exports a calendar file.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="DeadlineSync PK — never miss a class deadline">
+<meta property="og:description" content="Paste a WhatsApp class-group message (kal quiz hai 9 baje) and get a calendar reminder. Free, no login.">
+<meta property="og:image" content="https://gi-v.github.io/deadline-pk/icons/icon-512.png">
+<meta property="og:url" content="https://gi-v.github.io/deadline-pk/">
+<meta name="twitter:card" content="summary">
+<meta name="theme-color" content="#16a34a">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2316a34a'/%3E%3Cpath d='M18 26h28v20H18z' fill='none' stroke='white' stroke-width='4' stroke-linejoin='round'/%3E%3Cpath d='M18 33h28M25 18v8M39 18v8' stroke='white' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E">
 <style>/*__CSS__*/</style>
 </head>
@@ -71,7 +78,7 @@
     </div>
     <div class="lp-act lp-in" style="--d:.65s">
       <a class="lp-btn lp-solid" href="#mine">Open my deadlines</a>
-      <a class="lp-btn lp-ghost" href="#extractor">Scan a whole syllabus</a>
+      <a class="lp-btn lp-ghost" href="#app-ext">Using a laptop? Get the extension</a>
     </div>
   </div>
   <div class="lp-stats lp-in" style="--d:.85s"><span>Reads “kal”, “parson”, “agla Jumma”, “9 baje”</span><span>Installs like an app, works offline</span><span>Your list stays on your phone</span></div>
@@ -144,25 +151,58 @@
       <button type="submit" class="shrink-0 rounded-xl bg-brand px-5 py-3 text-base font-bold text-white hover:bg-brand-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand">📌 Pin</button>
     </form>
     <p id="quickMsg" role="status" class="mt-1 min-h-5 text-sm"></p>
+    <div id="confirm" hidden class="mt-2 rounded-2xl border-2 border-brand bg-green-50 p-3" aria-live="polite"></div>
+    <div id="saveNote" hidden class="mt-2 rounded-2xl border border-gray-200 bg-white p-3 text-sm" aria-live="polite"></div>
     <div id="mineTabs" role="tablist" aria-label="Deadline views" class="mt-2 flex gap-1 overflow-x-auto"></div>
     <ul id="mineList" class="mt-3 space-y-2"></ul>
     <div id="mineEmpty" class="mt-3 rounded-2xl border-2 border-dashed border-gray-300 p-6 text-center text-gray-600">
-      <p class="font-semibold text-gray-800">Nothing pinned yet.</p>
-      <p class="mt-1 text-sm">Copy a deadline message from your class group, paste it above, press Pin. Takes five seconds.</p>
+      <p class="font-semibold text-gray-800">Nothing pinned yet. Three steps:</p>
+      <ol class="mx-auto mt-2 max-w-sm space-y-1 text-left text-sm">
+        <li><strong>1.</strong> Copy a deadline message from your class group and paste it above (or use <em>Share → DeadlineSync</em> once the app is installed).</li>
+        <li><strong>2.</strong> Check the date it found. Fix it if it's wrong, then Save.</li>
+        <li><strong>3.</strong> Tap <strong>📅 Add to calendar</strong>, so your phone reminds you even when this app is closed.</li>
+      </ol>
       <button id="mineExample" type="button" class="mt-3 text-sm font-medium text-brand underline underline-offset-2">Try with an example</button>
     </div>
     <div id="mineTools" class="mt-3 flex flex-wrap gap-2" hidden>
       <a id="shareWeek" target="_blank" rel="noopener" class="rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold hover:bg-gray-100" href="#mine">💬 Send this week to WhatsApp</a>
       <button id="icsAll" type="button" class="rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold hover:bg-gray-100">📅 Download calendar file</button>
-      <button id="gSync" type="button" class="rounded-lg border border-blue-300 bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-900 hover:bg-blue-100">🔗 Connect Google Calendar</button>
-      <button id="gDisc" type="button" hidden class="rounded-lg px-2 py-2 text-xs text-gray-500 underline hover:text-red-600">Disconnect</button>
-      <p id="gStatus" role="status" class="w-full text-xs text-gray-500"></p>
       <button id="clearDone" type="button" class="rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold hover:bg-gray-100">Clear done</button>
     </div>
-    <p class="mt-3 text-xs text-gray-500">Saved only in this browser — no account, nothing uploaded. Reminders work while the app is open or installed.</p>
+    <p class="mt-3 text-xs text-gray-500">Your list is saved only on this device — no account, nothing uploaded. For reminders that work with the app closed, tap 📅 to add each deadline to your phone's calendar.</p>
+    <button id="shareApp" type="button" class="mt-3 rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold hover:bg-gray-100">📤 Share this app with your class group</button>
   </section>
 
+  <!-- More: advanced tools, hidden by default so the main screen stays simple -->
+  <details id="more" class="mb-6 rounded-2xl border border-gray-200 p-3 sm:p-4">
+    <summary class="cursor-pointer text-base font-bold">More tools <span class="text-sm font-normal text-gray-500">— backup, Google sync, scan a syllabus</span></summary>
+    <div class="mt-3 space-y-5">
+      <div>
+        <h3 class="font-semibold">Back up your deadlines</h3>
+        <p class="text-xs text-gray-500">Your list lives only in this browser. Download a copy before clearing data or changing phones.</p>
+        <div class="mt-2 flex flex-wrap gap-2">
+          <button id="backupBtn" type="button" class="rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold hover:bg-gray-100">⬇ Download backup</button>
+          <label class="cursor-pointer rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold hover:bg-gray-100">⬆ Restore backup<input id="restoreInput" type="file" accept="application/json,.json" class="sr-only"></label>
+        </div>
+      </div>
+      <div>
+        <h3 class="font-semibold">Sync to Google Calendar <span class="text-xs font-normal text-gray-500">(optional)</span></h3>
+        <p class="text-xs text-gray-500">Not needed — the 📅 buttons already work without signing in. This keeps a dedicated “DeadlinePK” calendar up to date automatically.</p>
+        <div class="mt-2 flex flex-wrap items-center gap-2">
+          <button id="gSync" type="button" class="rounded-lg border border-blue-300 bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-900 hover:bg-blue-100">🔗 Connect Google Calendar</button>
+          <button id="gDisc" type="button" hidden class="rounded-lg px-2 py-2 text-xs text-gray-500 underline hover:text-red-600">Disconnect</button>
+          <p id="gStatus" role="status" class="w-full text-xs text-gray-500"></p>
+        </div>
+      </div>
+      <div>
+        <h3 class="font-semibold">Scan a syllabus (PDF or photo) <span class="text-xs font-normal text-gray-500">— needs your own Claude API key</span></h3>
+        <p class="text-xs text-gray-500">Pasting text works for everyone with no key. Photos and PDFs need a key in ⚙ AI key.</p>
+      </div>
+    </div>
+  </details>
+
   <!-- Input card -->
+  <details id="scan" class="mb-2"><summary class="mb-3 cursor-pointer text-base font-bold">Paste a whole syllabus or timetable <span class="text-sm font-normal text-gray-500">— many deadlines at once</span></summary>
   <section id="extractor" class="scroll-mt-4 rounded-2xl bg-gray-100 p-4 sm:p-6" aria-labelledby="inputTitle">
     <h2 id="inputTitle" class="mb-3 text-xl font-bold">Scan a whole syllabus</h2>
 
@@ -194,6 +234,7 @@
 
     <button id="extractBtn" type="button" class="mt-5 w-full rounded-xl bg-brand px-5 py-3 text-base font-bold text-white hover:bg-brand-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:cursor-not-allowed disabled:opacity-60">Extract Deadlines</button>
   </section>
+  </details>
 
   <!-- Loading -->
   <section id="loading" hidden class="mt-6 flex items-center justify-center gap-3 rounded-2xl bg-gray-100 px-4 py-8" role="status" aria-live="polite">
@@ -734,7 +775,7 @@ function key(d){return (d.title||"").toLowerCase().replace(/\s+/g," ").trim()+"|
 function add(items){var n=0,have={};mine.forEach(function(d){have[key(d)]=1});
  items.forEach(function(it){if(!it||!it.title||!DC.isValidISO(it.date))return;var d={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),title:String(it.title).slice(0,120),date:it.date,time:DC.isValidTime(it.time)?it.time:null,type:it.type||"Other",done:false};if(have[key(d)])return;have[key(d)]=1;mine.push(d);n++});
  if(n){save();render();notifyCheck()}return n}
-window.__dpkPin=function(it){var n=add([it]);say(n?"Pinned ✓":"Already in your list",true);var s=$("mine");if(s&&s.scrollIntoView)s.scrollIntoView({behavior:"smooth",block:"start"});return n};
+window.__dpkPin=function(it){propose([it]);var s=$("mine");if(s&&s.scrollIntoView)s.scrollIntoView({behavior:"smooth",block:"start"})};
 function say(t,ok){var m=$("quickMsg");m.textContent=t;m.className="mt-1 min-h-5 text-sm "+(ok?"text-green-700":"text-red-700")}
 function open_(){return mine.filter(function(d){return !d.done})}
 function inTab(d,t){t=t||tab;var n=daysTo(d.date);if(t==="done")return d.done;if(d.done)return false;if(t==="today")return n<=0;if(t==="week")return n<=7;return true}
@@ -771,11 +812,38 @@ function render(){
  var n=open_().filter(function(d){return daysTo(d.date)<=0}).length;
  document.title=(n?"("+n+") ":"")+"DeadlineSync PK — Drop your syllabus. Get your calendar.";
 }
-$("quickForm").addEventListener("submit",function(e){e.preventDefault();var v=$("quickIn").value.trim();if(!v)return;
- var found=DC.extractFromText(v,{});var assumed=false;var ok=found.filter(function(f){return f.date||f.time}).map(function(f){if(!f.date){assumed=true;return Object.assign({},f,{date:today()})}return f});var n=add(ok);
- if(ok.length&&n){say((n===1?"Pinned: "+ok[0].title+" · "+DC.describeDate(ok[0].date)+(ok[0].time?" "+ok[0].time:""):"Pinned "+n+" deadlines")+(assumed?" (no date in the message, so I used today — tap the card to check)":""),true);$("quickIn").value="";if(tab==="done")tab="week";render()}
- else if(ok.length){say("Already in your list",true);$("quickIn").value=""}
- else say("Couldn’t find a date in that. Try “Quiz Friday 9 baje” or “Report 15 Dec”.",false)});
+function dl(name,type,text){var b=new Blob([text],{type:type}),u=URL.createObjectURL(b),a=document.createElement("a");a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(u)},4000)}
+function propose(found){
+ var items=found.filter(function(f){return f.date||f.time}).map(function(f){return Object.assign({},f,{date:f.date||today(),_assumed:!f.date})});
+ if(!items.length){say("Couldn’t find a date in that. Try “Quiz Friday 9 baje” or “Report 15 Dec”.",false);return}
+ var box=$("confirm");box.textContent="";box.hidden=false;$("saveNote").hidden=true;say("");
+ box.appendChild(el("p","mb-2 text-sm font-semibold text-green-900","Check "+(items.length>1?"these "+items.length+" deadlines":"this deadline")+" before saving:"));
+ var rows=[];
+ items.forEach(function(it){var r=el("div","mb-2 rounded-xl bg-white p-2 text-sm");
+  var t=el("input","w-full rounded-lg border border-gray-300 px-2 py-1.5 font-medium");t.type="text";t.value=it.title;t.dir="auto";t.setAttribute("aria-label","Title");
+  var row=el("div","mt-1 flex flex-wrap gap-2");
+  var d=el("input","rounded-lg border border-gray-300 px-2 py-1.5");d.type="date";d.value=it.date;d.setAttribute("aria-label","Date");
+  var tm=el("input","rounded-lg border border-gray-300 px-2 py-1.5");tm.type="time";tm.value=it.time||"";tm.setAttribute("aria-label","Time (optional)");
+  var hint=el("span","self-center text-xs "+(it._assumed||it.confidence==="low"?"text-yellow-800":"text-gray-500"),it._assumed?"⚠ No date in the message — I used today. Please check.":DC.describeDate(it.date));
+  d.addEventListener("input",function(){hint.textContent=d.value?DC.describeDate(d.value):"Pick a date"});
+  row.appendChild(d);row.appendChild(tm);row.appendChild(hint);r.appendChild(t);r.appendChild(row);box.appendChild(r);rows.push({it:it,t:t,d:d,tm:tm})});
+ var act=el("div","flex gap-2");
+ var ok=el("button","rounded-xl bg-brand px-5 py-2.5 font-bold text-white hover:bg-brand-dark","Save"+(items.length>1?" all":""));ok.type="button";
+ var no=el("button","rounded-xl border border-gray-300 bg-white px-4 py-2.5 font-semibold","Cancel");no.type="button";
+ no.onclick=function(){box.hidden=true};
+ ok.onclick=function(){var out=[];rows.forEach(function(r){if(DC.isValidISO(r.d.value)&&r.t.value.trim())out.push({title:r.t.value.trim(),date:r.d.value,time:r.tm.value||null,type:r.it.type})});
+  if(!out.length){say("Add a title and a date first.",false);return}
+  var n=add(out);box.hidden=true;$("quickIn").value="";if(tab==="done")tab="week";render();offerCalendar(out,n)};
+ act.appendChild(ok);act.appendChild(no);box.appendChild(act);box.scrollIntoView({block:"nearest",behavior:"smooth"})}
+function offerCalendar(items,n){var s=$("saveNote");s.textContent="";s.hidden=false;
+ s.appendChild(el("p","font-semibold",n?"Saved ✓":"Already in your list"));
+ s.appendChild(el("p","mt-1 text-gray-600","Add it to your phone’s calendar so it reminds you even when this app is closed:"));
+ var b=el("a","mt-2 inline-block rounded-xl bg-brand px-4 py-2.5 font-bold text-white hover:bg-brand-dark","📅 Add to calendar"+(items.length>1?" ("+items.length+")":""));b.href="#";
+ var ics=function(l){return DC.buildICS(l.map(function(d){return{title:d.title,date:d.date,time:d.time,type:d.type,notes:""}}),{calName:"My deadlines"})};
+ b.onclick=function(e){e.preventDefault();if(items.length===1){window.open(DC.gcalUrl(items[0]),"_blank","noopener")}else{dl("deadlines.ics","text/calendar",ics(items))}};
+ s.appendChild(b);
+ if(items.length===1){var i=el("button","ml-2 mt-2 rounded-xl border border-gray-300 px-4 py-2.5 font-semibold","⬇ .ics file");i.type="button";i.onclick=function(){dl("deadline.ics","text/calendar",ics(items))};s.appendChild(i)}}
+$("quickForm").addEventListener("submit",function(e){e.preventDefault();var v=$("quickIn").value.trim();if(!v)return;propose(DC.extractFromText(v,{}))});
 $("quickIn").addEventListener("keydown",function(e){if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();$("quickForm").requestSubmit()}});
 $("mineExample").onclick=function(){add([{title:"Quiz",date:today(),time:"09:00",type:"Quiz"},{title:"Assignment 3",date:DC.toISO(DC.addDays(new Date(),2)),time:null,type:"Assignment"},{title:"Midterm exam",date:DC.toISO(DC.addDays(new Date(),6)),time:"10:00",type:"Exam"}]);say("Added 3 examples — delete them with ✕",true)};
 $("clearDone").onclick=function(){gone(mine.filter(function(d){return d.done}));mine=mine.filter(function(d){return !d.done});save();render()};
@@ -792,6 +860,13 @@ var dip=null;window.addEventListener("beforeinstallprompt",function(e){e.prevent
 $("installBtn").onclick=function(){if(dip){dip.prompt();dip=null;$("installBtn").hidden=true}};
 if(/^https?:$/.test(location.protocol)){var l=document.createElement("link");l.rel="manifest";l.href="manifest.webmanifest";document.head.appendChild(l);
  if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(function(){})}
+$("backupBtn").onclick=function(){dl("deadlinepk-backup.json","application/json",JSON.stringify({v:1,mine:mine}))};
+$("restoreInput").onchange=function(){var f=this.files&&this.files[0];if(!f)return;var r=new FileReader();r.onload=function(){try{var o=JSON.parse(String(r.result));var a=Array.isArray(o)?o:o.mine;if(!Array.isArray(a))throw 0;var n=add(a.filter(function(x){return x&&x.title&&DC.isValidISO(x.date)}));say("Restored "+n+" deadline"+(n===1?"":"s")+".",true)}catch(e){say("That file isn’t a DeadlinePK backup.",false)}};r.readAsText(f);this.value=""};
+$("shareApp").onclick=function(){var url=location.origin+location.pathname,text="Never miss a class deadline — paste a message from our group and it makes a calendar reminder (kal, parson, 9 baje all work). Free, no login: "+url;
+ if(navigator.share){navigator.share({title:"DeadlineSync PK",text:text}).catch(function(){})}else{window.open(DC.waUrl(text,""),"_blank","noopener")}};
+/* Android "Share to app": WhatsApp -> Share -> DeadlineSync arrives as ?text= */
+try{var qp=new URLSearchParams(location.search),sh=[qp.get("title"),qp.get("text"),qp.get("url")].filter(Boolean).join("\n");
+ if(sh.trim()){history.replaceState(null,"",location.pathname);$("quickIn").value=sh.trim();setTimeout(function(){propose(DC.extractFromText(sh,{}));var s=$("mine");if(s)s.scrollIntoView()},300)}}catch(e){}
 window.__dpk={getMine:function(){return mine},saveQuiet:function(){sv(KEY,mine)},render:render};
 render();notifyCheck();
 }catch(e){console.error(e)}})();

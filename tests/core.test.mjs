@@ -27,7 +27,13 @@ t('urdu script kal', () => { const r = P('کل کوئز ہے ۹ بجے'); assert
 // ---- weekdays
 t('Friday tak', () => { const r = P('Assignment submit karo Friday tak'); assert.equal(r.date, '2026-11-27'); assert.equal(r.title, 'Assignment'); });
 t('Jumma', () => assert.equal(P('Assignment jumma tak').date, '2026-11-27'));
-t('Somwar today=Mon -> today', () => assert.equal(P('quiz somwar').date, '2026-11-23'));
+t('bare weekday said on that weekday -> next week (aaj means today)', () => { assert.equal(P('quiz somwar').date, '2026-11-30'); assert.equal(P('quiz aaj somwar').date, '2026-11-23'); });
+t('bare ordinal day: "27th" -> this month; passed -> next month', () => {
+  assert.equal(P('Seminar on 27th at 4 pm').date, '2026-11-27');
+  assert.equal(P('Seminar on 27th at 4 pm').time, '16:00');
+  assert.equal(P('Viva 5th').date, '2026-12-05');
+});
+t('"ho gayi hai" is not past tense', () => assert.equal(P('Class kal 2 baje shift ho gayi hai').date, '2026-11-24'));
 t('agla somwar -> next week', () => assert.equal(P('quiz agla somwar').date, '2026-11-30'));
 t('agla jumerat', () => assert.equal(P('Mid agla jumerat').date, '2026-11-26'));
 t('next Friday', () => assert.equal(P('next Friday quiz').date, '2026-11-27'));

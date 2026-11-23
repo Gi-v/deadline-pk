@@ -7,6 +7,11 @@
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#16a34a",
+  "share_target": {
+    "action": "./",
+    "method": "GET",
+    "params": { "title": "title", "text": "text", "url": "url" }
+  },
   "icons": [
     {
       "src": "icons/icon-192.png",
