@@ -809,20 +809,28 @@ function live(){return token&&Date.now()<exp-60000}
 function paint(){var st=ld(SKEY,{}),b=$("gSync"),dc=$("gDisc");
  b.textContent=st.connected?"🔄 Sync to Google Calendar":"🔗 Connect Google Calendar";dc.hidden=!st.connected;
  if(st.connected&&st.last&&!busy)say("Synced to your “DeadlinePK” calendar at "+new Date(st.last).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})+".",true)}
-function loadGIS(){return new Promise(function(res,rej){if(window.google&&google.accounts&&google.accounts.oauth2)return res();
- var s=document.createElement("script");s.src="https://accounts.google.com/gsi/client";s.async=true;s.onload=function(){res()};s.onerror=function(){rej(new Error("offline"))};document.head.appendChild(s)})}
-function auth(interactive){return loadGIS().then(function(){return new Promise(function(res,rej){
+function redirectUri(){return location.origin+location.pathname}
+function goGoogle(){var st=Math.random().toString(36).slice(2)+Date.now().toString(36);try{sessionStorage.setItem("dpk.oauth.state",st)}catch(e){}
+ var q={client_id:cid(),redirect_uri:redirectUri(),response_type:"token",scope:SCOPE,state:st,include_granted_scopes:"true"};
+ if(!ld(SKEY,{}).connected)q.prompt="consent";
+ location.href="https://accounts.google.com/o/oauth2/v2/auth?"+Object.keys(q).map(function(k){return k+"="+encodeURIComponent(q[k])}).join("&")}
+function auth(interactive){return new Promise(function(res,rej){
  if(live())return res();
  if(!interactive&&!ld(SKEY,{}).connected)return rej(new Error("needs-consent"));
- tc=google.accounts.oauth2.initTokenClient({client_id:cid(),scope:SCOPE,
-  callback:function(r){if(r&&r.access_token){token=r.access_token;exp=Date.now()+(r.expires_in||3600)*1000;res()}else rej(new Error((r&&r.error)||"denied"))},
-  error_callback:function(e){rej(new Error((e&&e.type)||"popup"))}});
- tc.requestAccessToken({prompt:ld(SKEY,{}).connected?"":"consent"})})})}
+ say("Redirecting to Google sign-in… you’ll come back here automatically.");setTimeout(goGoogle,150)})}
+/* Returning from Google: the token arrives in the URL fragment. */
+function takeReturn(){var h=location.hash;if(h.length<2||!/access_token=|error=/.test(h))return null;
+ var o={};h.slice(1).split("&").forEach(function(kv){var i=kv.indexOf("=");if(i>0)o[kv.slice(0,i)]=decodeURIComponent(kv.slice(i+1).replace(/[+]/g," "))});
+ try{history.replaceState(null,"",location.pathname+location.search)}catch(e){}
+ var want="";try{want=sessionStorage.getItem("dpk.oauth.state")||"";sessionStorage.removeItem("dpk.oauth.state")}catch(e){}
+ if(o.error)return{error:o.error};
+ if(!o.access_token||!want||o.state!==want)return{error:"state_mismatch"};
+ return{token:o.access_token,exp:Date.now()+(+o.expires_in||3600)*1000}}
 function req(method,path,body){return fetch("https://www.googleapis.com/calendar/v3"+path,{method:method,headers:{Authorization:"Bearer "+token,"Content-Type":"application/json"},body:body?JSON.stringify(body):undefined})
  .then(function(r){if(!r.ok){return r.text().then(function(t){var e=new Error("Google "+r.status),m="";try{m=JSON.parse(t).error.message||""}catch(x){}e.status=r.status;e.detail=m;throw e})}return r.text()}).then(function(t){return t?JSON.parse(t):null})}
 function sync(interactive){if(busy)return;
  if(!cid()){$("settings").hidden=false;$("settingsBtn").setAttribute("aria-expanded","true");var g=$("gcid");g.scrollIntoView({behavior:"smooth",block:"center"});g.focus();say("Add a Google Client ID first (steps are in the box above).",false);return}
- busy=true;say("Connecting to Google… a sign-in window should open (allow pop-ups for this site if nothing appears).");$("gSync").disabled=true;
+ busy=true;say("Checking sign-in…");$("gSync").disabled=true;
  auth(interactive).then(function(){say("Syncing…");var P=window.__dpk,st=ld(SKEY,{});
   return DC.syncToGoogle({request:req,calendarId:st.calendarId,deadlines:P.getMine(),removed:ld(RKEY,[]),tz:Intl.DateTimeFormat().resolvedOptions().timeZone,calendarName:"DeadlinePK"})})
  .then(function(r){var P=window.__dpk;P.getMine().forEach(function(x){if(Object.prototype.hasOwnProperty.call(r.gids,x.id)){if(r.gids[x.id])x.gid=r.gids[x.id];else delete x.gid}});
@@ -833,16 +841,17 @@ function sync(interactive){if(busy)return;
   else if(c===403)say("Google refused access (403)"+(e.detail?": "+e.detail:"")+". Usually: the Google Calendar API isn’t enabled in your Google Cloud project, or the calendar.app.created scope wasn’t added.",false)
   else if(m==="offline")say("Can’t reach Google — check your internet.",false)
   else if(m==="needs-consent"){say("Press Connect to sign in.",false)}
-  else if(/popup|denied|access_denied/.test(m))say("Sign-in cancelled.",false)
+  else if(/denied/.test(m))say("Sign-in cancelled.",false)
   else say("Sync failed: "+m,false)})
  .then(function(){busy=false;$("gSync").disabled=false})}
 $("gSync").onclick=function(){sync(true)};
-$("gDisc").onclick=function(){try{if(token&&window.google&&google.accounts)google.accounts.oauth2.revoke(token,function(){})}catch(e){}token=null;exp=0;sv(SKEY,{});say("Disconnected. Events already in your calendar stay there.");paint()};
+$("gDisc").onclick=function(){try{if(token)fetch("https://oauth2.googleapis.com/revoke",{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body:"token="+encodeURIComponent(token)})}catch(e){}token=null;exp=0;sv(SKEY,{});say("Disconnected. Events already in your calendar stay there.");paint()};
 window.__dpkAfterSave=function(){if(live()&&ld(SKEY,{}).connected&&!busy){clearTimeout(timer);timer=setTimeout(function(){sync(false)},1500)}};
 var gi=$("gcid");if(BAKED){$("gcidWrap").hidden=true}else{gi.value=cid();gi.addEventListener("input",function(){try{localStorage.setItem(CKEY,gi.value.trim())}catch(e){}})}
 paint();
-// Preload Google's sign-in script when configured so the popup opens straight from the click (browsers block late popups).
-if(cid()&&navigator.onLine)setTimeout(function(){loadGIS().catch(function(){})},1500);
+var ret=takeReturn();
+if(ret&&ret.token){token=ret.token;exp=ret.exp;sv(SKEY,Object.assign(ld(SKEY,{}),{connected:true}));say("Signed in ✓ — syncing…",true);setTimeout(function(){sync(false)},400)}
+else if(ret&&ret.error){say(ret.error==="access_denied"?"Google sign-in was cancelled or your account isn’t a test user.":"Google sign-in failed: "+ret.error,false)}
 }catch(e){console.error(e)}})();
 
 ;(function(){try{var C=window.DeadlineCore,el=document.getElementById("lpIn"),out=document.getElementById("lpOut");if(!C||!el||!out)return;
