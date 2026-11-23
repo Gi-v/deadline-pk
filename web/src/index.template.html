@@ -822,7 +822,7 @@ function req(method,path,body){return fetch("https://www.googleapis.com/calendar
  .then(function(r){if(!r.ok){var e=new Error("Google "+r.status);e.status=r.status;throw e}return r.text()}).then(function(t){return t?JSON.parse(t):null})}
 function sync(interactive){if(busy)return;
  if(!cid()){$("settings").hidden=false;$("settingsBtn").setAttribute("aria-expanded","true");var g=$("gcid");g.scrollIntoView({behavior:"smooth",block:"center"});g.focus();say("Add a Google Client ID first (steps are in the box above).",false);return}
- busy=true;say("Connecting to Google…");$("gSync").disabled=true;
+ busy=true;say("Connecting to Google… a sign-in window should open (allow pop-ups for this site if nothing appears).");$("gSync").disabled=true;
  auth(interactive).then(function(){say("Syncing…");var P=window.__dpk,st=ld(SKEY,{});
   return DC.syncToGoogle({request:req,calendarId:st.calendarId,deadlines:P.getMine(),removed:ld(RKEY,[]),tz:Intl.DateTimeFormat().resolvedOptions().timeZone,calendarName:"DeadlinePK"})})
  .then(function(r){var P=window.__dpk;P.getMine().forEach(function(x){if(Object.prototype.hasOwnProperty.call(r.gids,x.id)){if(r.gids[x.id])x.gid=r.gids[x.id];else delete x.gid}});
