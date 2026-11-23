@@ -1,7 +1,7 @@
 // Static checks on the built single-file web app.
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -30,6 +30,15 @@ t('required UI present', () => {
 });
 t('system prompt matches the spec', () => {
   ['You are a deadline extraction engine for university syllabi.', 'RELATIVE: Week X', 'Never hallucinate dates', 'Return ONLY a valid JSON array'].forEach((s) => assert.ok(html.includes(s), s));
+});
+
+t('daily tracker + PWA pieces present', () => {
+  ['id="mine"', 'id="quickIn"', 'My deadlines', 'Send this week to WhatsApp', 'Save to My deadlines', 'deadlinesync.mine.v1'].forEach((x) => assert.ok(html.includes(x), x));
+  const root = join(dirname(fileURLToPath(import.meta.url)), '..', 'web');
+  ['manifest.webmanifest', 'sw.js', 'icons/icon-192.png', 'icons/icon-512.png'].forEach((f) => assert.ok(existsSync(join(root, f)), f));
+  const m = JSON.parse(readFileSync(join(root, 'manifest.webmanifest'), 'utf8'));
+  assert.equal(m.display, 'standalone');
+  assert.ok(m.icons.some((i) => i.sizes === '512x512') && m.icons.some((i) => i.sizes === '192x192'));
 });
 
 console.log(`web tests: ${pass} passed, ${fail} failed`);

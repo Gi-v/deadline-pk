@@ -38,14 +38,14 @@ function inTriangle(px, py, [ax, ay], [bx, by], [cx, cy]) {
   return !((d1 < 0 || d2 < 0 || d3 < 0) && (d1 > 0 || d2 > 0 || d3 > 0));
 }
 
-function pixel(x, y) {
+function pixel(x, y, bg) {
   if (!inRoundRect(x, y, 0.22)) return null; // transparent
   const head = inCircle(x, y, 0.5, 0.38, 0.2) && !inCircle(x, y, 0.5, 0.38, 0.07);
   const stem = inTriangle(x, y, [0.4, 0.5], [0.6, 0.5], [0.5, 0.84]);
-  return head || stem ? [255, 255, 255] : [124, 58, 237];
+  return head || stem ? [255, 255, 255] : bg;
 }
 
-function png(size) {
+function png(size, bg) {
   const SS = 4;
   const raw = Buffer.alloc((size * 4 + 1) * size);
   for (let py = 0; py < size; py++) {
@@ -53,7 +53,7 @@ function png(size) {
     for (let px = 0; px < size; px++) {
       let r = 0, g = 0, b = 0, a = 0;
       for (let sy = 0; sy < SS; sy++) for (let sx = 0; sx < SS; sx++) {
-        const c = pixel((px + (sx + 0.5) / SS) / size, (py + (sy + 0.5) / SS) / size);
+        const c = pixel((px + (sx + 0.5) / SS) / size, (py + (sy + 0.5) / SS) / size, bg);
         if (c) { r += c[0]; g += c[1]; b += c[2]; a++; }
       }
       const o = py * (size * 4 + 1) + 1 + px * 4;
@@ -71,5 +71,9 @@ function png(size) {
   ]);
 }
 
-for (const s of [16, 32, 48, 128]) writeFileSync(join(outDir, `icon${s}.png`), png(s));
+for (const s of [16, 32, 48, 128]) writeFileSync(join(outDir, `icon${s}.png`), png(s, [124, 58, 237]));
+// Web app (PWA) icons: brand green.
+const webDir = join(here, '..', 'web', 'icons');
+mkdirSync(webDir, { recursive: true });
+for (const s of [192, 512]) writeFileSync(join(webDir, `icon-${s}.png`), png(s, [22, 163, 74]));
 console.log('icons written to', outDir);
