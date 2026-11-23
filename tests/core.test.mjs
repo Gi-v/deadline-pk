@@ -164,5 +164,64 @@ t('wa + mail + share text', () => {
   assert.match(C.mailUrl({ title: 'Quiz', date: '2026-11-24' }), /^mailto:\?subject=Deadline%3A%20Quiz/);
 });
 
-console.log(`core tests: ${pass} passed, ${fail} failed`);
-process.exit(fail ? 1 : 0);
+// ---- Google Calendar API sync (mocked HTTP)
+t('google event: all-day vs timed, midnight rollover, reminders', () => {
+  const a = C.buildGoogleEvent({ id: 'a1', title: 'Report', date: '2026-12-15', type: 'Assignment' }, 'Asia/Karachi');
+  assert.deepEqual(a.start, { date: '2026-12-15' });
+  assert.deepEqual(a.end, { date: '2026-12-16' });
+  assert.equal(a.reminders.overrides[0].minutes, 360);
+  assert.equal(a.extendedProperties.private.dpkId, 'a1');
+  const b = C.buildGoogleEvent({ id: 'b', title: 'Quiz', date: '2026-11-24', time: '09:00' }, 'Asia/Karachi');
+  assert.equal(b.start.dateTime, '2026-11-24T09:00:00');
+  assert.equal(b.end.dateTime, '2026-11-24T10:00:00');
+  assert.equal(b.start.timeZone, 'Asia/Karachi');
+  assert.deepEqual(b.reminders.overrides.map((r) => r.minutes), [1440, 60]);
+  const c = C.buildGoogleEvent({ id: 'c', title: 'Late', date: '2026-11-30', time: '23:30' });
+  assert.equal(c.end.dateTime, '2026-12-01T00:30:00');
+  assert.equal(C.buildGoogleEvent({ title: 'x', date: 'bad' }), null);
+});
+
+(async () => {
+  const calls = [];
+  let n = 0;
+  const mk = (fail) => async (method, path, body) => {
+    calls.push(method + ' ' + path);
+    if (fail && fail(method, path)) { const e = new Error('x'); e.status = fail(method, path); throw e; }
+    if (method === 'POST' && path === '/calendars') return { id: 'cal@group' };
+    if (method === 'POST') return { id: 'ev' + (++n) };
+    return {};
+  };
+  const run = async (name, fn) => { try { await fn(); pass++; } catch (e) { fail++; console.log('FAIL', name, '\n   ', e.message.split('\n')[0]); } };
+
+  await run('sync: creates calendar once, creates events, skips none', async () => {
+    const r = await C.syncToGoogle({ request: mk(), deadlines: [{ id: 1, title: 'A', date: '2026-12-01' }, { id: 2, title: 'B', date: '2026-12-02', time: '10:00' }] });
+    assert.equal(r.calendarId, 'cal@group');
+    assert.deepEqual(r.stats, { created: 2, updated: 0, deleted: 0, failed: 0 });
+    assert.equal(calls.filter((c) => c === 'POST /calendars').length, 1);
+    assert.deepEqual(Object.keys(r.gids), ['1', '2']);
+  });
+  await run('sync: existing gid updates (no duplicate); done deletes; removed deletes', async () => {
+    calls.length = 0;
+    const r = await C.syncToGoogle({
+      calendarId: 'cal@group', request: mk(),
+      deadlines: [{ id: 1, title: 'A', date: '2026-12-01', gid: 'g1' }, { id: 2, title: 'B', date: '2026-12-02', gid: 'g2', done: true }],
+      removed: ['g9'],
+    });
+    assert.deepEqual(r.stats, { created: 0, updated: 1, deleted: 2, failed: 0 });
+    assert.equal(r.gids[1], 'g1'); assert.equal(r.gids[2], null);
+    assert.ok(calls.includes('PUT /calendars/cal%40group/events/g1'));
+    assert.ok(!calls.some((c) => c === 'POST /calendars/cal%40group/events'));
+  });
+  await run('sync: event deleted in Google (404) is re-created', async () => {
+    const r = await C.syncToGoogle({ calendarId: 'c', request: mk((m) => (m === 'PUT' ? 404 : 0)), deadlines: [{ id: 1, title: 'A', date: '2026-12-01', gid: 'gone' }] });
+    assert.deepEqual(r.stats, { created: 1, updated: 0, deleted: 0, failed: 0 });
+  });
+  await run('sync: 401 aborts so the caller can re-authorise; other errors count as failed', async () => {
+    await assert.rejects(C.syncToGoogle({ calendarId: 'c', request: mk(() => 401), deadlines: [{ id: 1, title: 'A', date: '2026-12-01' }] }), (e) => e.status === 401);
+    const r = await C.syncToGoogle({ calendarId: 'c', request: mk(() => 500), deadlines: [{ id: 1, title: 'A', date: '2026-12-01' }], removed: ['x'] });
+    assert.equal(r.stats.failed, 2); assert.deepEqual(r.removedLeft, ['x']);
+  });
+
+  console.log(`core tests: ${pass} passed, ${fail} failed`);
+  process.exit(fail ? 1 : 0);
+})();

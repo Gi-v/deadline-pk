@@ -102,6 +102,22 @@
       <label class="block text-sm font-medium">Model
         <input id="model" type="text" class="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-brand">
       </label>
+      <div id="gcidWrap" class="space-y-2">
+        <label class="block text-sm font-medium">Google OAuth Client ID <span class="font-normal text-gray-500">(only for Google Calendar sync)</span>
+          <input id="gcid" type="text" autocomplete="off" placeholder="1234567890-abc….apps.googleusercontent.com" class="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-brand">
+        </label>
+        <details class="rounded-lg bg-white p-3 text-xs text-gray-700">
+          <summary class="cursor-pointer font-semibold">How to get a Client ID (free, ~5 minutes, once)</summary>
+          <ol class="mt-2 list-decimal space-y-1 pl-4">
+            <li>Open <a class="underline" target="_blank" rel="noopener" href="https://console.cloud.google.com/projectcreate">Google Cloud Console</a> and create a project.</li>
+            <li><em>APIs &amp; Services → Library</em> → enable <strong>Google Calendar API</strong>.</li>
+            <li><em>OAuth consent screen</em> → External → add your Gmail as a <strong>test user</strong> → add scope <code>.../auth/calendar.app.created</code>.</li>
+            <li><em>Credentials → Create credentials → OAuth client ID → Web application</em>. Under <strong>Authorized JavaScript origins</strong> add this page's address (for example <code>https://gi-v.github.io</code>).</li>
+            <li>Copy the Client ID into the box above. Then press <strong>Connect Google Calendar</strong>.</li>
+          </ol>
+          <p class="mt-2">Events go into their own “DeadlinePK” calendar, so your other calendars are never touched.</p>
+        </details>
+      </div>
       <label class="block text-sm font-medium">Endpoint
         <input id="endpoint" type="text" class="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-brand">
       </label>
@@ -138,6 +154,9 @@
     <div id="mineTools" class="mt-3 flex flex-wrap gap-2" hidden>
       <a id="shareWeek" target="_blank" rel="noopener" class="rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold hover:bg-gray-100" href="#mine">💬 Send this week to WhatsApp</a>
       <button id="icsAll" type="button" class="rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold hover:bg-gray-100">📅 Download calendar file</button>
+      <button id="gSync" type="button" class="rounded-lg border border-blue-300 bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-900 hover:bg-blue-100">🔗 Connect Google Calendar</button>
+      <button id="gDisc" type="button" hidden class="rounded-lg px-2 py-2 text-xs text-gray-500 underline hover:text-red-600">Disconnect</button>
+      <p id="gStatus" role="status" class="w-full text-xs text-gray-500"></p>
       <button id="clearDone" type="button" class="rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold hover:bg-gray-100">Clear done</button>
     </div>
     <p class="mt-3 text-xs text-gray-500">Saved only in this browser — no account, nothing uploaded. Reminders work while the app is open or installed.</p>
@@ -706,7 +725,8 @@ var KEY="deadlinesync.mine.v1",NKEY="deadlinesync.notified.v1",tab="week";
 function ld(k,d){try{var v=JSON.parse(localStorage.getItem(k)||"null");return v==null?d:v}catch(e){return d}}
 function sv(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
 var mine=ld(KEY,[]);mine=Array.isArray(mine)?mine.filter(function(x){return x&&x.title&&DC.isValidISO(x.date)}):[];
-function save(){sv(KEY,mine)}
+function save(){sv(KEY,mine);if(window.__dpkAfterSave)window.__dpkAfterSave()}
+function gone(list){if(!list.length)return;var r=ld("deadlinesync.gcal.removed.v1",[]);list.forEach(function(d){if(d.gid)r.push(d.gid)});sv("deadlinesync.gcal.removed.v1",r)}
 var today=function(){return DC.toISO(new Date())};
 function daysTo(iso){var a=DC.startOfDay(new Date()),b=DC.fromISO(iso);return Math.round((b-a)/864e5)}
 function rel(d){var n=daysTo(d.date);if(n<0)return{t:"Overdue "+(-n)+"d",c:"bg-red-100 text-red-800"};if(n===0)return{t:"Today"+(d.time?" "+d.time:""),c:"bg-yellow-100 text-yellow-900"};if(n===1)return{t:"Tomorrow"+(d.time?" "+d.time:""),c:"bg-orange-100 text-orange-800"};return{t:"in "+n+" days",c:"bg-gray-100 text-gray-700"}}
@@ -742,7 +762,7 @@ function render(){
   var act=el("div","flex shrink-0 items-center gap-1");
   var g=el("a","rounded-lg px-2 py-1 text-base hover:bg-gray-100","📅");g.href=DC.gcalUrl(d)||"#";g.target="_blank";g.rel="noopener";g.title="Add to Google Calendar";g.setAttribute("aria-label","Add to Google Calendar");
   var w=el("a","rounded-lg px-2 py-1 text-base hover:bg-gray-100","💬");w.href=DC.waUrl(DC.shareText(d),"");w.target="_blank";w.rel="noopener";w.title="Send on WhatsApp";w.setAttribute("aria-label","Send on WhatsApp");
-  var x=el("button","rounded-lg px-2 py-1 text-gray-400 hover:bg-gray-100 hover:text-red-600","✕");x.type="button";x.title="Delete";x.setAttribute("aria-label","Delete "+d.title);x.onclick=function(){mine=mine.filter(function(m){return m!==d});save();render()};
+  var x=el("button","rounded-lg px-2 py-1 text-gray-400 hover:bg-gray-100 hover:text-red-600","✕");x.type="button";x.title="Delete";x.setAttribute("aria-label","Delete "+d.title);x.onclick=function(){gone([d]);mine=mine.filter(function(m){return m!==d});save();render()};
   act.appendChild(g);act.appendChild(w);act.appendChild(x);
   li.appendChild(cb);li.appendChild(mid);li.appendChild(act);list.appendChild(li)});
  var wk=open_().filter(function(d){return daysTo(d.date)<=7}).sort(sorter);
@@ -758,7 +778,7 @@ $("quickForm").addEventListener("submit",function(e){e.preventDefault();var v=$(
  else say("Couldn’t find a date in that. Try “Quiz Friday 9 baje” or “Report 15 Dec”.",false)});
 $("quickIn").addEventListener("keydown",function(e){if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();$("quickForm").requestSubmit()}});
 $("mineExample").onclick=function(){add([{title:"Quiz",date:today(),time:"09:00",type:"Quiz"},{title:"Assignment 3",date:DC.toISO(DC.addDays(new Date(),2)),time:null,type:"Assignment"},{title:"Midterm exam",date:DC.toISO(DC.addDays(new Date(),6)),time:"10:00",type:"Exam"}]);say("Added 3 examples — delete them with ✕",true)};
-$("clearDone").onclick=function(){mine=mine.filter(function(d){return !d.done});save();render()};
+$("clearDone").onclick=function(){gone(mine.filter(function(d){return d.done}));mine=mine.filter(function(d){return !d.done});save();render()};
 $("icsAll").onclick=function(){var ev=open_().map(function(d){return{title:d.title,date:d.date,time:d.time,type:d.type,notes:""}});if(!ev.length){say("Nothing open to export",false);return}
  var b=new Blob([DC.buildICS(ev,{calName:"My deadlines"})],{type:"text/calendar"}),u=URL.createObjectURL(b),a=document.createElement("a");a.href=u;a.download="my-deadlines.ics";document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(u)},4000)};
 var sb=$("saveMineBtn");if(sb)sb.onclick=function(){var ok=(window.__dpkRows?window.__dpkRows():[]).filter(function(r){return DC.isValidISO(r.date)});var n=add(ok);var s=$("mine");say(n?("Saved "+n+" to My deadlines ✓"):"Nothing new to save",!!n);if(s)s.scrollIntoView({behavior:"smooth",block:"start"})};
@@ -772,7 +792,57 @@ var dip=null;window.addEventListener("beforeinstallprompt",function(e){e.prevent
 $("installBtn").onclick=function(){if(dip){dip.prompt();dip=null;$("installBtn").hidden=true}};
 if(/^https?:$/.test(location.protocol)){var l=document.createElement("link");l.rel="manifest";l.href="manifest.webmanifest";document.head.appendChild(l);
  if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(function(){})}
+window.__dpk={getMine:function(){return mine},saveQuiet:function(){sv(KEY,mine)},render:render};
 render();notifyCheck();
+}catch(e){console.error(e)}})();
+
+;(function(){try{
+var DC=window.DeadlineCore,$=function(i){return document.getElementById(i)};
+var BAKED="/*__GCID__*/",CKEY="deadlinesync.gcid",SKEY="deadlinesync.gcal.v1",RKEY="deadlinesync.gcal.removed.v1";
+var SCOPE="https://www.googleapis.com/auth/calendar.app.created";
+var token=null,exp=0,tc=null,busy=false,timer=null;
+function ld(k,d){try{var v=JSON.parse(localStorage.getItem(k)||"null");return v==null?d:v}catch(e){return d}}
+function sv(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+function cid(){return BAKED||(function(){try{return (localStorage.getItem(CKEY)||"").trim()}catch(e){return""}})()}
+function say(t,ok){var m=$("gStatus");m.textContent=t;m.className="w-full text-xs "+(ok===false?"text-red-700":ok?"text-green-700":"text-gray-500")}
+function live(){return token&&Date.now()<exp-60000}
+function paint(){var st=ld(SKEY,{}),b=$("gSync"),dc=$("gDisc");
+ b.textContent=st.connected?"🔄 Sync to Google Calendar":"🔗 Connect Google Calendar";dc.hidden=!st.connected;
+ if(st.connected&&st.last&&!busy)say("Synced to your “DeadlinePK” calendar at "+new Date(st.last).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})+".",true)}
+function loadGIS(){return new Promise(function(res,rej){if(window.google&&google.accounts&&google.accounts.oauth2)return res();
+ var s=document.createElement("script");s.src="https://accounts.google.com/gsi/client";s.async=true;s.onload=function(){res()};s.onerror=function(){rej(new Error("offline"))};document.head.appendChild(s)})}
+function auth(interactive){return loadGIS().then(function(){return new Promise(function(res,rej){
+ if(live())return res();
+ if(!interactive&&!ld(SKEY,{}).connected)return rej(new Error("needs-consent"));
+ tc=google.accounts.oauth2.initTokenClient({client_id:cid(),scope:SCOPE,
+  callback:function(r){if(r&&r.access_token){token=r.access_token;exp=Date.now()+(r.expires_in||3600)*1000;res()}else rej(new Error((r&&r.error)||"denied"))},
+  error_callback:function(e){rej(new Error((e&&e.type)||"popup"))}});
+ tc.requestAccessToken({prompt:ld(SKEY,{}).connected?"":"consent"})})})}
+function req(method,path,body){return fetch("https://www.googleapis.com/calendar/v3"+path,{method:method,headers:{Authorization:"Bearer "+token,"Content-Type":"application/json"},body:body?JSON.stringify(body):undefined})
+ .then(function(r){if(!r.ok){var e=new Error("Google "+r.status);e.status=r.status;throw e}return r.text()}).then(function(t){return t?JSON.parse(t):null})}
+function sync(interactive){if(busy)return;
+ if(!cid()){$("settings").hidden=false;$("settingsBtn").setAttribute("aria-expanded","true");var g=$("gcid");g.scrollIntoView({behavior:"smooth",block:"center"});g.focus();say("Add a Google Client ID first (steps are in the box above).",false);return}
+ busy=true;say("Connecting to Google…");$("gSync").disabled=true;
+ auth(interactive).then(function(){say("Syncing…");var P=window.__dpk,st=ld(SKEY,{});
+  return DC.syncToGoogle({request:req,calendarId:st.calendarId,deadlines:P.getMine(),removed:ld(RKEY,[]),tz:Intl.DateTimeFormat().resolvedOptions().timeZone,calendarName:"DeadlinePK"})})
+ .then(function(r){var P=window.__dpk;P.getMine().forEach(function(x){if(Object.prototype.hasOwnProperty.call(r.gids,x.id)){if(r.gids[x.id])x.gid=r.gids[x.id];else delete x.gid}});
+  P.saveQuiet();sv(RKEY,r.removedLeft);sv(SKEY,{calendarId:r.calendarId,connected:true,last:Date.now()});
+  var s=r.stats;busy=false;paint();say("Synced: "+s.created+" added, "+s.updated+" updated, "+s.deleted+" removed"+(s.failed?", "+s.failed+" failed (try again)":"")+". Open Google Calendar → “DeadlinePK”.",!s.failed)})
+ .catch(function(e){var m=String(e&&e.message||e),c=e&&e.status;
+  if(c===401){token=null;say("Google session expired — press Sync again.",false)}
+  else if(c===403)say("Google refused access (403). In Google Cloud: enable the Google Calendar API and add your account as a test user.",false)
+  else if(m==="offline")say("Can’t reach Google — check your internet.",false)
+  else if(m==="needs-consent"){say("Press Connect to sign in.",false)}
+  else if(/popup|denied|access_denied/.test(m))say("Sign-in cancelled.",false)
+  else say("Sync failed: "+m,false)})
+ .then(function(){busy=false;$("gSync").disabled=false})}
+$("gSync").onclick=function(){sync(true)};
+$("gDisc").onclick=function(){try{if(token&&window.google&&google.accounts)google.accounts.oauth2.revoke(token,function(){})}catch(e){}token=null;exp=0;sv(SKEY,{});say("Disconnected. Events already in your calendar stay there.");paint()};
+window.__dpkAfterSave=function(){if(live()&&ld(SKEY,{}).connected&&!busy){clearTimeout(timer);timer=setTimeout(function(){sync(false)},1500)}};
+var gi=$("gcid");if(BAKED){$("gcidWrap").hidden=true}else{gi.value=cid();gi.addEventListener("input",function(){try{localStorage.setItem(CKEY,gi.value.trim())}catch(e){}})}
+paint();
+// Preload Google's sign-in script when configured so the popup opens straight from the click (browsers block late popups).
+if(cid()&&navigator.onLine)setTimeout(function(){loadGIS().catch(function(){})},1500);
 }catch(e){console.error(e)}})();
 
 ;(function(){try{var C=window.DeadlineCore,el=document.getElementById("lpIn"),out=document.getElementById("lpOut");if(!C||!el||!out)return;

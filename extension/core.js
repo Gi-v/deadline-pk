@@ -688,7 +688,77 @@
   }
   const mailUrl = (d) => 'mailto:?subject=' + encodeURIComponent('Deadline: ' + d.title) + '&body=' + encodeURIComponent(shareText(d));
 
+  /* ---------------------------------------------------------------- real Google Calendar sync (API v3) */
+  /** Google Calendar event resource for one deadline. All-day when there is no time; otherwise a 1-hour event. */
+  function buildGoogleEvent(d, tz) {
+    const day = fromISO(d && d.date);
+    if (!day || !d.title) return null;
+    const ev = {
+      summary: String(d.title),
+      description: 'Pinned with DeadlineSync PK' + (d.type && d.type !== 'Other' ? ' · ' + d.type : ''),
+      extendedProperties: { private: { dpkId: String(d.id || '') } },
+    };
+    if (isValidTime(d.time)) {
+      const [h, m] = d.time.split(':').map(Number);
+      const endMin = h * 60 + m + 60;
+      const endDay = endMin >= 1440 ? toISO(addDays(day, 1)) : d.date;
+      const em = endMin % 1440;
+      ev.start = { dateTime: d.date + 'T' + d.time + ':00', timeZone: tz || 'Asia/Karachi' };
+      ev.end = { dateTime: endDay + 'T' + pad(Math.floor(em / 60)) + ':' + pad(em % 60) + ':00', timeZone: tz || 'Asia/Karachi' };
+      ev.reminders = { useDefault: false, overrides: [{ method: 'popup', minutes: 1440 }, { method: 'popup', minutes: 60 }] };
+    } else {
+      ev.start = { date: d.date };
+      ev.end = { date: toISO(addDays(day, 1)) };
+      ev.reminders = { useDefault: false, overrides: [{ method: 'popup', minutes: 360 }] }; // 6 pm the day before
+    }
+    return ev;
+  }
+
+  /**
+   * Pushes deadlines into a dedicated "DeadlinePK" calendar. `request(method, path, body)` does the HTTP call
+   * (path is relative to /calendar/v3) and must throw an Error with `.status` on failure. Idempotent: events that
+   * already have a google id (d.gid) are updated, never duplicated; done items are removed from Google.
+   */
+  async function syncToGoogle(o) {
+    const request = o.request, enc = encodeURIComponent;
+    let calId = o.calendarId;
+    if (!calId) {
+      const c = await request('POST', '/calendars', { summary: o.calendarName || 'DeadlinePK', description: 'Deadlines pinned with DeadlineSync PK', timeZone: o.tz || 'Asia/Karachi' });
+      calId = c.id;
+    }
+    const base = '/calendars/' + enc(calId) + '/events';
+    const stats = { created: 0, updated: 0, deleted: 0, failed: 0 };
+    const gids = {};
+    const gone = (e) => e && (e.status === 404 || e.status === 410);
+    for (const d of o.deadlines || []) {
+      try {
+        if (d.done) {
+          if (d.gid) { try { await request('DELETE', base + '/' + enc(d.gid)); stats.deleted++; } catch (e) { if (!gone(e)) throw e; } }
+          gids[d.id] = null;
+          continue;
+        }
+        const body = buildGoogleEvent(d, o.tz);
+        if (!body) continue;
+        if (d.gid) {
+          try { await request('PUT', base + '/' + enc(d.gid), body); stats.updated++; gids[d.id] = d.gid; continue; }
+          catch (e) { if (!gone(e)) throw e; }
+        }
+        const ev = await request('POST', base, body);
+        gids[d.id] = ev.id; stats.created++;
+      } catch (e) {
+        if (e && e.status === 401) throw e; // token expired: caller re-authorises
+        stats.failed++;
+      }
+    }
+    const left = [];
+    for (const g of o.removed || []) {
+      try { await request('DELETE', base + '/' + enc(g)); stats.deleted++; } catch (e) { if (e && e.status === 401) throw e; if (!gone(e)) { stats.failed++; left.push(g); } }
+    }
+    return { calendarId: calId, gids, stats, removedLeft: left };
+  }
+
   return {
+    buildGoogleEvent, syncToGoogle,
     shareText, gcalUrl, waUrl, mailUrl,
     TYPES, DAY_NAMES,
     toISO, fromISO, isValidISO, isValidTime, addDays, startOfDay, describeDate, resolveRelative,

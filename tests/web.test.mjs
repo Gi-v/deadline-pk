@@ -13,7 +13,8 @@ t('no unreplaced build markers', () => { assert.ok(!html.includes('/*__CSS__*/')
 t('self-contained: no external scripts/styles/images', () => {
   assert.ok(!/<script[^>]+src=/i.test(html));
   assert.ok(!/<link[^>]+rel=["']stylesheet/i.test(html));
-  assert.ok(!/(src|href)=["']https?:\/\/(?!calendar\.google\.com)/i.test(html));
+  // No statically-loaded external resources (links the user clicks are fine; Google sign-in is injected only on demand).
+  assert.ok(!/<(script|img|link|iframe|video|source|audio)\b[^>]*\b(src|href)=["']https?:\/\//i.test(html));
 });
 t('inline scripts parse', () => {
   const blocks = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1]);

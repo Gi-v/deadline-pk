@@ -22,7 +22,9 @@ const css = await postcss([tailwind({ optimize: { minify: true } })]).process(re
 
 let html = readFileSync(tplPath, 'utf8');
 const core = readFileSync(join(root, 'shared', 'deadline-core.js'), 'utf8').replace(/<\/script/gi, '<\\/script');
-for (const [marker, value] of [['/*__CSS__*/', css.css], ['/*__CORE__*/', core]]) {
+let gcid = '';
+try { gcid = String(JSON.parse(readFileSync(join(root, 'web', 'config.json'), 'utf8')).googleClientId || '').replace(/[^A-Za-z0-9._-]/g, ''); } catch (e) { /* no config: users paste their own Client ID */ }
+for (const [marker, value] of [['/*__CSS__*/', css.css], ['/*__CORE__*/', core], ['/*__GCID__*/', gcid]]) {
   if (!html.includes(marker)) throw new Error('marker missing in template: ' + marker);
   html = html.split(marker).join(value); // split/join: no $-pattern surprises like String.replace
 }

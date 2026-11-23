@@ -46,7 +46,7 @@ Drop up to 5 PDFs / JPG / PNG / WEBP (≤10 MB each), or paste text (WhatsApp ch
 cd deadline-pk
 npm install          # tailwind + postcss (Windows binaries; the parent folder's node_modules is Linux-only)
 npm run build        # icons + extension/core.js + web/DeadlineSync-PK.html
-npm test             # 117 tests: parser/ICS core, extension background (mocked chrome.*), built web app
+npm test             # 122 tests: parser/ICS core, extension background (mocked chrome.*), built web app
 node tools/serve.mjs # http://127.0.0.1:5173 for browser testing; tests/wa-mock.html = fake WhatsApp page
 ```
 **Source of truth:** `shared/deadline-core.js` (parser, ICS, AI-output cleanup). `extension/core.js` and the inlined copy in the web app are generated — don't edit them. Web UI source: `web/src/index.template.html`.
@@ -56,7 +56,18 @@ Known limits: Chrome's "Load unpacked" and live WhatsApp Web were not available 
 ## Publish on GitHub Pages
 The repo ships `.github/workflows/pages.yml`: on every push to `main` it runs the tests, then publishes the web app as the site root (`index.html`) and the extension as `DeadlinePinPK.zip` next to it. One-time setup after pushing: repo **Settings → Pages → Source: GitHub Actions**. Built files are committed on purpose (run `npm run build` before committing) so CI needs no npm install.
 
+## Google Calendar sync (real, two-way for what you pin)
+**🔗 Connect Google Calendar** in My deadlines signs in with Google (Identity Services, no server) and writes to its own **"DeadlinePK"** calendar via the Calendar API — so your other calendars are never touched. Add / edit / tick done / delete in the app and the events follow (auto-sync while the sign-in is fresh, ~1 h; otherwise press Sync). Scope used: `calendar.app.created` only.
+
+**One-time setup (needs a Google account — I cannot do this for you):**
+1. console.cloud.google.com → new project → enable **Google Calendar API**.
+2. OAuth consent screen → External → add your Gmail as **test user** → add scope `.../auth/calendar.app.created`.
+3. Credentials → OAuth client ID → **Web application** → Authorized JavaScript origins: `https://gi-v.github.io` (and `http://localhost:5173` for dev).
+4. Put the Client ID in `web/config.json` (`{"googleClientId": "…"}`), run `npm run build`, commit, push — every visitor can then just click Connect. Or paste it into the page's ⚙ settings box to use it on one device only.
+Client IDs are public, not secrets. While the consent screen is in "Testing" only listed test users can sign in (max 100); publish it for everyone (this scope is non-sensitive, so no Google review is normally required).
+
 ## Change log
+- **2026-11-23 — v2.1.0** Real Google Calendar sync (see above). Core: `buildGoogleEvent`, `syncToGoogle` (idempotent: update-not-duplicate, done/removed items deleted, 404 recreated, 401 re-auth). +5 tests, sync flow also exercised in the browser against a mocked Google. **Not tested against real Google** (needs your Client ID).
 - **2026-11-23 — v2.0.0** Built for daily use, not one-off extraction. The web app now opens on **My deadlines**: paste one or many WhatsApp messages → pinned (saved in the browser, no account), tabs Today / This week / All / Done, tick off, per-item 📅 Google Calendar and 💬 WhatsApp, "Send this week to WhatsApp", download all as .ics, "🔔 Remind me" (browser notifications while the app is open). The syllabus scanner moved below and can "Save to My deadlines". Installable PWA (manifest + offline service worker, green icons) on https hosting. Messages with a time but no date ("Quiz he 9") pin for today. Landing copy rewritten around the real problem (deadlines buried in class groups). +1 test (117 total).
 - **2026-11-23 — v1.3.0** Hero is now alive: a live demo box runs the real parser as you type (cycles examples, you can type your own), drifting colour glows, same optional video. Added GitHub Pages workflow (site + extension zip), `.gitignore`, zip download link in the page footer.
 - **2026-11-23 — v1.2.2** The landing hero is now inside the web app itself (`web/DeadlineSync-PK.html`): hero first, "Start" scrolls to the tool, extension install steps in the footer. The hero video is an optional online-only extra (not loaded offline or with reduced motion), so the file still works as a single offline file.
