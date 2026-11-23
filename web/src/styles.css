@@ -1,0 +1,11 @@
+@import "tailwindcss" source(none);
+@source "./index.template.html";
+
+@theme {
+  --color-brand: #16a34a;
+  --color-brand-dark: #15803d;
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Nastaliq Urdu", sans-serif;
+}
+
+/* Urdu text should flow right-to-left inside inputs without flipping the whole layout. */
+input[dir="auto"], textarea[dir="auto"] { unicode-bidi: plaintext; }

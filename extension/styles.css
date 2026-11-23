@@ -1,0 +1,60 @@
+/* DeadlinePinPK — injected UI. Everything is namespaced "dpk-" and reset with all:initial
+   so host pages (WhatsApp, Gmail, portals) cannot restyle it and it cannot restyle them. */
+.dpk-ui {
+  all: initial;
+  box-sizing: border-box;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Nastaliq Urdu", sans-serif;
+  font-size: 13px;
+  line-height: 1.2;
+  position: fixed;
+  z-index: 2147483647;
+  color: #fff;
+}
+.dpk-ui[hidden] { display: none !important; }
+
+.dpk-pin-btn {
+  background: #7c3aed;
+  color: #fff;
+  border-radius: 999px;
+  padding: 7px 12px;
+  cursor: pointer;
+  font-weight: 600;
+  box-shadow: 0 4px 14px rgba(76, 29, 149, .35);
+  user-select: none;
+  white-space: nowrap;
+  transition: transform 150ms, background 150ms;
+}
+.dpk-pin-btn:hover { background: #6d28d9; transform: translateY(-1px); }
+
+.dpk-wa-pin {
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #7c3aed;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 14px;
+  box-shadow: 0 2px 8px rgba(76, 29, 149, .4);
+  user-select: none;
+  transition: transform 150ms, background 150ms;
+}
+.dpk-wa-pin:hover { background: #6d28d9; transform: scale(1.12); }
+
+.dpk-toast {
+  right: 18px;
+  bottom: 22px;
+  max-width: 320px;
+  background: #1f1637;
+  color: #fff;
+  padding: 10px 14px;
+  border-radius: 12px;
+  box-shadow: 0 6px 22px rgba(0, 0, 0, .3);
+  border-left: 4px solid #7c3aed;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 150ms, transform 150ms;
+}
+.dpk-toast.dpk-show { opacity: 1; transform: translateY(0); }

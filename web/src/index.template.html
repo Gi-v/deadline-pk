@@ -1,0 +1,692 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DeadlineSync PK — Drop your syllabus. Get your calendar.</title>
+<meta name="description" content="Free, no-login tool that extracts every deadline from a university syllabus (scanned PDF, WhatsApp image, Urdu or English) and exports a calendar file.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2316a34a'/%3E%3Cpath d='M18 26h28v20H18z' fill='none' stroke='white' stroke-width='4' stroke-linejoin='round'/%3E%3Cpath d='M18 33h28M25 18v8M39 18v8' stroke='white' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E">
+<style>/*__CSS__*/</style>
+</head>
+<body class="bg-white font-sans text-gray-900 antialiased">
+<style>
+.lp{position:relative;min-height:92vh;min-height:92dvh;display:grid;grid-template-rows:1fr auto;isolation:isolate;background:#000;color:#fff;overflow:hidden}
+.lp-bg{position:absolute;inset:0;z-index:-1;background:radial-gradient(ellipse at 50% 100%,#0b5c2f 0%,#031a0d 45%,#000 80%)}
+.lp-bg video{width:100%;height:100%;object-fit:cover}
+.lp-bg::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.55),rgba(0,0,0,.15) 35%,rgba(0,0,0,.8))}
+.lp-copy{align-self:end;display:flex;flex-direction:column;align-items:center;text-align:center;padding:96px 24px 40px;max-width:900px;margin:0 auto}
+.lp-badge{display:inline-flex;margin-bottom:22px;padding:9px 15px;border-radius:5px;font-size:12.5px;background:linear-gradient(90deg,#4b4b4b,#161616 60%,#0a0a0a)}
+.lp h2{font-weight:500;letter-spacing:-.045em;line-height:1.1;font-size:clamp(34px,5.2vw,60px)}
+.lp h2 em{font-family:"Instrument Serif",Georgia,"Times New Roman",serif;font-style:italic;font-weight:400;font-size:1.08em;color:#86efac}
+.lp-lede{margin-top:18px;max-width:560px;color:#a1a1aa;font-size:clamp(15px,1.4vw,18px)}
+.lp-act{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:26px}
+.lp-btn{display:inline-flex;align-items:center;justify-content:center;height:44px;padding:0 20px;border-radius:6px;font-weight:500;font-size:14px;text-decoration:none;transition:box-shadow .3s,border-color .3s}
+.lp-solid{background:linear-gradient(180deg,#fff,#e7e7e7 48%,#cfcfcf);color:#111;border:1px solid #fff}
+.lp-solid:hover{box-shadow:0 0 26px rgba(134,239,172,.45)}
+.lp-ghost{background:linear-gradient(135deg,rgba(255,255,255,.12),rgba(0,0,0,.5) 46%,rgba(150,170,200,.1));border:1px solid rgba(198,198,198,.55);color:#fff}
+.lp-ghost:hover{border-color:rgba(220,255,230,.85);box-shadow:0 0 24px rgba(134,239,172,.28)}
+.lp-btn:focus-visible{outline:2px solid #86efac;outline-offset:3px}
+.lp-stats{display:flex;justify-content:space-between;gap:24px;padding:0 72px 32px;color:#d8d8d8;font-size:13.5px}
+.lp-stats span::before{content:"✓";margin-right:10px;color:#86efac}
+.lp-in{animation:lpup 1s cubic-bezier(.16,1,.3,1) both;animation-delay:var(--d,.1s)}
+@keyframes lpup{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+@media(max-width:700px){.lp-stats{flex-direction:column;align-items:center;gap:10px;padding:0 20px 28px;text-align:center}.lp-act{flex-direction:column;width:100%}.lp-btn{width:100%}}
+@media(prefers-reduced-motion:reduce){.lp-in{animation:none}}
+
+.lp-demo{margin-top:30px;width:100%;max-width:640px;text-align:left;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.lp-chat{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.18);border-radius:16px;padding:14px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.lp-lab{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#86efac;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.lp-lab i{width:7px;height:7px;border-radius:50%;background:#22c55e;box-shadow:0 0 0 0 rgba(34,197,94,.7);animation:lppulse 1.8s infinite}
+@keyframes lppulse{70%{box-shadow:0 0 0 9px rgba(34,197,94,0)}100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}}
+#lpIn{width:100%;background:#0d1f14;border:1px solid rgba(134,239,172,.35);color:#fff;border-radius:12px 12px 12px 3px;padding:11px 13px;font:inherit;font-size:15px}
+#lpIn:focus{outline:2px solid #86efac;outline-offset:2px}
+.lp-hint{font-size:12px;color:#a1a1aa;margin-top:8px}
+#lpOut{min-height:112px;display:flex;flex-direction:column;gap:6px}
+.lp-card-t{font-weight:600;font-size:17px;letter-spacing:-.02em}
+.lp-row{display:flex;flex-wrap:wrap;gap:6px}
+.lp-chip{font-size:12.5px;padding:4px 10px;border-radius:99px;background:rgba(134,239,172,.15);color:#bbf7d0;border:1px solid rgba(134,239,172,.3)}
+.lp-chip.warn{background:rgba(250,204,21,.14);color:#fde68a;border-color:rgba(250,204,21,.35)}
+.lp-chip.none{background:rgba(255,255,255,.06);color:#a1a1aa;border-color:rgba(255,255,255,.15)}
+.lp-pop{animation:lppop .45s cubic-bezier(.16,1,.3,1)}
+@keyframes lppop{from{opacity:.2;transform:translateY(8px) scale(.97)}to{opacity:1;transform:none}}
+.lp-blob{position:absolute;z-index:-1;border-radius:50%;filter:blur(70px);opacity:.35;animation:lpfloat 14s ease-in-out infinite alternate}
+.lp-b1{width:380px;height:380px;background:#16a34a;left:-90px;top:8%}
+.lp-b2{width:320px;height:320px;background:#7c3aed;right:-80px;top:30%;animation-duration:18s}
+@keyframes lpfloat{to{transform:translate(60px,-40px) scale(1.15)}}
+@media(max-width:700px){.lp-demo{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){.lp-blob,.lp-lab i,.lp-pop{animation:none}}
+</style>
+<section class="lp" aria-label="Introduction">
+  <span class="lp-blob lp-b1"></span><span class="lp-blob lp-b2"></span>
+  <div class="lp-bg"><video id="lpVideo" autoplay muted loop playsinline preload="none" aria-hidden="true" data-video="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20261022_235442_c62146c2-3f2f-46c0-ab51-649a4aa26cf5.mp4"></video></div>
+  <div class="lp-copy">
+    <div class="lp-badge lp-in" style="--d:.15s">Roman Urdu · اردو · English</div>
+    <h2 class="lp-in" style="--d:.3s">“Kal quiz hai.”<br>Now it's a <em>calendar</em> event.</h2>
+    <p class="lp-lede lp-in" style="--d:.5s">Drop a syllabus, a WhatsApp screenshot or pasted text. DeadlineSync pulls out every deadline and gives you one file for Google Calendar.</p>
+    <div class="lp-demo lp-in" style="--d:.55s">
+      <div class="lp-chat"><div class="lp-lab"><i></i>A message you got</div>
+        <input id="lpIn" type="text" maxlength="200" autocomplete="off" spellcheck="false" aria-label="Try a deadline message" value="Quiz he 9">
+        <div class="lp-hint">Type your own — it runs the real parser, right here.</div></div>
+      <div class="lp-chat"><div class="lp-lab">What DeadlineSync pins</div><div id="lpOut" aria-live="polite"></div></div>
+    </div>
+    <div class="lp-act lp-in" style="--d:.65s">
+      <a class="lp-btn lp-solid" href="#app">Start — drop your syllabus</a>
+      <a class="lp-btn lp-ghost" href="#app-ext">Get the Chrome extension</a>
+    </div>
+  </div>
+  <div class="lp-stats lp-in" style="--d:.85s"><span>Understands kal, parson, agla Jumma, 9 baje</span><span>Pasted text works offline, no account</span><span>Day-first dates, Pakistan style</span></div>
+</section>
+
+<div id="app" class="mx-auto max-w-3xl px-4 py-6 sm:py-10">
+
+  <!-- Header -->
+  <header class="mb-6 flex items-start justify-between gap-3">
+    <div>
+      <h1 class="text-3xl font-extrabold tracking-tight text-brand sm:text-4xl">DeadlineSync</h1>
+      <p class="mt-1 text-base text-gray-600">Drop your syllabus. Get your calendar.</p>
+    </div>
+    <button id="settingsBtn" type="button" aria-expanded="false" aria-controls="settings"
+      class="shrink-0 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 focus-visible:outline-2 focus-visible:outline-brand">
+      ⚙ AI key
+    </button>
+  </header>
+
+  <!-- Settings -->
+  <section id="settings" hidden class="mb-6 rounded-2xl bg-gray-100 p-4 sm:p-5">
+    <h2 class="text-base font-bold">Claude API settings</h2>
+    <p class="mt-1 text-sm text-gray-600">Needed to read scanned PDFs and photos. Pasted text works offline without a key. Your key is stored only in this browser and is sent only to the endpoint below.</p>
+    <div class="mt-3 grid gap-3 sm:grid-cols-2">
+      <label class="block text-sm font-medium sm:col-span-2">Anthropic API key
+        <input id="apiKey" type="password" autocomplete="off" placeholder="sk-ant-…" class="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-brand">
+      </label>
+      <label class="block text-sm font-medium">Model
+        <input id="model" type="text" class="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-brand">
+      </label>
+      <label class="block text-sm font-medium">Endpoint
+        <input id="endpoint" type="text" class="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-brand">
+      </label>
+    </div>
+    <div class="mt-3 flex flex-wrap items-center gap-2">
+      <button id="saveSettings" type="button" class="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white hover:bg-brand-dark">Save</button>
+      <button id="testSettings" type="button" class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold hover:bg-gray-50">Test connection</button>
+      <span id="settingsMsg" role="status" class="text-sm"></span>
+    </div>
+  </section>
+
+  <!-- Input card -->
+  <section class="rounded-2xl bg-gray-100 p-4 sm:p-6" aria-labelledby="inputTitle">
+    <h2 id="inputTitle" class="sr-only">Add your syllabus</h2>
+
+    <label id="drop" class="flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-300 bg-white px-4 py-8 text-center focus-within:border-brand focus-within:outline-2 focus-within:outline-brand hover:border-brand">
+      <input id="fileInput" type="file" class="sr-only" multiple accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp">
+      <svg aria-hidden="true" class="h-10 w-10 text-brand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4m0 0 4 4m-4-4L8 8"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>
+      <span class="mt-2 text-base font-semibold">Drag &amp; drop your syllabus here</span>
+      <span class="mt-1 text-sm text-gray-500">or tap to choose · PDF, JPG, PNG, WEBP · up to 5 files, 10&nbsp;MB each</span>
+    </label>
+    <ul id="fileList" class="mt-3 space-y-2 empty:hidden" aria-live="polite"></ul>
+
+    <div class="mt-4">
+      <label for="pasteText" class="block text-sm font-medium">…or paste text <span class="font-normal text-gray-500">(WhatsApp messages, Urdu or English — works offline)</span></label>
+      <textarea id="pasteText" dir="auto" rows="3" placeholder="Quiz kal 9 baje&#10;Assignment 3 Friday tak&#10;Midterm 15th October"
+        class="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-brand"></textarea>
+      <button id="sampleBtn" type="button" class="mt-1 text-sm font-medium text-brand underline underline-offset-2">Try an example</button>
+    </div>
+
+    <div class="mt-4 grid gap-3 sm:grid-cols-2">
+      <label class="block text-sm font-medium" for="semStart">Semester start date
+        <input id="semStart" type="date" class="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-brand">
+        <span class="mt-1 block text-xs font-normal text-gray-500">Used to turn “Week 3” into a real date. Week 1 starts on this day.</span>
+      </label>
+      <label class="block text-sm font-medium" for="courseName">Course name
+        <input id="courseName" type="text" placeholder="e.g. CS-101" class="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-brand">
+        <span class="mt-1 block text-xs font-normal text-gray-500">Added to the start of every event title.</span>
+      </label>
+    </div>
+
+    <button id="extractBtn" type="button" class="mt-5 w-full rounded-xl bg-brand px-5 py-3 text-base font-bold text-white hover:bg-brand-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:cursor-not-allowed disabled:opacity-60">Extract Deadlines</button>
+  </section>
+
+  <!-- Loading -->
+  <section id="loading" hidden class="mt-6 flex items-center justify-center gap-3 rounded-2xl bg-gray-100 px-4 py-8" role="status" aria-live="polite">
+    <svg class="h-6 w-6 animate-spin text-brand" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" class="opacity-25"/><path d="M4 12a8 8 0 0 1 8-8" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></svg>
+    <span id="loadingMsg" class="font-medium text-gray-700">Reading your syllabus...</span>
+  </section>
+
+  <!-- Messages -->
+  <div id="messages" class="mt-6 space-y-3" aria-live="polite"></div>
+
+  <!-- Results -->
+  <section id="results" hidden class="mt-6" aria-labelledby="resultsTitle">
+    <div class="flex items-end justify-between gap-3">
+      <h2 id="resultsTitle" class="text-xl font-bold">Your deadlines <span id="count" class="text-base font-medium text-gray-500"></span></h2>
+      <button id="addRow" type="button" class="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-semibold hover:bg-gray-100">+ Add row</button>
+    </div>
+    <p class="mt-1 text-sm text-gray-600">Check the yellow rows, fix anything wrong, then export. Everything is editable.</p>
+
+    <div class="mt-3 rounded-2xl bg-gray-100 p-3 sm:p-4">
+      <table class="w-full border-separate border-spacing-0 text-sm">
+        <thead class="hidden text-left text-xs font-semibold uppercase tracking-wide text-gray-500 sm:table-header-group">
+          <tr><th class="pb-2 pr-2">Event name</th><th class="pb-2 pr-2">Date</th><th class="pb-2 pr-2">Type</th><th class="pb-2 pr-2">Confidence</th><th class="pb-2"><span class="sr-only">Delete</span></th></tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+
+    <div class="mt-4 flex flex-col gap-3 sm:flex-row">
+      <button id="gcalBtn" type="button" class="flex-1 rounded-xl bg-brand px-5 py-3 text-base font-bold text-white hover:bg-brand-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand">Add to Google Calendar</button>
+      <button id="copyBtn" type="button" class="flex-1 rounded-xl border border-gray-300 bg-white px-5 py-3 text-base font-bold hover:bg-gray-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand">Copy as text</button>
+    </div>
+    <div id="gcalTip" hidden class="mt-3 rounded-xl border border-green-200 bg-green-50 p-3 text-sm text-green-900">
+      <strong>Your .ics file downloaded.</strong> In Google Calendar open <em>Settings → Import &amp; export → Import</em>, choose the file, pick a calendar. On a phone, just open the file and choose Calendar.
+      <a href="https://calendar.google.com/calendar/u/0/r/settings/export" target="_blank" rel="noopener" class="ml-1 font-semibold underline">Open Google Calendar import →</a>
+    </div>
+  </section>
+
+  <footer class="mt-12 border-t border-gray-200 pt-4 text-center text-sm text-gray-500">
+    Free forever. No login. Built for Pakistani students.<br><span id="app-ext">Want it on WhatsApp Web? <a class="underline" href="DeadlinePinPK.zip" download>Download the DeadlinePinPK extension (.zip)</a>, unzip it, then open <code>chrome://extensions</code>, turn on Developer mode, Load unpacked, choose the unzipped folder. (When running from GitHub Pages the zip is there; if you opened this file from disk, the folder is <code>extension</code>.)</span>
+  </footer>
+</div>
+
+<script>/*__CORE__*/</script>
+<script>
+(() => {
+  'use strict';
+  const DC = window.DeadlineCore;
+  const $ = (id) => document.getElementById(id);
+
+  const MAX_FILES = 5;
+  const MAX_BYTES = 10 * 1024 * 1024;
+  const SETTINGS_KEY = 'deadlinesync.settings.v1';
+  const DEFAULTS = { apiKey: '', model: 'claude-sonnet-4-6', endpoint: 'https://api.anthropic.com/v1/messages' };
+
+  const SYSTEM_PROMPT = `You are a deadline extraction engine for university syllabi. The document may be:
+- A scanned PDF or image, possibly low quality
+- In English, Urdu, or a mix of both
+- Using relative dates ("Week 3", "after midterm", "next class") or absolute dates in any format
+
+Your job:
+1. Extract every deadline, quiz, assignment, exam, project, and submission date.
+2. For each item return a JSON array where each object has:
+   - "title": string — event name, clean and descriptive
+   - "date": string — ISO 8601 (YYYY-MM-DD) if determinable, or "RELATIVE: Week X" if not
+   - "type": one of ["Quiz", "Assignment", "Exam", "Project", "Presentation", "Lab", "Other"]
+   - "confidence": one of ["high", "medium", "low"]
+   - "notes": string — any extra context (e.g. "covers chapters 1-3", "group submission")
+
+3. If a date is relative (Week 3), calculate the actual date using the semester start date provided by the user. If no start date given, return the relative form.
+4. Never hallucinate dates. If you cannot determine a date, set confidence to "low" and date to "UNKNOWN".
+5. Return ONLY a valid JSON array. No explanation, no markdown, no preamble.`;
+
+  const LOADING = ['Reading your syllabus...', 'Finding deadlines...', 'Building your calendar...'];
+
+  /* ------------------------------------------------------------ state */
+  let files = [];            // File[]
+  let rows = [];             // {id,title,date,time,type,confidence,notes}
+  let nextId = 1;
+  let busy = false;
+  let loadingTimer = null;
+  let settings = loadSettings();
+
+  /* ------------------------------------------------------------ utils */
+  function h(tag, attrs, ...kids) {
+    const n = document.createElement(tag);
+    for (const k of Object.keys(attrs || {})) {
+      const v = attrs[k];
+      if (v == null || v === false) continue;
+      if (k === 'class') n.className = v;
+      else if (k.slice(0, 2) === 'on') n.addEventListener(k.slice(2), v);
+      else if (k === 'value') n.value = v;
+      else n.setAttribute(k, v === true ? '' : v);
+    }
+    kids.flat().forEach((c) => { if (c != null && c !== false) n.append(c.nodeType ? c : document.createTextNode(c)); });
+    return n;
+  }
+  const todayISO = () => DC.toISO(new Date());
+  function loadSettings() {
+    try { return Object.assign({}, DEFAULTS, JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}')); }
+    catch (e) { return Object.assign({}, DEFAULTS); }
+  }
+  function storeSettings(s) {
+    try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)); return true; } catch (e) { return false; }
+  }
+  const fmtSize = (n) => (n >= 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB');
+  const slug = (s) => String(s || '').trim().toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-+|-+$/g, '');
+
+  function message(kind, text, extra) {
+    const palette = {
+      error: 'border-red-200 bg-red-50 text-red-900',
+      warn: 'border-yellow-200 bg-yellow-50 text-yellow-900',
+      info: 'border-green-200 bg-green-50 text-green-900',
+    };
+    const box = h('div', { class: 'rounded-xl border p-3 text-sm ' + palette[kind], role: kind === 'error' ? 'alert' : null }, text, extra || null);
+    $('messages').append(box);
+    return box;
+  }
+  const clearMessages = () => { $('messages').textContent = ''; };
+
+  /* ------------------------------------------------------------ settings panel */
+  $('apiKey').value = settings.apiKey;
+  $('model').value = settings.model;
+  $('endpoint').value = settings.endpoint;
+  $('settingsBtn').addEventListener('click', () => {
+    const open = $('settings').hidden;
+    $('settings').hidden = !open;
+    $('settingsBtn').setAttribute('aria-expanded', String(open));
+  });
+  const readSettingsForm = () => ({
+    apiKey: $('apiKey').value.trim(),
+    model: $('model').value.trim() || DEFAULTS.model,
+    endpoint: $('endpoint').value.trim() || DEFAULTS.endpoint,
+  });
+  function settingsSay(text, ok) {
+    const m = $('settingsMsg');
+    m.textContent = text;
+    m.className = 'text-sm ' + (ok ? 'text-green-700' : 'text-red-700');
+  }
+  $('saveSettings').addEventListener('click', () => {
+    settings = readSettingsForm();
+    settingsSay(storeSettings(settings) ? 'Saved ✓' : 'Saved for this tab only (browser blocked storage)', true);
+  });
+  $('testSettings').addEventListener('click', async () => {
+    const s = readSettingsForm();
+    if (!s.apiKey) return settingsSay('Enter a key first', false);
+    settingsSay('Testing…', true);
+    try {
+      await callClaude(s, { max_tokens: 16, messages: [{ role: 'user', content: 'Reply with the single word OK.' }] });
+      settingsSay('Connection works ✓', true);
+    } catch (e) {
+      settingsSay(e.message, false);
+    }
+  });
+
+  /* ------------------------------------------------------------ files */
+  function fileKind(f) {
+    if (f.type === 'application/pdf' || /\.pdf$/i.test(f.name)) return 'pdf';
+    if (/^image\/(jpeg|png|webp)$/.test(f.type) || /\.(jpe?g|png|webp)$/i.test(f.name)) return 'image';
+    return null;
+  }
+  function addFiles(list) {
+    const notes = [];
+    for (const f of Array.from(list)) {
+      if (!fileKind(f)) { notes.push(`“${f.name}” isn’t a PDF, JPG, PNG or WEBP.`); continue; }
+      if (f.size > MAX_BYTES) { notes.push(`“${f.name}” is ${fmtSize(f.size)} — the limit is 10 MB. Try a smaller photo or compress the PDF.`); continue; }
+      if (files.some((x) => x.name === f.name && x.size === f.size)) continue;
+      if (files.length >= MAX_FILES) { notes.push(`Only ${MAX_FILES} files at a time — “${f.name}” was skipped.`); continue; }
+      files.push(f);
+    }
+    renderFiles();
+    if (notes.length) { clearMessages(); notes.forEach((n) => message('warn', n)); }
+  }
+  function renderFiles() {
+    const ul = $('fileList');
+    ul.textContent = '';
+    files.forEach((f, i) => {
+      ul.append(
+        h('li', { class: 'flex items-center justify-between gap-3 rounded-lg bg-white px-3 py-2 text-sm' },
+          h('span', { class: 'min-w-0 truncate' }, (fileKind(f) === 'pdf' ? '📄 ' : '🖼️ ') + f.name, h('span', { class: 'ml-2 text-gray-500' }, fmtSize(f.size))),
+          h('button', { type: 'button', 'aria-label': 'Remove ' + f.name, class: 'shrink-0 rounded px-2 py-1 text-gray-500 hover:bg-gray-100 hover:text-red-600', onclick: () => { files.splice(i, 1); renderFiles(); } }, '✕')
+        )
+      );
+    });
+  }
+  $('fileInput').addEventListener('change', (e) => { addFiles(e.target.files); e.target.value = ''; });
+  const drop = $('drop');
+  ['dragenter', 'dragover'].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add('border-brand', 'bg-green-50'); }));
+  ['dragleave', 'drop'].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.remove('border-brand', 'bg-green-50'); }));
+  drop.addEventListener('drop', (e) => { if (e.dataTransfer && e.dataTransfer.files.length) addFiles(e.dataTransfer.files); });
+  // A missed drop must not navigate the tab away to the file.
+  ['dragover', 'drop'].forEach((ev) => window.addEventListener(ev, (e) => e.preventDefault()));
+  // Pasting a screenshot (Ctrl+V) from WhatsApp Web works too.
+  window.addEventListener('paste', (e) => {
+    const imgs = Array.from((e.clipboardData && e.clipboardData.files) || []).filter((f) => fileKind(f));
+    if (imgs.length) { e.preventDefault(); addFiles(imgs.map((f, i) => (f.name && f.name !== 'image.png' ? f : new File([f], 'pasted-' + (files.length + i + 1) + '.png', { type: f.type })))); }
+  });
+
+  $('semStart').value = todayISO();
+  $('sampleBtn').addEventListener('click', () => {
+    $('pasteText').value = 'Week 2: Quiz 1 (chapters 1-3)\nAssignment 1 due 15th October\nMidterm exam - Friday 6 Nov, 9 baje\nQuiz kal hai 9 baje\nLab report agla Somwar tak\nFinal project submission 18/12/2026';
+    $('pasteText').focus();
+  });
+
+  /* ------------------------------------------------------------ Claude */
+  async function callClaude(s, body) {
+    let res;
+    try {
+      res = await fetch(s.endpoint || DEFAULTS.endpoint, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-api-key': s.apiKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true',
+        },
+        body: JSON.stringify(Object.assign({ model: s.model || DEFAULTS.model }, body)),
+      });
+    } catch (e) {
+      throw new Error('Could not reach the API — check your internet connection (or the endpoint in settings).');
+    }
+    if (!res.ok) {
+      let detail = '';
+      try { detail = (await res.json()).error.message; } catch (e) { /* ignore */ }
+      const friendly = { 401: 'API key was rejected (401). Check it in ⚙ AI key.', 403: 'API key is not allowed to use this model (403).', 404: 'Model or endpoint not found (404) — check the model name in settings.', 413: 'File too large for the API (413).', 429: 'Rate limit hit (429) — wait a minute and try again.', 529: 'The API is overloaded (529) — try again shortly.' };
+      throw new Error((friendly[res.status] || 'API error ' + res.status) + (detail && !friendly[res.status] ? ': ' + detail : ''));
+    }
+    const data = await res.json();
+    return (data.content || []).map((c) => c.text || '').join('');
+  }
+
+  const readB64 = (blob) => new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result).split(',')[1] || '');
+    r.onerror = () => reject(new Error('Could not read “' + (blob.name || 'file') + '”.'));
+    r.readAsDataURL(blob);
+  });
+  const imageMime = (f) => (/^image\/(jpeg|png|webp)$/.test(f.type) ? f.type : /\.png$/i.test(f.name) ? 'image/png' : /\.webp$/i.test(f.name) ? 'image/webp' : 'image/jpeg');
+
+  // WhatsApp photos are often huge or tiny-and-blurry; scale to a size the API reads well and accepts (<5 MB).
+  async function imageBlock(f) {
+    const MAX_DIM = 1800;
+    let bmp = null;
+    try { bmp = await createImageBitmap(f, { imageOrientation: 'from-image' }); } catch (e) { /* send as-is */ }
+    if (!bmp || (Math.max(bmp.width, bmp.height) <= MAX_DIM && f.size <= 4.5 * 1048576)) {
+      if (bmp && bmp.close) bmp.close();
+      return { type: 'image', source: { type: 'base64', media_type: imageMime(f), data: await readB64(f) } };
+    }
+    const k = Math.min(1, MAX_DIM / Math.max(bmp.width, bmp.height));
+    const c = document.createElement('canvas');
+    c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k);
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
+    ctx.drawImage(bmp, 0, 0, c.width, c.height);
+    if (bmp.close) bmp.close();
+    return { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: c.toDataURL('image/jpeg', 0.88).split(',')[1] } };
+  }
+  async function fileBlock(f) {
+    if (fileKind(f) === 'pdf') return { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: await readB64(f) } };
+    return imageBlock(f);
+  }
+
+  function userText(extra) {
+    const start = $('semStart').value;
+    const course = $('courseName').value.trim();
+    return `Semester start date: ${start || 'not provided'}
+Course name: ${course || 'not provided'}
+Today's date: ${todayISO()}
+Document: ${extra ? 'see the pasted text below' : 'attached above'}
+${extra ? '\nPasted text:\n"""\n' + extra + '\n"""\n' : ''}
+Extract all deadlines from this syllabus. If a date has no year, use the semester start date to decide the year.`;
+  }
+
+  /** One request per file/text so a bad file never sinks the others. Returns {events} or {raw} on unparseable output. */
+  async function askClaude(content, label) {
+    const out = await callClaude(settings, {
+      max_tokens: 4096,
+      system: SYSTEM_PROMPT,
+      messages: [{ role: 'user', content }],
+    });
+    const arr = DC.extractJSON(out);
+    if (!arr) return { raw: out, label };
+    const start = $('semStart').value;
+    return {
+      label,
+      events: arr.filter((x) => x && typeof x === 'object').map((x) => DC.normalizeEvent(x, { semesterStart: start })).filter((e) => e.title && e.title !== 'Untitled'),
+    };
+  }
+
+  /* ------------------------------------------------------------ extract */
+  function setBusy(on) {
+    busy = on;
+    $('extractBtn').disabled = on;
+    $('loading').hidden = !on;
+    clearInterval(loadingTimer);
+    if (on) {
+      let i = 0;
+      $('loadingMsg').textContent = LOADING[0];
+      loadingTimer = setInterval(() => { i = (i + 1) % LOADING.length; $('loadingMsg').textContent = LOADING[i]; }, 2200);
+    }
+  }
+
+  $('extractBtn').addEventListener('click', async () => {
+    if (busy) return;
+    clearMessages();
+    $('results').hidden = true;
+    $('gcalTip').hidden = true;
+    const text = $('pasteText').value.trim();
+    if (!files.length && !text) return message('error', 'Add a syllabus file or paste some text first.');
+    const hasKey = !!settings.apiKey;
+    if (files.length && !hasKey) {
+      message('error', 'Reading PDFs and photos needs a Claude API key. Open “⚙ AI key” above and add one — or paste the text into the box instead (that works offline).');
+      if (!text) return;
+    }
+
+    setBusy(true);
+    const start = $('semStart').value;
+    const found = [];
+    const raws = [];
+    let failed = 0;
+    try {
+      const jobs = [];
+      if (hasKey) {
+        files.forEach((f) => jobs.push(
+          (async () => askClaude([await fileBlock(f), { type: 'text', text: userText('') }], f.name))()
+        ));
+        if (text) jobs.push(askClaude([{ type: 'text', text: userText(text) }], 'pasted text'));
+      }
+      const settled = await Promise.allSettled(jobs);
+      settled.forEach((r) => {
+        if (r.status === 'fulfilled') {
+          if (r.value.events) found.push(...r.value.events);
+          else raws.push(r.value);
+        } else {
+          failed++;
+          message('error', r.reason && r.reason.message ? r.reason.message : String(r.reason));
+        }
+      });
+      // Offline path: no key, or the AI call for the pasted text failed.
+      const textHandled = hasKey && settled.some((r, i) => i === jobs.length - 1 && text && r.status === 'fulfilled' && r.value.events);
+      if (text && !textHandled && !raws.some((r) => r.label === 'pasted text')) {
+        const offline = DC.extractFromText(text, { semesterStart: start || null });
+        offline.forEach((o) => found.push({ title: o.title, date: o.date, time: o.time, type: o.type, confidence: o.confidence, notes: o.original.slice(0, 140) }));
+        if (offline.length && hasKey) message('info', 'Pasted text was read with the built-in offline parser (the AI request failed).');
+      }
+    } finally {
+      setBusy(false);
+    }
+
+    raws.forEach((r) => {
+      const ta = h('textarea', { readonly: true, rows: 6, class: 'mt-2 w-full rounded-lg border border-yellow-300 bg-white p-2 font-mono text-xs text-gray-800' });
+      ta.value = r.raw;
+      message('warn', `Could not parse the result for ${r.label} automatically. Here is the raw reply — copy it if useful:`, ta);
+    });
+
+    rows = DC.dedupe(found).map((e) => Object.assign({ id: nextId++ }, e));
+    if (!rows.length) {
+      if (!failed && !raws.length) message('warn', 'No deadlines found — try uploading a clearer image.');
+      return;
+    }
+    sortRows();
+    renderRows();
+    $('results').hidden = false;
+    $('results').scrollIntoView({ block: 'start' });
+  });
+
+  /* ------------------------------------------------------------ results table */
+  const TYPES = DC.TYPES;
+  const BADGE = { high: 'bg-green-100 text-green-800', medium: 'bg-yellow-100 text-yellow-800', low: 'bg-red-100 text-red-800' };
+  const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+
+  function sortRows() {
+    rows.sort((a, b) => {
+      const va = DC.isValidISO(a.date), vb = DC.isValidISO(b.date);
+      if (va && vb) return a.date < b.date ? -1 : a.date > b.date ? 1 : 0;
+      return va ? -1 : vb ? 1 : 0;
+    });
+  }
+
+  function rowClass(r) {
+    const base = 'block rounded-xl border p-3 sm:table-row sm:rounded-none sm:border-0 sm:p-0 mb-3 sm:mb-0 ';
+    if (r.invalid) return base + 'border-red-400 bg-red-50';
+    if (r.confidence === 'low') return base + 'border-yellow-300 bg-yellow-50';
+    return base + 'border-gray-200 bg-white';
+  }
+  const cell = 'block sm:table-cell sm:border-b sm:border-gray-200 sm:py-2 sm:pr-2 align-top';
+  const inputCls = 'w-full rounded-lg border bg-white/80 px-2 py-1.5 text-sm focus-visible:outline-2 focus-visible:outline-brand ';
+
+  function refreshRow(tr, r) {
+    tr.className = rowClass(r);
+    const warn = tr.querySelector('[data-warn]');
+    if (warn) warn.hidden = !(r.confidence === 'low' || r.invalid);
+    const badge = tr.querySelector('[data-badge]');
+    if (badge) { badge.className = 'rounded-full px-2.5 py-1 text-xs font-bold ' + BADGE[r.confidence]; badge.value = r.confidence; }
+    const di = tr.querySelector('[data-date]');
+    if (di) di.className = inputCls + (r.invalid ? 'border-red-500 text-red-700' : 'border-gray-300');
+  }
+
+  function renderRows() {
+    const tb = $('rows');
+    tb.textContent = '';
+    rows.forEach((r) => tb.append(rowEl(r)));
+    $('count').textContent = '(' + rows.length + ')';
+  }
+
+  function rowEl(r) {
+    const tr = h('tr', { 'data-id': r.id });
+
+    const title = h('input', { type: 'text', dir: 'auto', value: r.title, 'aria-label': 'Event name', class: inputCls + 'border-gray-300 font-medium' });
+    title.addEventListener('input', () => { r.title = title.value; });
+    const note = h('input', { type: 'text', dir: 'auto', value: r.notes || '', placeholder: 'notes', 'aria-label': 'Notes', class: 'mt-1 w-full rounded-md border border-transparent bg-transparent px-2 py-0.5 text-xs text-gray-500 hover:border-gray-300 focus-visible:border-gray-300 focus-visible:outline-2 focus-visible:outline-brand' });
+    note.addEventListener('input', () => { r.notes = note.value; });
+    const warn = h('span', { 'data-warn': true, hidden: !(r.confidence === 'low'), title: 'Check this one', class: 'mr-1' }, '⚠️');
+
+    // date: free text (so "UNKNOWN" / "RELATIVE: Week 3" stay visible) + a calendar picker button
+    const dateInput = h('input', { type: 'text', 'data-date': true, inputmode: 'numeric', value: r.date, placeholder: 'YYYY-MM-DD', 'aria-label': 'Date', class: inputCls + 'border-gray-300' });
+    const picker = h('input', { type: 'date', tabindex: '-1', 'aria-hidden': 'true', class: 'pointer-events-none absolute h-0 w-0 opacity-0' });
+    const setDate = (v, confirmed) => {
+      r.date = v; dateInput.value = v;
+      if (DC.isValidISO(v)) { r.invalid = false; if (confirmed) r.confidence = 'high'; }
+      refreshRow(tr, r);
+    };
+    dateInput.addEventListener('input', () => { r.date = dateInput.value; if (r.invalid && DC.isValidISO(r.date.trim())) { r.invalid = false; refreshRow(tr, r); } });
+    dateInput.addEventListener('change', () => {
+      let v = dateInput.value.trim();
+      if (!DC.isValidISO(v) && v) {
+        // friendly input: "15 Oct", "15/10", "Friday" -> ISO, using the semester start as the year reference
+        const p = DC.parseDeadline(v, { semesterStart: $('semStart').value || null });
+        if (p.date) v = p.date;
+      }
+      setDate(v, DC.isValidISO(v));
+    });
+    const pickBtn = h('button', { type: 'button', title: 'Pick a date', 'aria-label': 'Pick a date', class: 'shrink-0 rounded-lg border border-gray-300 bg-white px-2 text-base hover:bg-gray-100',
+      onclick: () => { picker.value = DC.isValidISO(r.date) ? r.date : ''; (picker.showPicker ? picker.showPicker() : picker.click()); } }, '📅');
+    picker.addEventListener('change', () => { if (picker.value) setDate(picker.value, true); });
+
+    const time = r.time ? h('input', { type: 'time', value: r.time, 'aria-label': 'Time', class: 'mt-1 w-28 rounded-md border border-gray-300 bg-white/80 px-2 py-0.5 text-xs' }) : null;
+    if (time) time.addEventListener('input', () => { r.time = time.value || null; });
+
+    const type = h('select', { 'aria-label': 'Type', class: inputCls + 'border-gray-300' }, TYPES.map((t) => h('option', { value: t, selected: t === r.type }, t)));
+    type.addEventListener('change', () => { r.type = type.value; });
+
+    const badge = h('select', { 'data-badge': true, 'aria-label': 'Confidence', class: 'rounded-full px-2.5 py-1 text-xs font-bold ' + BADGE[r.confidence] },
+      ['high', 'medium', 'low'].map((c) => h('option', { value: c, selected: c === r.confidence }, cap(c))));
+    badge.addEventListener('change', () => { r.confidence = badge.value; refreshRow(tr, r); });
+
+    const del = h('button', { type: 'button', 'aria-label': 'Delete row', title: 'Delete', class: 'rounded-lg px-2 py-1.5 text-gray-500 hover:bg-red-100 hover:text-red-700',
+      onclick: () => { rows = rows.filter((x) => x.id !== r.id); tr.remove(); $('count').textContent = '(' + rows.length + ')'; if (!rows.length) $('results').hidden = true; } }, '🗑');
+
+    const lab = (t) => h('span', { class: 'mb-1 block text-xs font-semibold uppercase text-gray-500 sm:hidden' }, t);
+    tr.append(
+      h('td', { class: cell }, lab('Event name'), h('div', { class: 'flex items-center' }, warn, title), note),
+      h('td', { class: cell + ' relative' }, lab('Date'), h('div', { class: 'flex gap-1' }, dateInput, pickBtn, picker), time),
+      h('td', { class: cell }, lab('Type'), type),
+      h('td', { class: cell }, lab('Confidence'), badge),
+      h('td', { class: cell + ' sm:text-right' }, del)
+    );
+    refreshRow(tr, r);
+    return tr;
+  }
+
+  $('addRow').addEventListener('click', () => {
+    const r = { id: nextId++, title: 'New deadline', date: todayISO(), time: null, type: 'Other', confidence: 'high', notes: '' };
+    rows.push(r);
+    renderRows();
+    $('results').hidden = false;
+    const inp = $('rows').lastElementChild.querySelector('input');
+    inp.focus(); inp.select();
+  });
+
+  /* ------------------------------------------------------------ export */
+  function validate() {
+    let bad = 0;
+    rows.forEach((r) => {
+      r.invalid = !DC.isValidISO(String(r.date || '').trim());
+      if (!r.invalid) r.date = r.date.trim();
+      if (r.invalid) bad++;
+      const tr = $('rows').querySelector('[data-id="' + r.id + '"]');
+      if (tr) refreshRow(tr, r);
+    });
+    return bad;
+  }
+
+  $('gcalBtn').addEventListener('click', () => {
+    clearMessages();
+    $('gcalTip').hidden = true;
+    const bad = validate();
+    const good = rows.filter((r) => !r.invalid);
+    if (!good.length) {
+      message('error', 'No row has a valid date yet. Dates must look like 2026-10-15 — fix the rows highlighted in red (the 📅 button helps).');
+      const first = $('rows').querySelector('[data-date]');
+      if (first) first.focus();
+      return;
+    }
+    const course = $('courseName').value.trim();
+    const ics = DC.buildICS(good.map((r) => ({ title: r.title, date: r.date, time: r.time, type: r.type, notes: r.notes })), { course, calName: course ? course + ' deadlines' : 'Syllabus deadlines' });
+    const url = URL.createObjectURL(new Blob([ics], { type: 'text/calendar;charset=utf-8' }));
+    const a = h('a', { href: url, download: 'deadlines-' + (slug(course) || 'syllabus') + '.ics' });
+    document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+    $('gcalTip').hidden = false;
+    if (bad) message('warn', `${bad} row${bad > 1 ? 's were' : ' was'} skipped because the date isn’t valid (highlighted in red). Fix ${bad > 1 ? 'them' : 'it'} and export again.`);
+  });
+
+  $('copyBtn').addEventListener('click', async () => {
+    clearMessages();
+    validate();
+    const text = DC.copyAsText(rows, $('courseName').value.trim());
+    let ok = false;
+    try { await navigator.clipboard.writeText(text); ok = true; }
+    catch (e) {
+      const ta = h('textarea', { class: 'sr-only' }); ta.value = text; document.body.append(ta); ta.select();
+      try { ok = document.execCommand('copy'); } catch (e2) { /* ignore */ }
+      ta.remove();
+    }
+    message(ok ? 'info' : 'error', ok ? `Copied ${rows.length} deadline${rows.length === 1 ? '' : 's'} to the clipboard.` : 'Could not copy automatically — select the text from the table instead.');
+  });
+
+  // for automated tests
+  window.__ds = { get rows() { return rows; }, addFiles, DC };
+})();
+
+;(function(){try{var v=document.getElementById("lpVideo");if(v&&navigator.onLine&&!matchMedia("(prefers-reduced-motion: reduce)").matches){v.src=v.dataset.video;var p=v.play();if(p&&p.catch)p.catch(function(){});}}catch(e){}})();
+
+;(function(){try{var C=window.DeadlineCore,el=document.getElementById("lpIn"),out=document.getElementById("lpOut");if(!C||!el||!out)return;
+var ex=["Quiz he 9","Assignment 3 Friday tak","Viva kal 3 baje","Midterm agla Monday 10am","Report due 15 Dec 11:59pm","parson subah 8 baje paper"];
+function chip(t,c){var e=document.createElement("span");e.className="lp-chip"+(c?" "+c:"");e.textContent=t;return e}
+function render(){var t=el.value.trim();out.textContent="";var box=document.createElement("div");box.className="lp-pop";
+ if(!t){box.appendChild(chip("Type a message above","none"));out.appendChild(box);return}
+ var r=C.parseDeadline(t,{today:new Date()});
+ var h=document.createElement("div");h.className="lp-card-t";h.textContent=r.title||"Deadline";box.appendChild(h);
+ var row=document.createElement("div");row.className="lp-row";
+ row.appendChild(r.date?chip("📅 "+C.describeDate(r.date)):chip("No date found","warn"));
+ row.appendChild(r.time?chip("⏰ "+r.time):chip("all day","none"));
+ if(r.type)row.appendChild(chip(r.type,"none"));
+ box.appendChild(row);out.appendChild(box)}
+var i=0,typing=true,timer;function stop(){typing=false;clearInterval(timer)}
+el.addEventListener("focus",stop);el.addEventListener("input",function(){stop();render()});
+render();
+if(matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+function type(){var txt=ex[i%ex.length],n=0;el.value="";clearInterval(timer);timer=setInterval(function(){if(!typing){clearInterval(timer);return}n++;el.value=txt.slice(0,n);if(n>=txt.length){clearInterval(timer);render();setTimeout(function(){if(typing){i++;type()}},2400)}},55)}
+setTimeout(function(){if(typing)type()},1800);
+}catch(e){}})();
+</script>
+</body>
+</html>

@@ -1,0 +1,1394 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DeadlineSync PK — Drop your syllabus. Get your calendar.</title>
+<meta name="description" content="Free, no-login tool that extracts every deadline from a university syllabus (scanned PDF, WhatsApp image, Urdu or English) and exports a calendar file.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2316a34a'/%3E%3Cpath d='M18 26h28v20H18z' fill='none' stroke='white' stroke-width='4' stroke-linejoin='round'/%3E%3Cpath d='M18 33h28M25 18v8M39 18v8' stroke='white' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E">
+<style>/*! tailwindcss v4.3.3 | MIT License | https://tailwindcss.com */
+@layer properties{@supports (((-webkit-hyphens:none)) and (not (margin-trim:inline))) or ((-moz-orient:inline) and (not (color:rgb(from red r g b)))){*,:before,:after,::backdrop{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-space-y-reverse:0;--tw-border-style:solid;--tw-font-weight:initial;--tw-tracking:initial;--tw-ease:initial;--tw-outline-style:solid}}}@layer theme{:root,:host{--font-sans:system-ui, -apple-system, "Segoe UI", Roboto, "Noto Nastaliq Urdu", sans-serif;--font-mono:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;--color-red-50:oklch(97.1% .013 17.38);--color-red-100:oklch(93.6% .032 17.717);--color-red-200:oklch(88.5% .062 18.334);--color-red-400:oklch(70.4% .191 22.216);--color-red-500:oklch(63.7% .237 25.331);--color-red-600:oklch(57.7% .245 27.325);--color-red-700:oklch(50.5% .213 27.518);--color-red-800:oklch(44.4% .177 26.899);--color-red-900:oklch(39.6% .141 25.723);--color-yellow-50:oklch(98.7% .026 102.212);--color-yellow-100:oklch(97.3% .071 103.193);--color-yellow-200:oklch(94.5% .129 101.54);--color-yellow-300:oklch(90.5% .182 98.111);--color-yellow-800:oklch(47.6% .114 61.907);--color-yellow-900:oklch(42.1% .095 57.708);--color-green-50:oklch(98.2% .018 155.826);--color-green-100:oklch(96.2% .044 156.743);--color-green-200:oklch(92.5% .084 155.995);--color-green-700:oklch(52.7% .154 150.069);--color-green-800:oklch(44.8% .119 151.328);--color-green-900:oklch(39.3% .095 152.535);--color-gray-50:oklch(98.5% .002 247.839);--color-gray-100:oklch(96.7% .003 264.542);--color-gray-200:oklch(92.8% .006 264.531);--color-gray-300:oklch(87.2% .01 258.338);--color-gray-500:oklch(55.1% .027 264.364);--color-gray-600:oklch(44.6% .03 256.802);--color-gray-700:oklch(37.3% .034 259.733);--color-gray-800:oklch(27.8% .033 256.848);--color-gray-900:oklch(21% .034 264.665);--color-white:#fff;--spacing:.25rem;--container-3xl:48rem;--text-xs:.75rem;--text-xs--line-height:calc(1 / .75);--text-sm:.875rem;--text-sm--line-height:calc(1.25 / .875);--text-base:1rem;--text-base--line-height:calc(1.5 / 1);--text-xl:1.25rem;--text-xl--line-height:calc(1.75 / 1.25);--text-3xl:1.875rem;--text-3xl--line-height:calc(2.25 / 1.875);--text-4xl:2.25rem;--text-4xl--line-height:calc(2.5 / 2.25);--font-weight-normal:400;--font-weight-medium:500;--font-weight-semibold:600;--font-weight-bold:700;--font-weight-extrabold:800;--tracking-tight:-.025em;--tracking-wide:.025em;--radius-md:.375rem;--radius-lg:.5rem;--radius-xl:.75rem;--radius-2xl:1rem;--ease-in-out:cubic-bezier(.4, 0, .2, 1);--animate-spin:spin 1s linear infinite;--default-font-family:var(--font-sans);--default-mono-font-family:var(--font-mono);--color-brand:#16a34a;--color-brand-dark:#15803d}}@layer base{*,:after,:before,::backdrop{box-sizing:border-box;border:0 solid;margin:0;padding:0}::file-selector-button{box-sizing:border-box;border:0 solid;margin:0;padding:0}html,:host{-webkit-text-size-adjust:100%;tab-size:4;line-height:1.5;font-family:var(--default-font-family,-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji");font-feature-settings:var(--default-font-feature-settings,normal);font-variation-settings:var(--default-font-variation-settings,normal);-webkit-tap-highlight-color:transparent}hr{height:0;color:inherit;border-top-width:1px}abbr:where([title]){-webkit-text-decoration:underline dotted;text-decoration:underline dotted}h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}a{color:inherit;-webkit-text-decoration:inherit;-webkit-text-decoration:inherit;-webkit-text-decoration:inherit;text-decoration:inherit}b,strong{font-weight:bolder}code,kbd,samp,pre{font-family:var(--default-mono-font-family,ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace);font-feature-settings:var(--default-mono-font-feature-settings,normal);font-variation-settings:var(--default-mono-font-variation-settings,normal);font-size:1em}small{font-size:80%}sub,sup{vertical-align:baseline;font-size:75%;line-height:0;position:relative}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit;border-collapse:collapse}:-moz-focusring:where(:not(iframe)){outline:auto}progress{vertical-align:baseline}summary{display:list-item}ol,ul,menu{list-style:none}img,svg,video,canvas,audio,iframe,embed,object{vertical-align:middle;display:block}img,video{max-width:100%;height:auto}button,input,select,optgroup,textarea{font:inherit;font-feature-settings:inherit;font-variation-settings:inherit;letter-spacing:inherit;color:inherit;opacity:1;background-color:#0000;border-radius:0}::file-selector-button{font:inherit;font-feature-settings:inherit;font-variation-settings:inherit;letter-spacing:inherit;color:inherit;opacity:1;background-color:#0000;border-radius:0}:where(select:is([multiple],[size])) optgroup{font-weight:bolder}:where(select:is([multiple],[size])) optgroup option{padding-inline-start:20px}::file-selector-button{margin-inline-end:4px}::placeholder{opacity:1}@supports (not ((-webkit-appearance:-apple-pay-button))) or (contain-intrinsic-size:1px){::placeholder{color:currentColor}@supports (color:color-mix(in lab, red, red)){::placeholder{color:color-mix(in oklab, currentcolor 50%, transparent)}}}textarea{resize:vertical}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-date-and-time-value{min-height:1lh;text-align:inherit}::-webkit-datetime-edit{display:inline-flex}::-webkit-datetime-edit-fields-wrapper{padding:0}::-webkit-datetime-edit{padding-block:0}::-webkit-datetime-edit-year-field{padding-block:0}::-webkit-datetime-edit-month-field{padding-block:0}::-webkit-datetime-edit-day-field{padding-block:0}::-webkit-datetime-edit-hour-field{padding-block:0}::-webkit-datetime-edit-minute-field{padding-block:0}::-webkit-datetime-edit-second-field{padding-block:0}::-webkit-datetime-edit-millisecond-field{padding-block:0}::-webkit-datetime-edit-meridiem-field{padding-block:0}::-webkit-calendar-picker-indicator{line-height:1}:-moz-ui-invalid{box-shadow:none}button,input:where([type=button],[type=reset],[type=submit]){appearance:button}::file-selector-button{appearance:button}::-webkit-inner-spin-button{height:auto}::-webkit-outer-spin-button{height:auto}[hidden]:where(:not([hidden=until-found])){display:none!important}}@layer components;@layer utilities{.pointer-events-none{pointer-events:none}.sr-only{clip-path:inset(50%);white-space:nowrap;border-width:0;width:1px;height:1px;margin:-1px;padding:0;position:absolute;overflow:hidden}.absolute{position:absolute}.relative{position:relative}.mx-auto{margin-inline:auto}.mt-1{margin-top:var(--spacing)}.mt-2{margin-top:calc(var(--spacing) * 2)}.mt-3{margin-top:calc(var(--spacing) * 3)}.mt-4{margin-top:calc(var(--spacing) * 4)}.mt-5{margin-top:calc(var(--spacing) * 5)}.mt-6{margin-top:calc(var(--spacing) * 6)}.mt-12{margin-top:calc(var(--spacing) * 12)}.mr-1{margin-right:var(--spacing)}.mb-1{margin-bottom:var(--spacing)}.mb-3{margin-bottom:calc(var(--spacing) * 3)}.mb-6{margin-bottom:calc(var(--spacing) * 6)}.ml-1{margin-left:var(--spacing)}.ml-2{margin-left:calc(var(--spacing) * 2)}.block{display:block}.flex{display:flex}.grid{display:grid}.hidden{display:none}.table{display:table}.h-0{height:0}.h-6{height:calc(var(--spacing) * 6)}.h-10{height:calc(var(--spacing) * 10)}.w-0{width:0}.w-6{width:calc(var(--spacing) * 6)}.w-10{width:calc(var(--spacing) * 10)}.w-28{width:calc(var(--spacing) * 28)}.w-full{width:100%}.max-w-3xl{max-width:var(--container-3xl)}.min-w-0{min-width:0}.flex-1{flex:1}.shrink-0{flex-shrink:0}.border-separate{border-collapse:separate}.border-spacing-0{--tw-border-spacing-x:0px;--tw-border-spacing-y:0px;border-spacing:var(--tw-border-spacing-x) var(--tw-border-spacing-y)}.animate-spin{animation:var(--animate-spin)}.cursor-pointer{cursor:pointer}.flex-col{flex-direction:column}.flex-wrap{flex-wrap:wrap}.items-center{align-items:center}.items-end{align-items:flex-end}.items-start{align-items:flex-start}.justify-between{justify-content:space-between}.justify-center{justify-content:center}.gap-1{gap:var(--spacing)}.gap-2{gap:calc(var(--spacing) * 2)}.gap-3{gap:calc(var(--spacing) * 3)}:where(.space-y-2>:not(:last-child)){--tw-space-y-reverse:0;margin-block-start:calc(calc(var(--spacing) * 2) * var(--tw-space-y-reverse));margin-block-end:calc(calc(var(--spacing) * 2) * calc(1 - var(--tw-space-y-reverse)))}:where(.space-y-3>:not(:last-child)){--tw-space-y-reverse:0;margin-block-start:calc(calc(var(--spacing) * 3) * var(--tw-space-y-reverse));margin-block-end:calc(calc(var(--spacing) * 3) * calc(1 - var(--tw-space-y-reverse)))}.truncate{text-overflow:ellipsis;white-space:nowrap;overflow:hidden}.rounded{border-radius:.25rem}.rounded-2xl{border-radius:var(--radius-2xl)}.rounded-full{border-radius:3.40282e38px}.rounded-lg{border-radius:var(--radius-lg)}.rounded-md{border-radius:var(--radius-md)}.rounded-xl{border-radius:var(--radius-xl)}.border{border-style:var(--tw-border-style);border-width:1px}.border-2{border-style:var(--tw-border-style);border-width:2px}.border-t{border-top-style:var(--tw-border-style);border-top-width:1px}.border-dashed{--tw-border-style:dashed;border-style:dashed}.border-brand{border-color:var(--color-brand)}.border-gray-200{border-color:var(--color-gray-200)}.border-gray-300{border-color:var(--color-gray-300)}.border-green-200{border-color:var(--color-green-200)}.border-red-200{border-color:var(--color-red-200)}.border-red-400{border-color:var(--color-red-400)}.border-red-500{border-color:var(--color-red-500)}.border-transparent{border-color:#0000}.border-yellow-200{border-color:var(--color-yellow-200)}.border-yellow-300{border-color:var(--color-yellow-300)}.bg-brand{background-color:var(--color-brand)}.bg-gray-100{background-color:var(--color-gray-100)}.bg-green-50{background-color:var(--color-green-50)}.bg-green-100{background-color:var(--color-green-100)}.bg-red-50{background-color:var(--color-red-50)}.bg-red-100{background-color:var(--color-red-100)}.bg-transparent{background-color:#0000}.bg-white{background-color:var(--color-white)}.bg-white\/80{background-color:#fffc}@supports (color:color-mix(in lab, red, red)){.bg-white\/80{background-color:color-mix(in oklab, var(--color-white) 80%, transparent)}}.bg-yellow-50{background-color:var(--color-yellow-50)}.bg-yellow-100{background-color:var(--color-yellow-100)}.p-2{padding:calc(var(--spacing) * 2)}.p-3{padding:calc(var(--spacing) * 3)}.p-4{padding:calc(var(--spacing) * 4)}.px-2{padding-inline:calc(var(--spacing) * 2)}.px-2\.5{padding-inline:calc(var(--spacing) * 2.5)}.px-3{padding-inline:calc(var(--spacing) * 3)}.px-4{padding-inline:calc(var(--spacing) * 4)}.px-5{padding-inline:calc(var(--spacing) * 5)}.py-0\.5{padding-block:calc(var(--spacing) * .5)}.py-1{padding-block:var(--spacing)}.py-1\.5{padding-block:calc(var(--spacing) * 1.5)}.py-2{padding-block:calc(var(--spacing) * 2)}.py-3{padding-block:calc(var(--spacing) * 3)}.py-6{padding-block:calc(var(--spacing) * 6)}.py-8{padding-block:calc(var(--spacing) * 8)}.pt-4{padding-top:calc(var(--spacing) * 4)}.pr-2{padding-right:calc(var(--spacing) * 2)}.pb-2{padding-bottom:calc(var(--spacing) * 2)}.text-center{text-align:center}.text-left{text-align:left}.align-top{vertical-align:top}.font-mono{font-family:var(--font-mono)}.font-sans{font-family:var(--font-sans)}.text-3xl{font-size:var(--text-3xl);line-height:var(--tw-leading,var(--text-3xl--line-height))}.text-base{font-size:var(--text-base);line-height:var(--tw-leading,var(--text-base--line-height))}.text-sm{font-size:var(--text-sm);line-height:var(--tw-leading,var(--text-sm--line-height))}.text-xl{font-size:var(--text-xl);line-height:var(--tw-leading,var(--text-xl--line-height))}.text-xs{font-size:var(--text-xs);line-height:var(--tw-leading,var(--text-xs--line-height))}.font-bold{--tw-font-weight:var(--font-weight-bold);font-weight:var(--font-weight-bold)}.font-extrabold{--tw-font-weight:var(--font-weight-extrabold);font-weight:var(--font-weight-extrabold)}.font-medium{--tw-font-weight:var(--font-weight-medium);font-weight:var(--font-weight-medium)}.font-normal{--tw-font-weight:var(--font-weight-normal);font-weight:var(--font-weight-normal)}.font-semibold{--tw-font-weight:var(--font-weight-semibold);font-weight:var(--font-weight-semibold)}.tracking-tight{--tw-tracking:var(--tracking-tight);letter-spacing:var(--tracking-tight)}.tracking-wide{--tw-tracking:var(--tracking-wide);letter-spacing:var(--tracking-wide)}.text-brand{color:var(--color-brand)}.text-gray-500{color:var(--color-gray-500)}.text-gray-600{color:var(--color-gray-600)}.text-gray-700{color:var(--color-gray-700)}.text-gray-800{color:var(--color-gray-800)}.text-gray-900{color:var(--color-gray-900)}.text-green-700{color:var(--color-green-700)}.text-green-800{color:var(--color-green-800)}.text-green-900{color:var(--color-green-900)}.text-red-700{color:var(--color-red-700)}.text-red-800{color:var(--color-red-800)}.text-red-900{color:var(--color-red-900)}.text-white{color:var(--color-white)}.text-yellow-800{color:var(--color-yellow-800)}.text-yellow-900{color:var(--color-yellow-900)}.uppercase{text-transform:uppercase}.underline{text-decoration-line:underline}.underline-offset-2{text-underline-offset:2px}.antialiased{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}.opacity-0{opacity:0}.opacity-25{opacity:.25}.ease-in-out{--tw-ease:var(--ease-in-out);transition-timing-function:var(--ease-in-out)}.empty\:hidden:empty{display:none}.focus-within\:border-brand:focus-within{border-color:var(--color-brand)}.focus-within\:outline-2:focus-within{outline-style:var(--tw-outline-style);outline-width:2px}.focus-within\:outline-brand:focus-within{outline-color:var(--color-brand)}@media (hover:hover){.hover\:border-brand:hover{border-color:var(--color-brand)}.hover\:border-gray-300:hover{border-color:var(--color-gray-300)}.hover\:bg-brand-dark:hover{background-color:var(--color-brand-dark)}.hover\:bg-gray-50:hover{background-color:var(--color-gray-50)}.hover\:bg-gray-100:hover{background-color:var(--color-gray-100)}.hover\:bg-red-100:hover{background-color:var(--color-red-100)}.hover\:text-red-600:hover{color:var(--color-red-600)}.hover\:text-red-700:hover{color:var(--color-red-700)}}.focus-visible\:border-gray-300:focus-visible{border-color:var(--color-gray-300)}.focus-visible\:outline-2:focus-visible{outline-style:var(--tw-outline-style);outline-width:2px}.focus-visible\:outline-offset-2:focus-visible{outline-offset:2px}.focus-visible\:outline-brand:focus-visible{outline-color:var(--color-brand)}.disabled\:cursor-not-allowed:disabled{cursor:not-allowed}.disabled\:opacity-60:disabled{opacity:.6}@media (min-width:40rem){.sm\:col-span-2{grid-column:span 2/span 2}.sm\:mb-0{margin-bottom:0}.sm\:hidden{display:none}.sm\:table-cell{display:table-cell}.sm\:table-header-group{display:table-header-group}.sm\:table-row{display:table-row}.sm\:grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}.sm\:flex-row{flex-direction:row}.sm\:rounded-none{border-radius:0}.sm\:border-0{border-style:var(--tw-border-style);border-width:0}.sm\:border-b{border-bottom-style:var(--tw-border-style);border-bottom-width:1px}.sm\:border-gray-200{border-color:var(--color-gray-200)}.sm\:p-0{padding:0}.sm\:p-4{padding:calc(var(--spacing) * 4)}.sm\:p-5{padding:calc(var(--spacing) * 5)}.sm\:p-6{padding:calc(var(--spacing) * 6)}.sm\:py-2{padding-block:calc(var(--spacing) * 2)}.sm\:py-10{padding-block:calc(var(--spacing) * 10)}.sm\:pr-2{padding-right:calc(var(--spacing) * 2)}.sm\:text-right{text-align:right}.sm\:text-4xl{font-size:var(--text-4xl);line-height:var(--tw-leading,var(--text-4xl--line-height))}}}input[dir=auto],textarea[dir=auto]{unicode-bidi:plaintext}@property --tw-border-spacing-x{syntax:"<length>";inherits:false;initial-value:0}@property --tw-border-spacing-y{syntax:"<length>";inherits:false;initial-value:0}@property --tw-space-y-reverse{syntax:"*";inherits:false;initial-value:0}@property --tw-border-style{syntax:"*";inherits:false;initial-value:solid}@property --tw-font-weight{syntax:"*";inherits:false}@property --tw-tracking{syntax:"*";inherits:false}@property --tw-ease{syntax:"*";inherits:false}@property --tw-outline-style{syntax:"*";inherits:false;initial-value:solid}@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body class="bg-white font-sans text-gray-900 antialiased">
+<style>
+.lp{position:relative;min-height:92vh;min-height:92dvh;display:grid;grid-template-rows:1fr auto;isolation:isolate;background:#000;color:#fff;overflow:hidden}
+.lp-bg{position:absolute;inset:0;z-index:-1;background:radial-gradient(ellipse at 50% 100%,#0b5c2f 0%,#031a0d 45%,#000 80%)}
+.lp-bg video{width:100%;height:100%;object-fit:cover}
+.lp-bg::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.55),rgba(0,0,0,.15) 35%,rgba(0,0,0,.8))}
+.lp-copy{align-self:end;display:flex;flex-direction:column;align-items:center;text-align:center;padding:96px 24px 40px;max-width:900px;margin:0 auto}
+.lp-badge{display:inline-flex;margin-bottom:22px;padding:9px 15px;border-radius:5px;font-size:12.5px;background:linear-gradient(90deg,#4b4b4b,#161616 60%,#0a0a0a)}
+.lp h2{font-weight:500;letter-spacing:-.045em;line-height:1.1;font-size:clamp(34px,5.2vw,60px)}
+.lp h2 em{font-family:"Instrument Serif",Georgia,"Times New Roman",serif;font-style:italic;font-weight:400;font-size:1.08em;color:#86efac}
+.lp-lede{margin-top:18px;max-width:560px;color:#a1a1aa;font-size:clamp(15px,1.4vw,18px)}
+.lp-act{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:26px}
+.lp-btn{display:inline-flex;align-items:center;justify-content:center;height:44px;padding:0 20px;border-radius:6px;font-weight:500;font-size:14px;text-decoration:none;transition:box-shadow .3s,border-color .3s}
+.lp-solid{background:linear-gradient(180deg,#fff,#e7e7e7 48%,#cfcfcf);color:#111;border:1px solid #fff}
+.lp-solid:hover{box-shadow:0 0 26px rgba(134,239,172,.45)}
+.lp-ghost{background:linear-gradient(135deg,rgba(255,255,255,.12),rgba(0,0,0,.5) 46%,rgba(150,170,200,.1));border:1px solid rgba(198,198,198,.55);color:#fff}
+.lp-ghost:hover{border-color:rgba(220,255,230,.85);box-shadow:0 0 24px rgba(134,239,172,.28)}
+.lp-btn:focus-visible{outline:2px solid #86efac;outline-offset:3px}
+.lp-stats{display:flex;justify-content:space-between;gap:24px;padding:0 72px 32px;color:#d8d8d8;font-size:13.5px}
+.lp-stats span::before{content:"✓";margin-right:10px;color:#86efac}
+.lp-in{animation:lpup 1s cubic-bezier(.16,1,.3,1) both;animation-delay:var(--d,.1s)}
+@keyframes lpup{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+@media(max-width:700px){.lp-stats{flex-direction:column;align-items:center;gap:10px;padding:0 20px 28px;text-align:center}.lp-act{flex-direction:column;width:100%}.lp-btn{width:100%}}
+@media(prefers-reduced-motion:reduce){.lp-in{animation:none}}
+
+.lp-demo{margin-top:30px;width:100%;max-width:640px;text-align:left;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.lp-chat{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.18);border-radius:16px;padding:14px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.lp-lab{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#86efac;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.lp-lab i{width:7px;height:7px;border-radius:50%;background:#22c55e;box-shadow:0 0 0 0 rgba(34,197,94,.7);animation:lppulse 1.8s infinite}
+@keyframes lppulse{70%{box-shadow:0 0 0 9px rgba(34,197,94,0)}100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}}
+#lpIn{width:100%;background:#0d1f14;border:1px solid rgba(134,239,172,.35);color:#fff;border-radius:12px 12px 12px 3px;padding:11px 13px;font:inherit;font-size:15px}
+#lpIn:focus{outline:2px solid #86efac;outline-offset:2px}
+.lp-hint{font-size:12px;color:#a1a1aa;margin-top:8px}
+#lpOut{min-height:112px;display:flex;flex-direction:column;gap:6px}
+.lp-card-t{font-weight:600;font-size:17px;letter-spacing:-.02em}
+.lp-row{display:flex;flex-wrap:wrap;gap:6px}
+.lp-chip{font-size:12.5px;padding:4px 10px;border-radius:99px;background:rgba(134,239,172,.15);color:#bbf7d0;border:1px solid rgba(134,239,172,.3)}
+.lp-chip.warn{background:rgba(250,204,21,.14);color:#fde68a;border-color:rgba(250,204,21,.35)}
+.lp-chip.none{background:rgba(255,255,255,.06);color:#a1a1aa;border-color:rgba(255,255,255,.15)}
+.lp-pop{animation:lppop .45s cubic-bezier(.16,1,.3,1)}
+@keyframes lppop{from{opacity:.2;transform:translateY(8px) scale(.97)}to{opacity:1;transform:none}}
+.lp-blob{position:absolute;z-index:-1;border-radius:50%;filter:blur(70px);opacity:.35;animation:lpfloat 14s ease-in-out infinite alternate}
+.lp-b1{width:380px;height:380px;background:#16a34a;left:-90px;top:8%}
+.lp-b2{width:320px;height:320px;background:#7c3aed;right:-80px;top:30%;animation-duration:18s}
+@keyframes lpfloat{to{transform:translate(60px,-40px) scale(1.15)}}
+@media(max-width:700px){.lp-demo{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){.lp-blob,.lp-lab i,.lp-pop{animation:none}}
+</style>
+<section class="lp" aria-label="Introduction">
+  <span class="lp-blob lp-b1"></span><span class="lp-blob lp-b2"></span>
+  <div class="lp-bg"><video id="lpVideo" autoplay muted loop playsinline preload="none" aria-hidden="true" data-video="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20261022_235442_c62146c2-3f2f-46c0-ab51-649a4aa26cf5.mp4"></video></div>
+  <div class="lp-copy">
+    <div class="lp-badge lp-in" style="--d:.15s">Roman Urdu · اردو · English</div>
+    <h2 class="lp-in" style="--d:.3s">“Kal quiz hai.”<br>Now it's a <em>calendar</em> event.</h2>
+    <p class="lp-lede lp-in" style="--d:.5s">Drop a syllabus, a WhatsApp screenshot or pasted text. DeadlineSync pulls out every deadline and gives you one file for Google Calendar.</p>
+    <div class="lp-demo lp-in" style="--d:.55s">
+      <div class="lp-chat"><div class="lp-lab"><i></i>A message you got</div>
+        <input id="lpIn" type="text" maxlength="200" autocomplete="off" spellcheck="false" aria-label="Try a deadline message" value="Quiz he 9">
+        <div class="lp-hint">Type your own — it runs the real parser, right here.</div></div>
+      <div class="lp-chat"><div class="lp-lab">What DeadlineSync pins</div><div id="lpOut" aria-live="polite"></div></div>
+    </div>
+    <div class="lp-act lp-in" style="--d:.65s">
+      <a class="lp-btn lp-solid" href="#app">Start — drop your syllabus</a>
+      <a class="lp-btn lp-ghost" href="#app-ext">Get the Chrome extension</a>
+    </div>
+  </div>
+  <div class="lp-stats lp-in" style="--d:.85s"><span>Understands kal, parson, agla Jumma, 9 baje</span><span>Pasted text works offline, no account</span><span>Day-first dates, Pakistan style</span></div>
+</section>
+
+<div id="app" class="mx-auto max-w-3xl px-4 py-6 sm:py-10">
+
+  <!-- Header -->
+  <header class="mb-6 flex items-start justify-between gap-3">
+    <div>
+      <h1 class="text-3xl font-extrabold tracking-tight text-brand sm:text-4xl">DeadlineSync</h1>
+      <p class="mt-1 text-base text-gray-600">Drop your syllabus. Get your calendar.</p>
+    </div>
+    <button id="settingsBtn" type="button" aria-expanded="false" aria-controls="settings"
+      class="shrink-0 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 focus-visible:outline-2 focus-visible:outline-brand">
+      ⚙ AI key
+    </button>
+  </header>
+
+  <!-- Settings -->
+  <section id="settings" hidden class="mb-6 rounded-2xl bg-gray-100 p-4 sm:p-5">
+    <h2 class="text-base font-bold">Claude API settings</h2>
+    <p class="mt-1 text-sm text-gray-600">Needed to read scanned PDFs and photos. Pasted text works offline without a key. Your key is stored only in this browser and is sent only to the endpoint below.</p>
+    <div class="mt-3 grid gap-3 sm:grid-cols-2">
+      <label class="block text-sm font-medium sm:col-span-2">Anthropic API key
+        <input id="apiKey" type="password" autocomplete="off" placeholder="sk-ant-…" class="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-brand">
+      </label>
+      <label class="block text-sm font-medium">Model
+        <input id="model" type="text" class="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-brand">
+      </label>
+      <label class="block text-sm font-medium">Endpoint
+        <input id="endpoint" type="text" class="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-brand">
+      </label>
+    </div>
+    <div class="mt-3 flex flex-wrap items-center gap-2">
+      <button id="saveSettings" type="button" class="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white hover:bg-brand-dark">Save</button>
+      <button id="testSettings" type="button" class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold hover:bg-gray-50">Test connection</button>
+      <span id="settingsMsg" role="status" class="text-sm"></span>
+    </div>
+  </section>
+
+  <!-- Input card -->
+  <section class="rounded-2xl bg-gray-100 p-4 sm:p-6" aria-labelledby="inputTitle">
+    <h2 id="inputTitle" class="sr-only">Add your syllabus</h2>
+
+    <label id="drop" class="flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-300 bg-white px-4 py-8 text-center focus-within:border-brand focus-within:outline-2 focus-within:outline-brand hover:border-brand">
+      <input id="fileInput" type="file" class="sr-only" multiple accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp">
+      <svg aria-hidden="true" class="h-10 w-10 text-brand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4m0 0 4 4m-4-4L8 8"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>
+      <span class="mt-2 text-base font-semibold">Drag &amp; drop your syllabus here</span>
+      <span class="mt-1 text-sm text-gray-500">or tap to choose · PDF, JPG, PNG, WEBP · up to 5 files, 10&nbsp;MB each</span>
+    </label>
+    <ul id="fileList" class="mt-3 space-y-2 empty:hidden" aria-live="polite"></ul>
+
+    <div class="mt-4">
+      <label for="pasteText" class="block text-sm font-medium">…or paste text <span class="font-normal text-gray-500">(WhatsApp messages, Urdu or English — works offline)</span></label>
+      <textarea id="pasteText" dir="auto" rows="3" placeholder="Quiz kal 9 baje&#10;Assignment 3 Friday tak&#10;Midterm 15th October"
+        class="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-brand"></textarea>
+      <button id="sampleBtn" type="button" class="mt-1 text-sm font-medium text-brand underline underline-offset-2">Try an example</button>
+    </div>
+
+    <div class="mt-4 grid gap-3 sm:grid-cols-2">
+      <label class="block text-sm font-medium" for="semStart">Semester start date
+        <input id="semStart" type="date" class="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-brand">
+        <span class="mt-1 block text-xs font-normal text-gray-500">Used to turn “Week 3” into a real date. Week 1 starts on this day.</span>
+      </label>
+      <label class="block text-sm font-medium" for="courseName">Course name
+        <input id="courseName" type="text" placeholder="e.g. CS-101" class="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus-visible:outline-2 focus-visible:outline-brand">
+        <span class="mt-1 block text-xs font-normal text-gray-500">Added to the start of every event title.</span>
+      </label>
+    </div>
+
+    <button id="extractBtn" type="button" class="mt-5 w-full rounded-xl bg-brand px-5 py-3 text-base font-bold text-white hover:bg-brand-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:cursor-not-allowed disabled:opacity-60">Extract Deadlines</button>
+  </section>
+
+  <!-- Loading -->
+  <section id="loading" hidden class="mt-6 flex items-center justify-center gap-3 rounded-2xl bg-gray-100 px-4 py-8" role="status" aria-live="polite">
+    <svg class="h-6 w-6 animate-spin text-brand" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" class="opacity-25"/><path d="M4 12a8 8 0 0 1 8-8" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></svg>
+    <span id="loadingMsg" class="font-medium text-gray-700">Reading your syllabus...</span>
+  </section>
+
+  <!-- Messages -->
+  <div id="messages" class="mt-6 space-y-3" aria-live="polite"></div>
+
+  <!-- Results -->
+  <section id="results" hidden class="mt-6" aria-labelledby="resultsTitle">
+    <div class="flex items-end justify-between gap-3">
+      <h2 id="resultsTitle" class="text-xl font-bold">Your deadlines <span id="count" class="text-base font-medium text-gray-500"></span></h2>
+      <button id="addRow" type="button" class="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-semibold hover:bg-gray-100">+ Add row</button>
+    </div>
+    <p class="mt-1 text-sm text-gray-600">Check the yellow rows, fix anything wrong, then export. Everything is editable.</p>
+
+    <div class="mt-3 rounded-2xl bg-gray-100 p-3 sm:p-4">
+      <table class="w-full border-separate border-spacing-0 text-sm">
+        <thead class="hidden text-left text-xs font-semibold uppercase tracking-wide text-gray-500 sm:table-header-group">
+          <tr><th class="pb-2 pr-2">Event name</th><th class="pb-2 pr-2">Date</th><th class="pb-2 pr-2">Type</th><th class="pb-2 pr-2">Confidence</th><th class="pb-2"><span class="sr-only">Delete</span></th></tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+
+    <div class="mt-4 flex flex-col gap-3 sm:flex-row">
+      <button id="gcalBtn" type="button" class="flex-1 rounded-xl bg-brand px-5 py-3 text-base font-bold text-white hover:bg-brand-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand">Add to Google Calendar</button>
+      <button id="copyBtn" type="button" class="flex-1 rounded-xl border border-gray-300 bg-white px-5 py-3 text-base font-bold hover:bg-gray-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand">Copy as text</button>
+    </div>
+    <div id="gcalTip" hidden class="mt-3 rounded-xl border border-green-200 bg-green-50 p-3 text-sm text-green-900">
+      <strong>Your .ics file downloaded.</strong> In Google Calendar open <em>Settings → Import &amp; export → Import</em>, choose the file, pick a calendar. On a phone, just open the file and choose Calendar.
+      <a href="https://calendar.google.com/calendar/u/0/r/settings/export" target="_blank" rel="noopener" class="ml-1 font-semibold underline">Open Google Calendar import →</a>
+    </div>
+  </section>
+
+  <footer class="mt-12 border-t border-gray-200 pt-4 text-center text-sm text-gray-500">
+    Free forever. No login. Built for Pakistani students.<br><span id="app-ext">Want it on WhatsApp Web? <a class="underline" href="DeadlinePinPK.zip" download>Download the DeadlinePinPK extension (.zip)</a>, unzip it, then open <code>chrome://extensions</code>, turn on Developer mode, Load unpacked, choose the unzipped folder. (When running from GitHub Pages the zip is there; if you opened this file from disk, the folder is <code>extension</code>.)</span>
+  </footer>
+</div>
+
+<script>/*
+ * deadline-core.js — shared engine for DeadlineSync PK (web) and DeadlinePinPK (extension).
+ *
+ * Works with no network and no API key:
+ *   - Roman-Urdu / Urdu-script / English date + time parsing
+ *   - event-type detection and clean title extraction
+ *   - WhatsApp export prefix stripping
+ *   - AI-response normalisation (JSON recovery, relative "Week N" resolution, dedupe)
+ *   - RFC 5545 .ics generation (all-day or timed events, VALARM, line folding, UTF-8 safe)
+ *
+ * UMD: loads as a <script> (window.DeadlineCore / self.DeadlineCore) or via require().
+ * Source of truth lives in /shared; build.mjs inlines it into the web app and
+ * copies it to extension/core.js. Do not edit the copies.
+ */
+(function (root, factory) {
+  if (typeof module === 'object' && module.exports) module.exports = factory();
+  else root.DeadlineCore = factory();
+})(typeof self !== 'undefined' ? self : this, function () {
+  'use strict';
+
+  const TYPES = ['Quiz', 'Assignment', 'Exam', 'Project', 'Presentation', 'Lab', 'Other'];
+  const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+  /* ------------------------------------------------------------------ date helpers */
+  const pad = (n) => String(n).padStart(2, '0');
+  const startOfDay = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const addDays = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+  const toISO = (d) => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+
+  function validDate(y, m, d) {
+    const dt = new Date(y, m, d);
+    if (dt.getFullYear() !== y || dt.getMonth() !== m || dt.getDate() !== d) return null;
+    return dt;
+  }
+  function fromISO(s) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(s || '').trim());
+    return m ? validDate(+m[1], +m[2] - 1, +m[3]) : null;
+  }
+  const isValidISO = (s) => !!fromISO(s);
+  function isValidTime(t) {
+    const m = /^(\d{2}):(\d{2})$/.exec(String(t || ''));
+    return !!m && +m[1] <= 23 && +m[2] <= 59;
+  }
+  function describeDate(iso) {
+    const d = fromISO(iso);
+    if (!d) return String(iso || '');
+    return DAY_NAMES[d.getDay()].slice(0, 3) + ', ' + d.getDate() + ' ' + MONTH_NAMES[d.getMonth()] + ' ' + d.getFullYear();
+  }
+  const mondayOf = (d) => addDays(startOfDay(d), -((d.getDay() + 6) % 7));
+  const nextOnOrAfter = (d, wd) => addDays(d, (wd - d.getDay() + 7) % 7);
+  const nextStrictlyAfter = (d, wd) => addDays(d, (wd - d.getDay() + 7) % 7 || 7);
+  const prevStrictlyBefore = (d, wd) => addDays(d, -((d.getDay() - wd + 7) % 7 || 7));
+
+  /** Day of week + month/day with no year: pick the year that keeps it near `ref`. */
+  function inferYear(month, day, ref, pastDays) {
+    let y = ref.getFullYear();
+    let c = validDate(y, month, day);
+    if (c && c < addDays(ref, -(pastDays == null ? 90 : pastDays))) c = validDate(y + 1, month, day);
+    return c;
+  }
+
+  /** "RELATIVE: Week 3" / "week 3" + semester start -> ISO (week 1 starts on the start date). */
+  function resolveRelative(str, startISO) {
+    const m = /week\s*#?\s*(\d{1,2})/i.exec(String(str || ''));
+    const start = fromISO(startISO);
+    if (!m || !start) return null;
+    return toISO(addDays(start, 7 * (+m[1] - 1)));
+  }
+
+  /* ------------------------------------------------------------------ text normalisation */
+  const B1 = '(?<![\\p{L}\\p{N}_])';
+  const B2 = '(?![\\p{L}\\p{N}_])';
+  const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const alt = (words) =>
+    '(?:' + words.slice().sort((a, b) => b.length - a.length).map(esc).join('|') + ')';
+
+  function normalize(text) {
+    return String(text == null ? '' : text)
+      .normalize('NFKC')
+      .replace(/[\u0660-\u0669]/g, (c) => String(c.charCodeAt(0) - 0x660))
+      .replace(/[\u06F0-\u06F9]/g, (c) => String(c.charCodeAt(0) - 0x6f0))
+      .replace(/[\u064B-\u065F\u0670\u200c\u200d\u200e\u200f]/g, '')
+      .replace(/[\u2018\u2019\u02bc]/g, "'")
+      .replace(/[\u2013\u2014]/g, '-')
+      .replace(/\u00a0/g, ' ')
+      .replace(/\r/g, '');
+  }
+  const blank = (s, a, b) => s.slice(0, a) + ' '.repeat(b - a) + s.slice(b);
+
+  /** Remove "[10:42 am, 22/11/2026] Name:" or "22/11/26, 10:42 - Name:" WhatsApp export prefixes. */
+  function stripWhatsAppPrefix(line) {
+    return String(line || '')
+      .replace(/^\s*\[[^\]\n]{4,40}\]\s*[^:\n]{1,40}:\s*/, '')
+      .replace(/^\s*\d{1,2}[\/.]\d{1,2}[\/.]\d{2,4},?\s+\d{1,2}:\d{2}(?::\d{2})?\s*(?:[ap]\.?m\.?)?\s*-\s*[^:\n]{1,40}:\s*/i, '');
+  }
+
+  /* ------------------------------------------------------------------ vocab */
+  const WEEKDAY_WORDS = {
+    0: ['sunday', 'sun', 'itwar', 'itwaar', 'etwar', 'aitwar', 'ittwar', 'اتوار'],
+    1: ['monday', 'mon', 'somwar', 'somvar', 'sombar', 'peer', 'pir', 'پیر'],
+    2: ['tuesday', 'tues', 'tue', 'mangal', 'mangalwar', 'mangl', 'منگل'],
+    3: ['wednesday', 'wed', 'budh', 'budhwar', 'budhar', 'بدھ'],
+    4: ['thursday', 'thurs', 'thur', 'thu', 'jumerat', 'jumeraat', 'jummerat', 'jumarat', 'jumayrat', 'جمعرات'],
+    5: ['friday', 'fri', 'jumma', 'jummah', 'jumah', 'juma', 'jumu', 'جمعہ', 'جمعه'],
+    6: ['saturday', 'sat', 'hafta', 'haftah', 'sanichar', 'ہفتہ', 'ہفته'],
+  };
+  const WORD_TO_WD = {};
+  Object.keys(WEEKDAY_WORDS).forEach((k) => WEEKDAY_WORDS[k].forEach((w) => (WORD_TO_WD[w] = +k)));
+  const WD_ALT = alt(Object.keys(WORD_TO_WD));
+
+  const MONTHS = {
+    january: 0, jan: 0, february: 1, feb: 1, march: 2, mar: 2, april: 3, apr: 3, may: 4,
+    june: 5, jun: 5, july: 6, jul: 6, august: 7, aug: 7, september: 8, sept: 8, sep: 8,
+    october: 9, oct: 9, november: 10, nov: 10, december: 11, dec: 11,
+  };
+  const MONTH_ALT = alt(Object.keys(MONTHS));
+
+  const DP = {
+    morning: ['subah', 'subha', 'subeh', 'sawere', 'savere', 'صبح', 'morning'],
+    afternoon: ['dopahar', 'dopehar', 'dupahar', 'دوپہر', 'afternoon'],
+    evening: ['shaam', 'شام', 'evening'],
+    night: ['raat', 'رات', 'night'],
+  };
+  const DP_ALT = alt([].concat(DP.morning, DP.afternoon, DP.evening, DP.night));
+  const dayPartOf = (w) => {
+    w = w.toLowerCase();
+    for (const k in DP) if (DP[k].indexOf(w) !== -1) return k;
+    return null;
+  };
+
+  const NEXT_W = '(?:next|agla|agle|agli|اگلے|اگلا|اگلی|coming)';
+  const THIS_W = '(?:this|iss|is|اس)';
+  const WEEK_W = '(?:week|hafta|hafte|haftah|ہفتے|ہفتہ)';
+
+  const RE = {
+    // times
+    tBaje: new RegExp(
+      B1 + '(?:(' + DP_ALT + ')\\s*(?:ko\\s*)?)?(\\d{1,2})(?::(\\d{2}))?\\s*(?:baje|bje|bajay|بجے|o\'clock)' + B2 +
+        '(?:\\s*(?:ko\\s*)?(' + DP_ALT + ')' + B2 + ')?', 'giu'),
+    tColon: new RegExp(B1 + '(\\d{1,2})([:.])(\\d{2})(?!\\d)(?:\\s*(am|pm|a\\.m\\.|p\\.m\\.)(?![\\p{L}]))?', 'giu'),
+    tMer: new RegExp(B1 + '(\\d{1,2})\\s*(am|pm|a\\.m\\.|p\\.m\\.)(?![\\p{L}])', 'giu'),
+    // Bare "hai 9" / "at 5" / "kal 9": only after a cue word, and only when the number ends the phrase
+    // (so "Lab 4 kal", "kal 2 quizzes hain", "by 5 Dec", "chapters 1-3" are NOT times).
+    tBare: new RegExp(
+      B1 + '(?:at|by|@|ko|hai|he|hy|hay|hain|kal|aaj|parson|today|tomorrow|tonight|until|till)\\s*(\\d{1,2})(?![\\p{N}:./\\/-])' +
+        '(?=\\s*(?:$|[.,;!?)]|-\\s|(?:tak|tk|sharp|se|ko|hai|he|hy|hay|hain|ho|ga|gi|ka|ki|ke|par|pe|baad|subah|shaam|raat|dopahar)(?![\\p{L}])))', 'gimu'),
+    tWord: new RegExp(B1 + '(eod|end of day|cob|midnight|noon)' + B2, 'giu'),
+    // absolute dates
+    iso: new RegExp('(?<![\\p{N}])(\\d{4})[-/.](\\d{1,2})[-/.](\\d{1,2})(?![\\p{N}])', 'gu'),
+    num: new RegExp('(?<![\\p{N}.\\/-])(\\d{1,2})([\\/.-])(\\d{1,2})(?:\\2(\\d{4}|\\d{2}))?(?![\\p{N}]|[\\/.-]\\p{N})', 'gu'),
+    dm: new RegExp('(?<![\\p{N}])(\\d{1,2})(?:st|nd|rd|th)?\\s*(?:of\\s+)?(' + MONTH_ALT + ')\\.?(?![\\p{L}])(?:\\s*,?\\s*(20\\d{2})(?!\\d))?', 'giu'),
+    md: new RegExp(B1 + '(' + MONTH_ALT + ')\\.?\\s*(\\d{1,2})(?:st|nd|rd|th)?(?![\\p{N}])(?:\\s*,?\\s*(20\\d{2})(?!\\d))?', 'giu'),
+    // relative
+    nextWeek: new RegExp(B1 + NEXT_W + '\\s+' + WEEK_W + '(?!\\s*\\d)' + B2, 'giu'),
+    thisWeek: new RegExp(B1 + THIS_W + '\\s+' + WEEK_W + '(?!\\s*\\d)' + B2, 'giu'),
+    nextWd: new RegExp(B1 + NEXT_W + '\\s+(?:ka\\s+|ke\\s+)?(' + WD_ALT + ')' + B2, 'giu'),
+    lastWd: new RegExp(B1 + '(?:last|pichla|pichle|pichli|پچھلے|پچھلا)\\s+(' + WD_ALT + ')' + B2, 'giu'),
+    dayAfter: new RegExp(B1 + '(?:day after tomorrow|parson|parso|parsoon|parsoo|پرسوں)' + B2, 'giu'),
+    in3: new RegExp(B1 + '(?:narson|narsoo|narsoon|nrson|ترسوں)' + B2, 'giu'),
+    tomorrow: new RegExp(B1 + '(?:tomorrow|tommorow|tomorow|tmrw|tmr|kal|kall|کل)' + B2, 'giu'),
+    today: new RegExp(B1 + '(?:today|tonight|aaj|aj|آج)' + B2, 'giu'),
+    inN1: new RegExp(B1 + 'in\\s+(\\d{1,2})\\s+days?' + B2, 'giu'),
+    inN2: new RegExp(B1 + '(\\d{1,2})\\s*(?:din|days?)\\s*(?:baad|bad|mein|me|later)' + B2, 'giu'),
+    weekN: new RegExp(B1 + '(?:week|wk|hafta|haftah)\\s*#?\\s*(\\d{1,2})(?![\\p{N}])', 'giu'),
+    wd: new RegExp(B1 + '(' + WD_ALT + ')' + B2, 'giu'),
+    past: new RegExp(B1 + '(?:tha|thi|hua|hui|huwa|gaya|gayi|chuka|chuki|was|were|yesterday)' + B2, 'iu'),
+  };
+
+  function firstMatch(re, s, accept) {
+    re.lastIndex = 0;
+    let m;
+    while ((m = re.exec(s))) {
+      if (!accept || accept(m)) return m;
+      if (m[0].length === 0) re.lastIndex++;
+    }
+    return null;
+  }
+  function allMatches(re, s, accept) {
+    re.lastIndex = 0;
+    const out = [];
+    let m;
+    while ((m = re.exec(s))) {
+      if (!accept || accept(m)) out.push(m);
+      if (m[0].length === 0) re.lastIndex++;
+    }
+    return out;
+  }
+  // "peer review" is not Monday.
+  const wdAccept = (s) => (m) =>
+    !(/^(peer|pir)$/i.test(m[1]) && /^\s*(review|feedback|evaluation|assessment|grading|teaching|mentor)/i.test(s.slice(m.index + m[0].length)));
+
+  /* ------------------------------------------------------------------ time */
+  function to24(h, mer, dp) {
+    let assumed = false;
+    if (mer) {
+      const pm = /^p/i.test(mer);
+      h = pm ? (h % 12) + 12 : h % 12;
+    } else if (dp === 'morning') {
+      h = h % 12;
+    } else if (dp === 'afternoon') {
+      if (h >= 1 && h <= 6) h += 12;
+    } else if (dp === 'evening') {
+      if (h < 12) h += 12;
+    } else if (dp === 'night') {
+      if (h === 12) h = 0;
+      else if (h >= 6 && h < 12) h += 12;
+    } else if (h >= 1 && h <= 6) {
+      h += 12;
+      assumed = true;
+    } else if (h <= 12) {
+      assumed = true;
+    }
+    return { h, assumed };
+  }
+
+  function findTime(s) {
+    const cands = [];
+    let m = firstMatch(RE.tBaje, s);
+    if (m) {
+      const dp = dayPartOf(m[1] || m[4] || '') || null;
+      const hh = +m[2], mm = m[3] ? +m[3] : 0;
+      if (hh <= 24 && mm < 60) {
+        const r = to24(hh === 24 ? 0 : hh, null, dp);
+        cands.push({ i: m.index, e: m.index + m[0].length, h: r.h, mm, assumed: r.assumed });
+      }
+    }
+    // "11.59pm" is a time, but "15.10" / "15.10.26" are dates: a dot needs am/pm to count.
+    m = firstMatch(RE.tColon, s, (x) => +x[1] <= 24 && +x[3] < 60 && (x[2] === ':' || !!x[4]));
+    if (m) {
+      const hh = +m[1], mm = +m[3];
+      if (m[4]) {
+        if (hh >= 1 && hh <= 12) cands.push({ i: m.index, e: m.index + m[0].length, h: to24(hh, m[4]).h, mm, assumed: false });
+      } else {
+        const r = hh >= 13 ? { h: hh, assumed: false } : to24(hh, null, null);
+        cands.push({ i: m.index, e: m.index + m[0].length, h: r.h, mm, assumed: r.assumed });
+      }
+    }
+    m = firstMatch(RE.tMer, s, (x) => +x[1] >= 1 && +x[1] <= 12);
+    if (m) cands.push({ i: m.index, e: m.index + m[0].length, h: to24(+m[1], m[2]).h, mm: 0, assumed: false });
+    m = firstMatch(RE.tWord, s);
+    if (m) {
+      const w = m[1].toLowerCase();
+      cands.push({ i: m.index, e: m.index + m[0].length, h: w === 'noon' ? 12 : 23, mm: w === 'noon' ? 0 : 59, assumed: false });
+    }
+    if (!cands.length) {
+      m = firstMatch(RE.tBare, s, (x) => +x[1] >= 1 && +x[1] <= 12);
+      if (m) {
+        const r = to24(+m[1], null, null);
+        const e = m.index + m[0].length;
+        cands.push({ i: e - m[1].length, e, h: r.h, mm: 0, assumed: true });
+      }
+    }
+    if (!cands.length) return null;
+    cands.sort((a, b) => a.i - b.i);
+    const c = cands[0];
+    if (c.h > 23) return null;
+    return { time: pad(c.h) + ':' + pad(c.mm), start: c.i, end: c.e, assumed: c.assumed };
+  }
+
+  /* ------------------------------------------------------------------ date */
+  function findDate(s, ctx) {
+    const { today, ref, start, pastDays } = ctx;
+    const abs = [];
+
+    let m = firstMatch(RE.iso, s, (x) => validDate(+x[1], +x[2] - 1, +x[3]));
+    if (m) abs.push({ i: m.index, e: m.index + m[0].length, date: validDate(+m[1], +m[2] - 1, +m[3]), kind: 'iso', conf: 'high' });
+
+    m = firstMatch(RE.num, s, (x) => {
+      if (!x[4] && x[2] !== '/') return false;
+      let d = +x[1], mo = +x[3];
+      if (mo > 12 && d <= 12) { const t = d; d = mo; mo = t; }
+      return mo >= 1 && mo <= 12 && d >= 1 && d <= 31;
+    });
+    if (m) {
+      let d = +m[1], mo = +m[3], swapped = false;
+      if (mo > 12 && d <= 12) { const t = d; d = mo; mo = t; swapped = true; }
+      let y = m[4] ? (m[4].length === 2 ? 2000 + +m[4] : +m[4]) : null;
+      const dt = y ? validDate(y, mo - 1, d) : inferYear(mo - 1, d, ref, pastDays);
+      if (dt) abs.push({ i: m.index, e: m.index + m[0].length, date: dt, kind: 'numeric', conf: y && !swapped ? 'high' : 'medium' });
+    }
+
+    m = firstMatch(RE.dm, s, (x) => !!validDate(2000, MONTHS[x[2].toLowerCase()], +x[1]) || +x[1] === 29);
+    if (m) {
+      const mo = MONTHS[m[2].toLowerCase()], d = +m[1];
+      const dt = m[3] ? validDate(+m[3], mo, d) : inferYear(mo, d, ref, pastDays);
+      if (dt) abs.push({ i: m.index, e: m.index + m[0].length, date: dt, kind: 'day-month', conf: 'high' });
+    }
+
+    m = firstMatch(RE.md, s, (x) => +x[2] >= 1 && +x[2] <= 31);
+    if (m) {
+      const mo = MONTHS[m[1].toLowerCase()], d = +m[2];
+      const dt = m[3] ? validDate(+m[3], mo, d) : inferYear(mo, d, ref, pastDays);
+      if (dt) abs.push({ i: m.index, e: m.index + m[0].length, date: dt, kind: 'month-day', conf: 'high' });
+    }
+
+    // "Quiz 1 Oct 18": the "1" belongs to the quiz, so "1 Oct" loses to "Oct 18".
+    const dmC = abs.find((a) => a.kind === 'day-month'), mdC = abs.find((a) => a.kind === 'month-day');
+    if (dmC && mdC && mdC.i < dmC.e && /(?:quiz|assignment|asgn|lab|test|project|hw|homework|chapter|ch|part|set|problem|q|week|wk|lecture|lec|#)\s*$/i.test(s.slice(0, dmC.i))) {
+      abs.splice(abs.indexOf(dmC), 1);
+    }
+
+    if (abs.length) {
+      abs.sort((a, b) => a.i - b.i);
+      return abs[0];
+    }
+
+    // "hafta" means both "week" and "Saturday": hide week phrases before looking for a weekday.
+    let sw = s;
+    [RE.nextWeek, RE.thisWeek].forEach((re) => allMatches(re, s).forEach((x) => { sw = blank(sw, x.index, x.index + x[0].length); }));
+    const wdTok = firstMatch(RE.wd, sw, wdAccept(sw));
+    const wd = wdTok ? WORD_TO_WD[wdTok[1].toLowerCase()] : null;
+    const pastWord = RE.past.test(s);
+
+    // "next week" / "agle hafte [monday]"
+    m = firstMatch(RE.nextWeek, s);
+    if (m) {
+      let end = m.index + m[0].length;
+      if (wdTok) {
+        const dt = addDays(mondayOf(today), 7 + ((wd + 6) % 7));
+        return { i: Math.min(m.index, wdTok.index), e: Math.max(end, wdTok.index + wdTok[0].length), date: dt, kind: 'next-week-weekday', conf: 'medium', wdBlank: wdTok };
+      }
+      return { i: m.index, e: end, date: addDays(today, 7), kind: 'next-week', conf: 'medium' };
+    }
+    // "this week" / "is hafta [friday]"
+    m = firstMatch(RE.thisWeek, s);
+    if (m) {
+      const end = m.index + m[0].length;
+      if (wdTok) {
+        const dt = addDays(mondayOf(today), (wd + 6) % 7);
+        return { i: Math.min(m.index, wdTok.index), e: Math.max(end, wdTok.index + wdTok[0].length), date: dt, kind: 'this-week-weekday', conf: dt < today ? 'low' : 'medium', wdBlank: wdTok };
+      }
+      return { i: m.index, e: end, date: addDays(mondayOf(today), 4), kind: 'this-week', conf: 'medium' };
+    }
+    m = firstMatch(RE.nextWd, s);
+    if (m) return { i: m.index, e: m.index + m[0].length, date: nextStrictlyAfter(today, WORD_TO_WD[m[1].toLowerCase()]), kind: 'next-weekday', conf: 'medium' };
+    m = firstMatch(RE.lastWd, s);
+    if (m) return { i: m.index, e: m.index + m[0].length, date: prevStrictlyBefore(today, WORD_TO_WD[m[1].toLowerCase()]), kind: 'last-weekday', conf: 'low' };
+
+    m = firstMatch(RE.dayAfter, s);
+    if (m) return { i: m.index, e: m.index + m[0].length, date: addDays(today, pastWord ? -2 : 2), kind: 'day-after-tomorrow', conf: pastWord ? 'low' : 'high' };
+    m = firstMatch(RE.in3, s);
+    if (m) return { i: m.index, e: m.index + m[0].length, date: addDays(today, 3), kind: 'in-3-days', conf: 'medium' };
+    m = firstMatch(RE.tomorrow, s);
+    if (m) return { i: m.index, e: m.index + m[0].length, date: addDays(today, pastWord ? -1 : 1), kind: 'tomorrow', conf: pastWord ? 'low' : 'high' };
+    m = firstMatch(RE.today, s);
+    if (m) return { i: m.index, e: m.index + m[0].length, date: today, kind: 'today', conf: 'high' };
+    m = firstMatch(RE.inN1, s) || firstMatch(RE.inN2, s);
+    if (m) return { i: m.index, e: m.index + m[0].length, date: addDays(today, +m[1]), kind: 'in-n-days', conf: 'medium' };
+
+    m = firstMatch(RE.weekN, s);
+    if (m) {
+      const n = +m[1];
+      const span = { i: m.index, e: m.index + m[0].length };
+      if (!start) return Object.assign(span, { date: null, kind: 'week-n', conf: 'low', relative: 'Week ' + n });
+      let dt = addDays(start, 7 * (n - 1));
+      let wdb = null;
+      if (wdTok) {
+        dt = addDays(dt, (wd - start.getDay() + 7) % 7);
+        wdb = wdTok;
+      }
+      return Object.assign(span, { date: dt, kind: 'week-n', conf: 'medium', relative: 'Week ' + n, wdBlank: wdb });
+    }
+
+    if (wdTok) {
+      const dt = nextOnOrAfter(today, wd);
+      return { i: wdTok.index, e: wdTok.index + wdTok[0].length, date: dt, kind: 'weekday', conf: 'medium' };
+    }
+    return null;
+  }
+
+  /* ------------------------------------------------------------------ type + title */
+  const TYPE_RES = [
+    ['Quiz', /(?<![\p{L}])(quizzes|quiz|class test|test|tests|کوئز|ٹیسٹ)(?![\p{L}])/iu],
+    ['Assignment', /(?<![\p{L}])(assignments?|assgn|asgn|homework|hw|problem set|pset|worksheet|اسائنمنٹ|اسائینمنٹ|ہوم ورک)(?![\p{L}])/iu],
+    ['Exam', /(?<![\p{L}])(mid-?term|mid term|midsem|mids|finals?(?!\s+(?:project|report|presentation|submission|assignment|lab|draft|viva))|exams?|(?<!research\s)(?<!term\s)paper|sessional|oht|امتحان|مڈ ?ٹرم|فائنل|پیپر)(?![\p{L}])/iu],
+    ['Project', /(?<![\p{L}])(projects?|proposal|reports?|thesis|fyp|term paper|capstone|prototype|پروجیکٹ|رپورٹ)(?![\p{L}])/iu],
+    ['Presentation', /(?<![\p{L}])(presentations?|viva|demo|pitch|seminar|ppt|slides|پریزنٹیشن|وائیوا)(?![\p{L}])/iu],
+    ['Lab', /(?<![\p{L}])(labs?|practicals?|لیب|پریکٹیکل)(?![\p{L}])/iu],
+  ];
+  function detectType(text) {
+    let best = null;
+    for (const [type, re] of TYPE_RES) {
+      const m = re.exec(text);
+      if (m && (!best || m.index < best.i)) best = { type, i: m.index };
+    }
+    return best ? best.type : 'Other';
+  }
+
+  const FILLERS = alt([
+    'he', 'hy', 'hn', 'kaha', 'to', 'extended', 'moved', 'postponed', 'preponed', 'rescheduled', 'shifted', 'karo', 'karna', 'krna', 'kro', 'kardo', 'karen', 'karein', 'kijiye', 'karni', 'karnay', 'hai', 'hain', 'hay', 'hoga',
+    'hogi', 'hongay', 'hoon', 'ho', 'ga', 'gi', 'tak', 'by', 'on', 'at', 'due', 'submit', 'submitted', 'submission',
+    'submissions', 'deadline', 'before', 'until', 'till', 'the', 'is', 'are', 'will', 'be', 'ka', 'ki', 'ke', 'ko', 'ne',
+    'se', 'mein', 'me', 'pe', 'par', 'aur', 'sab', 'sabko', 'please', 'plz', 'pls', 'reminder', 'note', 'dear', 'students',
+    'everyone', 'guys', 'all', 'wala', 'wali', 'lazmi', 'zaroor', 'jama', 'jamma', 'bhejna', 'bhejo', 'send', 'upload',
+    'tha', 'thi', 'agla', 'agle', 'agli', 'next', 'iss', 'this', 'coming', 'yaad', 'rakhen', 'rakhna', 'ہے', 'ہیں', 'تک',
+    'کو', 'کا', 'کی', 'کے', 'جمع', 'کریں', 'کرو', 'ہو', 'گا', 'گی', 'میں', 'پر', 'سے', 'ہوگا', 'ہوگی',
+  ]);
+  const FILLER_RE = new RegExp(B1 + FILLERS + B2, 'giu');
+
+  function buildTitle(blanked, type, original) {
+    let t = blanked
+      .replace(FILLER_RE, ' ')
+      .replace(/\s[-–—:]+\s/g, ' ')
+      .replace(/[,;:|•"“”()[\]!?*_~]+/g, ' ')
+      .replace(/(^|\s)[-–—.]+(?=\s|$)/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .replace(/^[-–—.\s]+|[-–—.\s]+$/g, '');
+    if (t.length < 2) {
+      t = type !== 'Other' ? type : /deadline|due|submit|submission/i.test(original) ? 'Submission' : 'Deadline';
+    }
+    t = t.charAt(0).toUpperCase() + t.slice(1);
+    return t.length > 80 ? t.slice(0, 77).trim() + '…' : t;
+  }
+
+  /* ------------------------------------------------------------------ parse one snippet */
+  /**
+   * parseDeadline(text, {today, ref, semesterStart}) -> {
+   *   title, date:'YYYY-MM-DD'|null, time:'HH:MM'|null, confidence:'high'|'medium'|'low',
+   *   type, notes, original, kind, relative, timeAssumed }
+   */
+  function parseDeadline(text, opts) {
+    opts = opts || {};
+    const today = startOfDay(opts.today || new Date());
+    const start = opts.semesterStart ? (opts.semesterStart instanceof Date ? startOfDay(opts.semesterStart) : fromISO(opts.semesterStart)) : null;
+    const ref = opts.ref ? startOfDay(opts.ref) : start || today;
+    const original = String(text == null ? '' : text).trim();
+    let s = normalize(original);
+
+    const t = findTime(s);
+    if (t) s = blank(s, t.start, t.end);
+
+    const d = findDate(s, { today, ref, start, pastDays: opts.pastDays });
+    if (d) {
+      s = blank(s, d.i, d.e);
+      if (d.wdBlank) s = blank(s, d.wdBlank.index, d.wdBlank.index + d.wdBlank[0].length);
+      if (['iso', 'numeric', 'day-month', 'month-day'].indexOf(d.kind) !== -1) {
+        // "Friday 18 Oct": weekday words are redundant once an exact date exists.
+        allMatches(RE.wd, s, wdAccept(s)).reverse().forEach((m) => { s = blank(s, m.index, m.index + m[0].length); });
+      }
+    }
+
+    const type = detectType(s);
+    const title = buildTitle(s, type, original);
+    const date = d && d.date ? toISO(d.date) : null;
+    return {
+      title,
+      date,
+      time: t ? t.time : null,
+      confidence: date ? d.conf : 'low',
+      type,
+      notes: d && d.relative && !date ? 'RELATIVE: ' + d.relative : '',
+      original,
+      kind: d ? d.kind : t ? 'time-only' : 'none',
+      relative: d && d.relative ? d.relative : null,
+      timeAssumed: !!(t && t.assumed),
+    };
+  }
+
+  /**
+   * Pre-pass used before the AI call: resolves Roman-Urdu / relative dates locally
+   * and returns a hint string so the model has the concrete calendar date as context.
+   */
+  function preParseUrdu(text, today) {
+    const t = startOfDay(today || new Date());
+    // A pinned message is almost never about the past: a yearless date more than 2 weeks gone means next year.
+    const r = parseDeadline(text, { today: t, pastDays: 14 });
+    let hint = 'Reference date (the day the text was written): ' + describeDate(toISO(t)) + ' (' + toISO(t) + ').';
+    if (r.date) {
+      hint += ' Local pre-parser resolved the date as ' + r.date + ' (' + DAY_NAMES[fromISO(r.date).getDay()] + ')' +
+        (r.time ? ' at ' + r.time : '') + ' using rule "' + r.kind + '" (confidence ' + r.confidence + ').';
+    } else {
+      hint += ' Local pre-parser found no concrete date.';
+    }
+    return { annotated: hint + '\n\nText: ' + text, hint, parsed: r };
+  }
+
+  /* ------------------------------------------------------------------ multi-line text (paste mode) */
+  function countAbsDates(s) {
+    return allMatches(RE.iso, s).length + allMatches(RE.dm, s).length + allMatches(RE.md, s).length +
+      allMatches(RE.num, s, (x) => !!x[4] || x[2] === '/').length;
+  }
+  function splitMulti(line) {
+    const n = normalize(line);
+    if (countAbsDates(n) < 2) return [line];
+    const parts = line.split(/\s*(?:,|;|&|\band\b|\baur\b)\s*/i).filter((p) => p.trim());
+    if (parts.length >= 2 && parts.every((p) => countAbsDates(normalize(p)) >= 1)) return parts;
+    return [line];
+  }
+
+  /** Extract every dated / event-looking line from pasted text (e.g. a WhatsApp chat or typed syllabus). */
+  function extractFromText(text, opts) {
+    opts = opts || {};
+    const out = [];
+    String(text || '')
+      .split(/\n|•/)
+      .map((l) => stripWhatsAppPrefix(l).trim())
+      .filter((l) => l.length >= 3)
+      .forEach((line) => {
+        splitMulti(line).forEach((chunk) => {
+          const r = parseDeadline(chunk, opts);
+          if (r.date || r.relative || r.type !== 'Other') {
+            out.push({
+              title: r.title, date: r.date || (r.relative ? 'RELATIVE: ' + r.relative : 'UNKNOWN'),
+              time: r.time, type: r.type, confidence: r.confidence,
+              original: r.original,
+            });
+          }
+        });
+      });
+    return out;
+  }
+
+  /* ------------------------------------------------------------------ AI output handling */
+  function extractJSON(text) {
+    let t = String(text || '').trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '');
+    const tryParse = (x) => { try { return JSON.parse(x); } catch (e) { return undefined; } };
+    let v = tryParse(t);
+    if (v === undefined) {
+      const a = t.indexOf('['), b = t.lastIndexOf(']');
+      if (a !== -1 && b > a) v = tryParse(t.slice(a, b + 1));
+    }
+    if (v === undefined) {
+      const a = t.indexOf('{'), b = t.lastIndexOf('}');
+      if (a !== -1 && b > a) v = tryParse(t.slice(a, b + 1));
+    }
+    if (v === undefined) return null;
+    if (Array.isArray(v)) return v;
+    if (v && typeof v === 'object') {
+      for (const k of Object.keys(v)) if (Array.isArray(v[k])) return v[k];
+      return [v];
+    }
+    return null;
+  }
+
+  function normalizeType(t) {
+    const x = String(t || '').trim().toLowerCase();
+    const hit = TYPES.find((n) => n.toLowerCase() === x);
+    if (hit) return hit;
+    return x ? detectType(x) : 'Other';
+  }
+  const normalizeConfidence = (c) => {
+    const x = String(c || '').trim().toLowerCase();
+    return x === 'high' || x === 'medium' || x === 'low' ? x : 'low';
+  };
+
+  /** Clean one model-produced object into a row. Resolves "RELATIVE: Week N" when a start date is known. */
+  function normalizeEvent(raw, opts) {
+    opts = opts || {};
+    raw = raw || {};
+    let date = String(raw.date == null ? '' : raw.date).trim();
+    let conf = normalizeConfidence(raw.confidence);
+    const iso = /^(\d{4}-\d{2}-\d{2})(?:[T ]|$)/.exec(date); // "2026-10-15T00:00:00" -> "2026-10-15"
+    if (iso && isValidISO(iso[1])) date = iso[1];
+    if (!isValidISO(date)) {
+      const resolved = /relative|week/i.test(date) ? resolveRelative(date, opts.semesterStart) : null;
+      if (resolved) {
+        date = resolved;
+        if (conf === 'high') conf = 'medium';
+      } else if (!date || /^(?:unknown|null|none|n\/a|tbd)$/i.test(date)) {
+        date = 'UNKNOWN';
+        conf = 'low';
+      }
+    }
+    const time = isValidTime(raw.time) ? raw.time : null;
+    return {
+      title: String(raw.title || raw.name || 'Untitled').trim(),
+      date,
+      time,
+      type: normalizeType(raw.type),
+      confidence: conf,
+      notes: String(raw.notes || '').trim(),
+    };
+  }
+
+  const dedupeKey = (e) => String(e.title || '').trim().toLowerCase().replace(/\s+/g, ' ') + '|' + String(e.date || '').trim();
+  function dedupe(events) {
+    const seen = new Set();
+    return events.filter((e) => {
+      const k = dedupeKey(e);
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    });
+  }
+
+  /* ------------------------------------------------------------------ export helpers */
+  function copyAsText(events, course) {
+    return events
+      .map((e) => {
+        const d = isValidISO(e.date) ? describeDate(e.date) : e.date || 'UNKNOWN';
+        return '• ' + d + (e.time ? ' ' + e.time : '') + ' — ' + (course ? course + ' — ' : '') + e.title + (e.type && e.type !== 'Other' ? ' (' + e.type + ')' : '') + (e.notes ? ' — ' + e.notes : '');
+      })
+      .join('\n');
+  }
+
+  /* ------------------------------------------------------------------ .ics */
+  function icsEscape(s) {
+    return String(s == null ? '' : s)
+      .replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n');
+  }
+  function foldLine(line) {
+    const enc = new TextEncoder();
+    if (enc.encode(line).length <= 75) return line;
+    const out = [];
+    let cur = '', bytes = 0, limit = 75;
+    for (const ch of line) {
+      const b = enc.encode(ch).length;
+      if (bytes + b > limit) { out.push(cur); cur = ''; bytes = 0; limit = 74; }
+      cur += ch; bytes += b;
+    }
+    out.push(cur);
+    return out.join('\r\n ');
+  }
+  function hash(str) {
+    let h = 5381;
+    for (let i = 0; i < str.length; i++) h = ((h << 5) + h + str.charCodeAt(i)) | 0;
+    return (h >>> 0).toString(36);
+  }
+  const compact = (iso) => iso.replace(/-/g, '');
+
+  /**
+   * buildICS(events, {course, calName, alarm, alarmTimed, now})
+   * events: [{title, date:'YYYY-MM-DD', time?:'HH:MM', notes?, description?, uidSeed?}]
+   * Rows with an invalid date are skipped (callers validate first). Returns CRLF text.
+   */
+  function buildICS(events, opts) {
+    const o = Object.assign({ course: '', calName: 'Deadlines', alarm: '-P2D', alarmTimed: '-PT1H', now: new Date() }, opts);
+    const stamp = o.now.getUTCFullYear() + pad(o.now.getUTCMonth() + 1) + pad(o.now.getUTCDate()) + 'T' +
+      pad(o.now.getUTCHours()) + pad(o.now.getUTCMinutes()) + pad(o.now.getUTCSeconds()) + 'Z';
+    const L = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//DeadlineSync PK//Deadlines//EN', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', 'X-WR-CALNAME:' + icsEscape(o.calName)];
+    events.forEach((e) => {
+      const d = fromISO(e.date);
+      if (!d) return;
+      const timed = isValidTime(e.time);
+      const summary = (o.course ? o.course + ' — ' : '') + e.title;
+      L.push('BEGIN:VEVENT');
+      L.push('UID:' + hash([e.uidSeed || '', e.title, e.date, e.time || ''].join('|')) + '@deadlinesync.pk');
+      L.push('DTSTAMP:' + stamp);
+      if (timed) {
+        const [hh, mm] = e.time.split(':').map(Number);
+        const s = new Date(d.getFullYear(), d.getMonth(), d.getDate(), hh, mm);
+        const en = new Date(s.getTime() + 60 * 60 * 1000);
+        const f = (x) => x.getFullYear() + pad(x.getMonth() + 1) + pad(x.getDate()) + 'T' + pad(x.getHours()) + pad(x.getMinutes()) + '00';
+        L.push('DTSTART:' + f(s), 'DTEND:' + f(en));
+      } else {
+        L.push('DTSTART;VALUE=DATE:' + compact(e.date), 'DTEND;VALUE=DATE:' + compact(toISO(addDays(d, 1))));
+      }
+      L.push('SUMMARY:' + icsEscape(summary));
+      const desc = e.description != null ? e.description : [e.type && e.type !== 'Other' ? e.type : '', e.notes].filter(Boolean).join(' — ');
+      if (desc) L.push('DESCRIPTION:' + icsEscape(desc));
+      L.push('TRANSP:TRANSPARENT');
+      L.push('BEGIN:VALARM', 'ACTION:DISPLAY', 'DESCRIPTION:' + icsEscape('Reminder: ' + summary), 'TRIGGER:' + (timed ? o.alarmTimed : o.alarm), 'END:VALARM');
+      L.push('END:VEVENT');
+    });
+    L.push('END:VCALENDAR');
+    return L.map(foldLine).join('\r\n') + '\r\n';
+  }
+
+  /* ------------------------------------------------------------------ share / calendar links (no login needed) */
+  function shareText(d) {
+    return '📌 Deadline: ' + d.title + '\n' + describeDate(d.date) + (d.time ? ' at ' + d.time : '') +
+      (d.sourceUrl ? '\nSource: ' + d.sourceUrl : '');
+  }
+  /** One-click "add to Google Calendar" link (opens the pre-filled event form; works with any signed-in account). */
+  function gcalUrl(d) {
+    const day = fromISO(d.date);
+    if (!day) return null;
+    const c = (x) => x.getFullYear() + pad(x.getMonth() + 1) + pad(x.getDate());
+    let dates;
+    if (isValidTime(d.time)) {
+      const [h, m] = d.time.split(':').map(Number);
+      const s = new Date(day.getFullYear(), day.getMonth(), day.getDate(), h, m);
+      const e = new Date(s.getTime() + 3600000);
+      const f = (x) => c(x) + 'T' + pad(x.getHours()) + pad(x.getMinutes()) + '00';
+      dates = f(s) + '/' + f(e);
+    } else {
+      dates = c(day) + '/' + c(addDays(day, 1));
+    }
+    return 'https://calendar.google.com/calendar/render?action=TEMPLATE&text=' + encodeURIComponent(d.title) +
+      '&dates=' + dates + '&details=' + encodeURIComponent((d.original || '') + (d.sourceUrl ? '\n' + d.sourceUrl : ''));
+  }
+  /** wa.me link: with a number it opens a chat with that number (e.g. yourself); without, WhatsApp asks who to send to. */
+  function waUrl(text, number) {
+    const n = String(number || '').replace(/\D/g, '');
+    return 'https://wa.me/' + n + '?text=' + encodeURIComponent(text);
+  }
+  const mailUrl = (d) => 'mailto:?subject=' + encodeURIComponent('Deadline: ' + d.title) + '&body=' + encodeURIComponent(shareText(d));
+
+  return {
+    shareText, gcalUrl, waUrl, mailUrl,
+    TYPES, DAY_NAMES,
+    toISO, fromISO, isValidISO, isValidTime, addDays, startOfDay, describeDate, resolveRelative,
+    normalize, stripWhatsAppPrefix, detectType,
+    parseDeadline, preParseUrdu, extractFromText,
+    extractJSON, normalizeEvent, dedupe, copyAsText,
+    buildICS, icsEscape, foldLine,
+  };
+});
+</script>
+<script>
+(() => {
+  'use strict';
+  const DC = window.DeadlineCore;
+  const $ = (id) => document.getElementById(id);
+
+  const MAX_FILES = 5;
+  const MAX_BYTES = 10 * 1024 * 1024;
+  const SETTINGS_KEY = 'deadlinesync.settings.v1';
+  const DEFAULTS = { apiKey: '', model: 'claude-sonnet-4-6', endpoint: 'https://api.anthropic.com/v1/messages' };
+
+  const SYSTEM_PROMPT = `You are a deadline extraction engine for university syllabi. The document may be:
+- A scanned PDF or image, possibly low quality
+- In English, Urdu, or a mix of both
+- Using relative dates ("Week 3", "after midterm", "next class") or absolute dates in any format
+
+Your job:
+1. Extract every deadline, quiz, assignment, exam, project, and submission date.
+2. For each item return a JSON array where each object has:
+   - "title": string — event name, clean and descriptive
+   - "date": string — ISO 8601 (YYYY-MM-DD) if determinable, or "RELATIVE: Week X" if not
+   - "type": one of ["Quiz", "Assignment", "Exam", "Project", "Presentation", "Lab", "Other"]
+   - "confidence": one of ["high", "medium", "low"]
+   - "notes": string — any extra context (e.g. "covers chapters 1-3", "group submission")
+
+3. If a date is relative (Week 3), calculate the actual date using the semester start date provided by the user. If no start date given, return the relative form.
+4. Never hallucinate dates. If you cannot determine a date, set confidence to "low" and date to "UNKNOWN".
+5. Return ONLY a valid JSON array. No explanation, no markdown, no preamble.`;
+
+  const LOADING = ['Reading your syllabus...', 'Finding deadlines...', 'Building your calendar...'];
+
+  /* ------------------------------------------------------------ state */
+  let files = [];            // File[]
+  let rows = [];             // {id,title,date,time,type,confidence,notes}
+  let nextId = 1;
+  let busy = false;
+  let loadingTimer = null;
+  let settings = loadSettings();
+
+  /* ------------------------------------------------------------ utils */
+  function h(tag, attrs, ...kids) {
+    const n = document.createElement(tag);
+    for (const k of Object.keys(attrs || {})) {
+      const v = attrs[k];
+      if (v == null || v === false) continue;
+      if (k === 'class') n.className = v;
+      else if (k.slice(0, 2) === 'on') n.addEventListener(k.slice(2), v);
+      else if (k === 'value') n.value = v;
+      else n.setAttribute(k, v === true ? '' : v);
+    }
+    kids.flat().forEach((c) => { if (c != null && c !== false) n.append(c.nodeType ? c : document.createTextNode(c)); });
+    return n;
+  }
+  const todayISO = () => DC.toISO(new Date());
+  function loadSettings() {
+    try { return Object.assign({}, DEFAULTS, JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}')); }
+    catch (e) { return Object.assign({}, DEFAULTS); }
+  }
+  function storeSettings(s) {
+    try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)); return true; } catch (e) { return false; }
+  }
+  const fmtSize = (n) => (n >= 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB');
+  const slug = (s) => String(s || '').trim().toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-+|-+$/g, '');
+
+  function message(kind, text, extra) {
+    const palette = {
+      error: 'border-red-200 bg-red-50 text-red-900',
+      warn: 'border-yellow-200 bg-yellow-50 text-yellow-900',
+      info: 'border-green-200 bg-green-50 text-green-900',
+    };
+    const box = h('div', { class: 'rounded-xl border p-3 text-sm ' + palette[kind], role: kind === 'error' ? 'alert' : null }, text, extra || null);
+    $('messages').append(box);
+    return box;
+  }
+  const clearMessages = () => { $('messages').textContent = ''; };
+
+  /* ------------------------------------------------------------ settings panel */
+  $('apiKey').value = settings.apiKey;
+  $('model').value = settings.model;
+  $('endpoint').value = settings.endpoint;
+  $('settingsBtn').addEventListener('click', () => {
+    const open = $('settings').hidden;
+    $('settings').hidden = !open;
+    $('settingsBtn').setAttribute('aria-expanded', String(open));
+  });
+  const readSettingsForm = () => ({
+    apiKey: $('apiKey').value.trim(),
+    model: $('model').value.trim() || DEFAULTS.model,
+    endpoint: $('endpoint').value.trim() || DEFAULTS.endpoint,
+  });
+  function settingsSay(text, ok) {
+    const m = $('settingsMsg');
+    m.textContent = text;
+    m.className = 'text-sm ' + (ok ? 'text-green-700' : 'text-red-700');
+  }
+  $('saveSettings').addEventListener('click', () => {
+    settings = readSettingsForm();
+    settingsSay(storeSettings(settings) ? 'Saved ✓' : 'Saved for this tab only (browser blocked storage)', true);
+  });
+  $('testSettings').addEventListener('click', async () => {
+    const s = readSettingsForm();
+    if (!s.apiKey) return settingsSay('Enter a key first', false);
+    settingsSay('Testing…', true);
+    try {
+      await callClaude(s, { max_tokens: 16, messages: [{ role: 'user', content: 'Reply with the single word OK.' }] });
+      settingsSay('Connection works ✓', true);
+    } catch (e) {
+      settingsSay(e.message, false);
+    }
+  });
+
+  /* ------------------------------------------------------------ files */
+  function fileKind(f) {
+    if (f.type === 'application/pdf' || /\.pdf$/i.test(f.name)) return 'pdf';
+    if (/^image\/(jpeg|png|webp)$/.test(f.type) || /\.(jpe?g|png|webp)$/i.test(f.name)) return 'image';
+    return null;
+  }
+  function addFiles(list) {
+    const notes = [];
+    for (const f of Array.from(list)) {
+      if (!fileKind(f)) { notes.push(`“${f.name}” isn’t a PDF, JPG, PNG or WEBP.`); continue; }
+      if (f.size > MAX_BYTES) { notes.push(`“${f.name}” is ${fmtSize(f.size)} — the limit is 10 MB. Try a smaller photo or compress the PDF.`); continue; }
+      if (files.some((x) => x.name === f.name && x.size === f.size)) continue;
+      if (files.length >= MAX_FILES) { notes.push(`Only ${MAX_FILES} files at a time — “${f.name}” was skipped.`); continue; }
+      files.push(f);
+    }
+    renderFiles();
+    if (notes.length) { clearMessages(); notes.forEach((n) => message('warn', n)); }
+  }
+  function renderFiles() {
+    const ul = $('fileList');
+    ul.textContent = '';
+    files.forEach((f, i) => {
+      ul.append(
+        h('li', { class: 'flex items-center justify-between gap-3 rounded-lg bg-white px-3 py-2 text-sm' },
+          h('span', { class: 'min-w-0 truncate' }, (fileKind(f) === 'pdf' ? '📄 ' : '🖼️ ') + f.name, h('span', { class: 'ml-2 text-gray-500' }, fmtSize(f.size))),
+          h('button', { type: 'button', 'aria-label': 'Remove ' + f.name, class: 'shrink-0 rounded px-2 py-1 text-gray-500 hover:bg-gray-100 hover:text-red-600', onclick: () => { files.splice(i, 1); renderFiles(); } }, '✕')
+        )
+      );
+    });
+  }
+  $('fileInput').addEventListener('change', (e) => { addFiles(e.target.files); e.target.value = ''; });
+  const drop = $('drop');
+  ['dragenter', 'dragover'].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add('border-brand', 'bg-green-50'); }));
+  ['dragleave', 'drop'].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.remove('border-brand', 'bg-green-50'); }));
+  drop.addEventListener('drop', (e) => { if (e.dataTransfer && e.dataTransfer.files.length) addFiles(e.dataTransfer.files); });
+  // A missed drop must not navigate the tab away to the file.
+  ['dragover', 'drop'].forEach((ev) => window.addEventListener(ev, (e) => e.preventDefault()));
+  // Pasting a screenshot (Ctrl+V) from WhatsApp Web works too.
+  window.addEventListener('paste', (e) => {
+    const imgs = Array.from((e.clipboardData && e.clipboardData.files) || []).filter((f) => fileKind(f));
+    if (imgs.length) { e.preventDefault(); addFiles(imgs.map((f, i) => (f.name && f.name !== 'image.png' ? f : new File([f], 'pasted-' + (files.length + i + 1) + '.png', { type: f.type })))); }
+  });
+
+  $('semStart').value = todayISO();
+  $('sampleBtn').addEventListener('click', () => {
+    $('pasteText').value = 'Week 2: Quiz 1 (chapters 1-3)\nAssignment 1 due 15th October\nMidterm exam - Friday 6 Nov, 9 baje\nQuiz kal hai 9 baje\nLab report agla Somwar tak\nFinal project submission 18/12/2026';
+    $('pasteText').focus();
+  });
+
+  /* ------------------------------------------------------------ Claude */
+  async function callClaude(s, body) {
+    let res;
+    try {
+      res = await fetch(s.endpoint || DEFAULTS.endpoint, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-api-key': s.apiKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true',
+        },
+        body: JSON.stringify(Object.assign({ model: s.model || DEFAULTS.model }, body)),
+      });
+    } catch (e) {
+      throw new Error('Could not reach the API — check your internet connection (or the endpoint in settings).');
+    }
+    if (!res.ok) {
+      let detail = '';
+      try { detail = (await res.json()).error.message; } catch (e) { /* ignore */ }
+      const friendly = { 401: 'API key was rejected (401). Check it in ⚙ AI key.', 403: 'API key is not allowed to use this model (403).', 404: 'Model or endpoint not found (404) — check the model name in settings.', 413: 'File too large for the API (413).', 429: 'Rate limit hit (429) — wait a minute and try again.', 529: 'The API is overloaded (529) — try again shortly.' };
+      throw new Error((friendly[res.status] || 'API error ' + res.status) + (detail && !friendly[res.status] ? ': ' + detail : ''));
+    }
+    const data = await res.json();
+    return (data.content || []).map((c) => c.text || '').join('');
+  }
+
+  const readB64 = (blob) => new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result).split(',')[1] || '');
+    r.onerror = () => reject(new Error('Could not read “' + (blob.name || 'file') + '”.'));
+    r.readAsDataURL(blob);
+  });
+  const imageMime = (f) => (/^image\/(jpeg|png|webp)$/.test(f.type) ? f.type : /\.png$/i.test(f.name) ? 'image/png' : /\.webp$/i.test(f.name) ? 'image/webp' : 'image/jpeg');
+
+  // WhatsApp photos are often huge or tiny-and-blurry; scale to a size the API reads well and accepts (<5 MB).
+  async function imageBlock(f) {
+    const MAX_DIM = 1800;
+    let bmp = null;
+    try { bmp = await createImageBitmap(f, { imageOrientation: 'from-image' }); } catch (e) { /* send as-is */ }
+    if (!bmp || (Math.max(bmp.width, bmp.height) <= MAX_DIM && f.size <= 4.5 * 1048576)) {
+      if (bmp && bmp.close) bmp.close();
+      return { type: 'image', source: { type: 'base64', media_type: imageMime(f), data: await readB64(f) } };
+    }
+    const k = Math.min(1, MAX_DIM / Math.max(bmp.width, bmp.height));
+    const c = document.createElement('canvas');
+    c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k);
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
+    ctx.drawImage(bmp, 0, 0, c.width, c.height);
+    if (bmp.close) bmp.close();
+    return { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: c.toDataURL('image/jpeg', 0.88).split(',')[1] } };
+  }
+  async function fileBlock(f) {
+    if (fileKind(f) === 'pdf') return { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: await readB64(f) } };
+    return imageBlock(f);
+  }
+
+  function userText(extra) {
+    const start = $('semStart').value;
+    const course = $('courseName').value.trim();
+    return `Semester start date: ${start || 'not provided'}
+Course name: ${course || 'not provided'}
+Today's date: ${todayISO()}
+Document: ${extra ? 'see the pasted text below' : 'attached above'}
+${extra ? '\nPasted text:\n"""\n' + extra + '\n"""\n' : ''}
+Extract all deadlines from this syllabus. If a date has no year, use the semester start date to decide the year.`;
+  }
+
+  /** One request per file/text so a bad file never sinks the others. Returns {events} or {raw} on unparseable output. */
+  async function askClaude(content, label) {
+    const out = await callClaude(settings, {
+      max_tokens: 4096,
+      system: SYSTEM_PROMPT,
+      messages: [{ role: 'user', content }],
+    });
+    const arr = DC.extractJSON(out);
+    if (!arr) return { raw: out, label };
+    const start = $('semStart').value;
+    return {
+      label,
+      events: arr.filter((x) => x && typeof x === 'object').map((x) => DC.normalizeEvent(x, { semesterStart: start })).filter((e) => e.title && e.title !== 'Untitled'),
+    };
+  }
+
+  /* ------------------------------------------------------------ extract */
+  function setBusy(on) {
+    busy = on;
+    $('extractBtn').disabled = on;
+    $('loading').hidden = !on;
+    clearInterval(loadingTimer);
+    if (on) {
+      let i = 0;
+      $('loadingMsg').textContent = LOADING[0];
+      loadingTimer = setInterval(() => { i = (i + 1) % LOADING.length; $('loadingMsg').textContent = LOADING[i]; }, 2200);
+    }
+  }
+
+  $('extractBtn').addEventListener('click', async () => {
+    if (busy) return;
+    clearMessages();
+    $('results').hidden = true;
+    $('gcalTip').hidden = true;
+    const text = $('pasteText').value.trim();
+    if (!files.length && !text) return message('error', 'Add a syllabus file or paste some text first.');
+    const hasKey = !!settings.apiKey;
+    if (files.length && !hasKey) {
+      message('error', 'Reading PDFs and photos needs a Claude API key. Open “⚙ AI key” above and add one — or paste the text into the box instead (that works offline).');
+      if (!text) return;
+    }
+
+    setBusy(true);
+    const start = $('semStart').value;
+    const found = [];
+    const raws = [];
+    let failed = 0;
+    try {
+      const jobs = [];
+      if (hasKey) {
+        files.forEach((f) => jobs.push(
+          (async () => askClaude([await fileBlock(f), { type: 'text', text: userText('') }], f.name))()
+        ));
+        if (text) jobs.push(askClaude([{ type: 'text', text: userText(text) }], 'pasted text'));
+      }
+      const settled = await Promise.allSettled(jobs);
+      settled.forEach((r) => {
+        if (r.status === 'fulfilled') {
+          if (r.value.events) found.push(...r.value.events);
+          else raws.push(r.value);
+        } else {
+          failed++;
+          message('error', r.reason && r.reason.message ? r.reason.message : String(r.reason));
+        }
+      });
+      // Offline path: no key, or the AI call for the pasted text failed.
+      const textHandled = hasKey && settled.some((r, i) => i === jobs.length - 1 && text && r.status === 'fulfilled' && r.value.events);
+      if (text && !textHandled && !raws.some((r) => r.label === 'pasted text')) {
+        const offline = DC.extractFromText(text, { semesterStart: start || null });
+        offline.forEach((o) => found.push({ title: o.title, date: o.date, time: o.time, type: o.type, confidence: o.confidence, notes: o.original.slice(0, 140) }));
+        if (offline.length && hasKey) message('info', 'Pasted text was read with the built-in offline parser (the AI request failed).');
+      }
+    } finally {
+      setBusy(false);
+    }
+
+    raws.forEach((r) => {
+      const ta = h('textarea', { readonly: true, rows: 6, class: 'mt-2 w-full rounded-lg border border-yellow-300 bg-white p-2 font-mono text-xs text-gray-800' });
+      ta.value = r.raw;
+      message('warn', `Could not parse the result for ${r.label} automatically. Here is the raw reply — copy it if useful:`, ta);
+    });
+
+    rows = DC.dedupe(found).map((e) => Object.assign({ id: nextId++ }, e));
+    if (!rows.length) {
+      if (!failed && !raws.length) message('warn', 'No deadlines found — try uploading a clearer image.');
+      return;
+    }
+    sortRows();
+    renderRows();
+    $('results').hidden = false;
+    $('results').scrollIntoView({ block: 'start' });
+  });
+
+  /* ------------------------------------------------------------ results table */
+  const TYPES = DC.TYPES;
+  const BADGE = { high: 'bg-green-100 text-green-800', medium: 'bg-yellow-100 text-yellow-800', low: 'bg-red-100 text-red-800' };
+  const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+
+  function sortRows() {
+    rows.sort((a, b) => {
+      const va = DC.isValidISO(a.date), vb = DC.isValidISO(b.date);
+      if (va && vb) return a.date < b.date ? -1 : a.date > b.date ? 1 : 0;
+      return va ? -1 : vb ? 1 : 0;
+    });
+  }
+
+  function rowClass(r) {
+    const base = 'block rounded-xl border p-3 sm:table-row sm:rounded-none sm:border-0 sm:p-0 mb-3 sm:mb-0 ';
+    if (r.invalid) return base + 'border-red-400 bg-red-50';
+    if (r.confidence === 'low') return base + 'border-yellow-300 bg-yellow-50';
+    return base + 'border-gray-200 bg-white';
+  }
+  const cell = 'block sm:table-cell sm:border-b sm:border-gray-200 sm:py-2 sm:pr-2 align-top';
+  const inputCls = 'w-full rounded-lg border bg-white/80 px-2 py-1.5 text-sm focus-visible:outline-2 focus-visible:outline-brand ';
+
+  function refreshRow(tr, r) {
+    tr.className = rowClass(r);
+    const warn = tr.querySelector('[data-warn]');
+    if (warn) warn.hidden = !(r.confidence === 'low' || r.invalid);
+    const badge = tr.querySelector('[data-badge]');
+    if (badge) { badge.className = 'rounded-full px-2.5 py-1 text-xs font-bold ' + BADGE[r.confidence]; badge.value = r.confidence; }
+    const di = tr.querySelector('[data-date]');
+    if (di) di.className = inputCls + (r.invalid ? 'border-red-500 text-red-700' : 'border-gray-300');
+  }
+
+  function renderRows() {
+    const tb = $('rows');
+    tb.textContent = '';
+    rows.forEach((r) => tb.append(rowEl(r)));
+    $('count').textContent = '(' + rows.length + ')';
+  }
+
+  function rowEl(r) {
+    const tr = h('tr', { 'data-id': r.id });
+
+    const title = h('input', { type: 'text', dir: 'auto', value: r.title, 'aria-label': 'Event name', class: inputCls + 'border-gray-300 font-medium' });
+    title.addEventListener('input', () => { r.title = title.value; });
+    const note = h('input', { type: 'text', dir: 'auto', value: r.notes || '', placeholder: 'notes', 'aria-label': 'Notes', class: 'mt-1 w-full rounded-md border border-transparent bg-transparent px-2 py-0.5 text-xs text-gray-500 hover:border-gray-300 focus-visible:border-gray-300 focus-visible:outline-2 focus-visible:outline-brand' });
+    note.addEventListener('input', () => { r.notes = note.value; });
+    const warn = h('span', { 'data-warn': true, hidden: !(r.confidence === 'low'), title: 'Check this one', class: 'mr-1' }, '⚠️');
+
+    // date: free text (so "UNKNOWN" / "RELATIVE: Week 3" stay visible) + a calendar picker button
+    const dateInput = h('input', { type: 'text', 'data-date': true, inputmode: 'numeric', value: r.date, placeholder: 'YYYY-MM-DD', 'aria-label': 'Date', class: inputCls + 'border-gray-300' });
+    const picker = h('input', { type: 'date', tabindex: '-1', 'aria-hidden': 'true', class: 'pointer-events-none absolute h-0 w-0 opacity-0' });
+    const setDate = (v, confirmed) => {
+      r.date = v; dateInput.value = v;
+      if (DC.isValidISO(v)) { r.invalid = false; if (confirmed) r.confidence = 'high'; }
+      refreshRow(tr, r);
+    };
+    dateInput.addEventListener('input', () => { r.date = dateInput.value; if (r.invalid && DC.isValidISO(r.date.trim())) { r.invalid = false; refreshRow(tr, r); } });
+    dateInput.addEventListener('change', () => {
+      let v = dateInput.value.trim();
+      if (!DC.isValidISO(v) && v) {
+        // friendly input: "15 Oct", "15/10", "Friday" -> ISO, using the semester start as the year reference
+        const p = DC.parseDeadline(v, { semesterStart: $('semStart').value || null });
+        if (p.date) v = p.date;
+      }
+      setDate(v, DC.isValidISO(v));
+    });
+    const pickBtn = h('button', { type: 'button', title: 'Pick a date', 'aria-label': 'Pick a date', class: 'shrink-0 rounded-lg border border-gray-300 bg-white px-2 text-base hover:bg-gray-100',
+      onclick: () => { picker.value = DC.isValidISO(r.date) ? r.date : ''; (picker.showPicker ? picker.showPicker() : picker.click()); } }, '📅');
+    picker.addEventListener('change', () => { if (picker.value) setDate(picker.value, true); });
+
+    const time = r.time ? h('input', { type: 'time', value: r.time, 'aria-label': 'Time', class: 'mt-1 w-28 rounded-md border border-gray-300 bg-white/80 px-2 py-0.5 text-xs' }) : null;
+    if (time) time.addEventListener('input', () => { r.time = time.value || null; });
+
+    const type = h('select', { 'aria-label': 'Type', class: inputCls + 'border-gray-300' }, TYPES.map((t) => h('option', { value: t, selected: t === r.type }, t)));
+    type.addEventListener('change', () => { r.type = type.value; });
+
+    const badge = h('select', { 'data-badge': true, 'aria-label': 'Confidence', class: 'rounded-full px-2.5 py-1 text-xs font-bold ' + BADGE[r.confidence] },
+      ['high', 'medium', 'low'].map((c) => h('option', { value: c, selected: c === r.confidence }, cap(c))));
+    badge.addEventListener('change', () => { r.confidence = badge.value; refreshRow(tr, r); });
+
+    const del = h('button', { type: 'button', 'aria-label': 'Delete row', title: 'Delete', class: 'rounded-lg px-2 py-1.5 text-gray-500 hover:bg-red-100 hover:text-red-700',
+      onclick: () => { rows = rows.filter((x) => x.id !== r.id); tr.remove(); $('count').textContent = '(' + rows.length + ')'; if (!rows.length) $('results').hidden = true; } }, '🗑');
+
+    const lab = (t) => h('span', { class: 'mb-1 block text-xs font-semibold uppercase text-gray-500 sm:hidden' }, t);
+    tr.append(
+      h('td', { class: cell }, lab('Event name'), h('div', { class: 'flex items-center' }, warn, title), note),
+      h('td', { class: cell + ' relative' }, lab('Date'), h('div', { class: 'flex gap-1' }, dateInput, pickBtn, picker), time),
+      h('td', { class: cell }, lab('Type'), type),
+      h('td', { class: cell }, lab('Confidence'), badge),
+      h('td', { class: cell + ' sm:text-right' }, del)
+    );
+    refreshRow(tr, r);
+    return tr;
+  }
+
+  $('addRow').addEventListener('click', () => {
+    const r = { id: nextId++, title: 'New deadline', date: todayISO(), time: null, type: 'Other', confidence: 'high', notes: '' };
+    rows.push(r);
+    renderRows();
+    $('results').hidden = false;
+    const inp = $('rows').lastElementChild.querySelector('input');
+    inp.focus(); inp.select();
+  });
+
+  /* ------------------------------------------------------------ export */
+  function validate() {
+    let bad = 0;
+    rows.forEach((r) => {
+      r.invalid = !DC.isValidISO(String(r.date || '').trim());
+      if (!r.invalid) r.date = r.date.trim();
+      if (r.invalid) bad++;
+      const tr = $('rows').querySelector('[data-id="' + r.id + '"]');
+      if (tr) refreshRow(tr, r);
+    });
+    return bad;
+  }
+
+  $('gcalBtn').addEventListener('click', () => {
+    clearMessages();
+    $('gcalTip').hidden = true;
+    const bad = validate();
+    const good = rows.filter((r) => !r.invalid);
+    if (!good.length) {
+      message('error', 'No row has a valid date yet. Dates must look like 2026-10-15 — fix the rows highlighted in red (the 📅 button helps).');
+      const first = $('rows').querySelector('[data-date]');
+      if (first) first.focus();
+      return;
+    }
+    const course = $('courseName').value.trim();
+    const ics = DC.buildICS(good.map((r) => ({ title: r.title, date: r.date, time: r.time, type: r.type, notes: r.notes })), { course, calName: course ? course + ' deadlines' : 'Syllabus deadlines' });
+    const url = URL.createObjectURL(new Blob([ics], { type: 'text/calendar;charset=utf-8' }));
+    const a = h('a', { href: url, download: 'deadlines-' + (slug(course) || 'syllabus') + '.ics' });
+    document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+    $('gcalTip').hidden = false;
+    if (bad) message('warn', `${bad} row${bad > 1 ? 's were' : ' was'} skipped because the date isn’t valid (highlighted in red). Fix ${bad > 1 ? 'them' : 'it'} and export again.`);
+  });
+
+  $('copyBtn').addEventListener('click', async () => {
+    clearMessages();
+    validate();
+    const text = DC.copyAsText(rows, $('courseName').value.trim());
+    let ok = false;
+    try { await navigator.clipboard.writeText(text); ok = true; }
+    catch (e) {
+      const ta = h('textarea', { class: 'sr-only' }); ta.value = text; document.body.append(ta); ta.select();
+      try { ok = document.execCommand('copy'); } catch (e2) { /* ignore */ }
+      ta.remove();
+    }
+    message(ok ? 'info' : 'error', ok ? `Copied ${rows.length} deadline${rows.length === 1 ? '' : 's'} to the clipboard.` : 'Could not copy automatically — select the text from the table instead.');
+  });
+
+  // for automated tests
+  window.__ds = { get rows() { return rows; }, addFiles, DC };
+})();
+
+;(function(){try{var v=document.getElementById("lpVideo");if(v&&navigator.onLine&&!matchMedia("(prefers-reduced-motion: reduce)").matches){v.src=v.dataset.video;var p=v.play();if(p&&p.catch)p.catch(function(){});}}catch(e){}})();
+
+;(function(){try{var C=window.DeadlineCore,el=document.getElementById("lpIn"),out=document.getElementById("lpOut");if(!C||!el||!out)return;
+var ex=["Quiz he 9","Assignment 3 Friday tak","Viva kal 3 baje","Midterm agla Monday 10am","Report due 15 Dec 11:59pm","parson subah 8 baje paper"];
+function chip(t,c){var e=document.createElement("span");e.className="lp-chip"+(c?" "+c:"");e.textContent=t;return e}
+function render(){var t=el.value.trim();out.textContent="";var box=document.createElement("div");box.className="lp-pop";
+ if(!t){box.appendChild(chip("Type a message above","none"));out.appendChild(box);return}
+ var r=C.parseDeadline(t,{today:new Date()});
+ var h=document.createElement("div");h.className="lp-card-t";h.textContent=r.title||"Deadline";box.appendChild(h);
+ var row=document.createElement("div");row.className="lp-row";
+ row.appendChild(r.date?chip("📅 "+C.describeDate(r.date)):chip("No date found","warn"));
+ row.appendChild(r.time?chip("⏰ "+r.time):chip("all day","none"));
+ if(r.type)row.appendChild(chip(r.type,"none"));
+ box.appendChild(row);out.appendChild(box)}
+var i=0,typing=true,timer;function stop(){typing=false;clearInterval(timer)}
+el.addEventListener("focus",stop);el.addEventListener("input",function(){stop();render()});
+render();
+if(matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+function type(){var txt=ex[i%ex.length],n=0;el.value="";clearInterval(timer);timer=setInterval(function(){if(!typing){clearInterval(timer);return}n++;el.value=txt.slice(0,n);if(n>=txt.length){clearInterval(timer);render();setTimeout(function(){if(typing){i++;type()}},2400)}},55)}
+setTimeout(function(){if(typing)type()},1800);
+}catch(e){}})();
+</script>
+</body>
+</html>

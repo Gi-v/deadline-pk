@@ -1,0 +1,700 @@
+/*
+ * deadline-core.js — shared engine for DeadlineSync PK (web) and DeadlinePinPK (extension).
+ *
+ * Works with no network and no API key:
+ *   - Roman-Urdu / Urdu-script / English date + time parsing
+ *   - event-type detection and clean title extraction
+ *   - WhatsApp export prefix stripping
+ *   - AI-response normalisation (JSON recovery, relative "Week N" resolution, dedupe)
+ *   - RFC 5545 .ics generation (all-day or timed events, VALARM, line folding, UTF-8 safe)
+ *
+ * UMD: loads as a <script> (window.DeadlineCore / self.DeadlineCore) or via require().
+ * Source of truth lives in /shared; build.mjs inlines it into the web app and
+ * copies it to extension/core.js. Do not edit the copies.
+ */
+(function (root, factory) {
+  if (typeof module === 'object' && module.exports) module.exports = factory();
+  else root.DeadlineCore = factory();
+})(typeof self !== 'undefined' ? self : this, function () {
+  'use strict';
+
+  const TYPES = ['Quiz', 'Assignment', 'Exam', 'Project', 'Presentation', 'Lab', 'Other'];
+  const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+  /* ------------------------------------------------------------------ date helpers */
+  const pad = (n) => String(n).padStart(2, '0');
+  const startOfDay = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const addDays = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+  const toISO = (d) => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+
+  function validDate(y, m, d) {
+    const dt = new Date(y, m, d);
+    if (dt.getFullYear() !== y || dt.getMonth() !== m || dt.getDate() !== d) return null;
+    return dt;
+  }
+  function fromISO(s) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(s || '').trim());
+    return m ? validDate(+m[1], +m[2] - 1, +m[3]) : null;
+  }
+  const isValidISO = (s) => !!fromISO(s);
+  function isValidTime(t) {
+    const m = /^(\d{2}):(\d{2})$/.exec(String(t || ''));
+    return !!m && +m[1] <= 23 && +m[2] <= 59;
+  }
+  function describeDate(iso) {
+    const d = fromISO(iso);
+    if (!d) return String(iso || '');
+    return DAY_NAMES[d.getDay()].slice(0, 3) + ', ' + d.getDate() + ' ' + MONTH_NAMES[d.getMonth()] + ' ' + d.getFullYear();
+  }
+  const mondayOf = (d) => addDays(startOfDay(d), -((d.getDay() + 6) % 7));
+  const nextOnOrAfter = (d, wd) => addDays(d, (wd - d.getDay() + 7) % 7);
+  const nextStrictlyAfter = (d, wd) => addDays(d, (wd - d.getDay() + 7) % 7 || 7);
+  const prevStrictlyBefore = (d, wd) => addDays(d, -((d.getDay() - wd + 7) % 7 || 7));
+
+  /** Day of week + month/day with no year: pick the year that keeps it near `ref`. */
+  function inferYear(month, day, ref, pastDays) {
+    let y = ref.getFullYear();
+    let c = validDate(y, month, day);
+    if (c && c < addDays(ref, -(pastDays == null ? 90 : pastDays))) c = validDate(y + 1, month, day);
+    return c;
+  }
+
+  /** "RELATIVE: Week 3" / "week 3" + semester start -> ISO (week 1 starts on the start date). */
+  function resolveRelative(str, startISO) {
+    const m = /week\s*#?\s*(\d{1,2})/i.exec(String(str || ''));
+    const start = fromISO(startISO);
+    if (!m || !start) return null;
+    return toISO(addDays(start, 7 * (+m[1] - 1)));
+  }
+
+  /* ------------------------------------------------------------------ text normalisation */
+  const B1 = '(?<![\\p{L}\\p{N}_])';
+  const B2 = '(?![\\p{L}\\p{N}_])';
+  const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const alt = (words) =>
+    '(?:' + words.slice().sort((a, b) => b.length - a.length).map(esc).join('|') + ')';
+
+  function normalize(text) {
+    return String(text == null ? '' : text)
+      .normalize('NFKC')
+      .replace(/[\u0660-\u0669]/g, (c) => String(c.charCodeAt(0) - 0x660))
+      .replace(/[\u06F0-\u06F9]/g, (c) => String(c.charCodeAt(0) - 0x6f0))
+      .replace(/[\u064B-\u065F\u0670\u200c\u200d\u200e\u200f]/g, '')
+      .replace(/[\u2018\u2019\u02bc]/g, "'")
+      .replace(/[\u2013\u2014]/g, '-')
+      .replace(/\u00a0/g, ' ')
+      .replace(/\r/g, '');
+  }
+  const blank = (s, a, b) => s.slice(0, a) + ' '.repeat(b - a) + s.slice(b);
+
+  /** Remove "[10:42 am, 22/11/2026] Name:" or "22/11/26, 10:42 - Name:" WhatsApp export prefixes. */
+  function stripWhatsAppPrefix(line) {
+    return String(line || '')
+      .replace(/^\s*\[[^\]\n]{4,40}\]\s*[^:\n]{1,40}:\s*/, '')
+      .replace(/^\s*\d{1,2}[\/.]\d{1,2}[\/.]\d{2,4},?\s+\d{1,2}:\d{2}(?::\d{2})?\s*(?:[ap]\.?m\.?)?\s*-\s*[^:\n]{1,40}:\s*/i, '');
+  }
+
+  /* ------------------------------------------------------------------ vocab */
+  const WEEKDAY_WORDS = {
+    0: ['sunday', 'sun', 'itwar', 'itwaar', 'etwar', 'aitwar', 'ittwar', 'اتوار'],
+    1: ['monday', 'mon', 'somwar', 'somvar', 'sombar', 'peer', 'pir', 'پیر'],
+    2: ['tuesday', 'tues', 'tue', 'mangal', 'mangalwar', 'mangl', 'منگل'],
+    3: ['wednesday', 'wed', 'budh', 'budhwar', 'budhar', 'بدھ'],
+    4: ['thursday', 'thurs', 'thur', 'thu', 'jumerat', 'jumeraat', 'jummerat', 'jumarat', 'jumayrat', 'جمعرات'],
+    5: ['friday', 'fri', 'jumma', 'jummah', 'jumah', 'juma', 'jumu', 'جمعہ', 'جمعه'],
+    6: ['saturday', 'sat', 'hafta', 'haftah', 'sanichar', 'ہفتہ', 'ہفته'],
+  };
+  const WORD_TO_WD = {};
+  Object.keys(WEEKDAY_WORDS).forEach((k) => WEEKDAY_WORDS[k].forEach((w) => (WORD_TO_WD[w] = +k)));
+  const WD_ALT = alt(Object.keys(WORD_TO_WD));
+
+  const MONTHS = {
+    january: 0, jan: 0, february: 1, feb: 1, march: 2, mar: 2, april: 3, apr: 3, may: 4,
+    june: 5, jun: 5, july: 6, jul: 6, august: 7, aug: 7, september: 8, sept: 8, sep: 8,
+    october: 9, oct: 9, november: 10, nov: 10, december: 11, dec: 11,
+  };
+  const MONTH_ALT = alt(Object.keys(MONTHS));
+
+  const DP = {
+    morning: ['subah', 'subha', 'subeh', 'sawere', 'savere', 'صبح', 'morning'],
+    afternoon: ['dopahar', 'dopehar', 'dupahar', 'دوپہر', 'afternoon'],
+    evening: ['shaam', 'شام', 'evening'],
+    night: ['raat', 'رات', 'night'],
+  };
+  const DP_ALT = alt([].concat(DP.morning, DP.afternoon, DP.evening, DP.night));
+  const dayPartOf = (w) => {
+    w = w.toLowerCase();
+    for (const k in DP) if (DP[k].indexOf(w) !== -1) return k;
+    return null;
+  };
+
+  const NEXT_W = '(?:next|agla|agle|agli|اگلے|اگلا|اگلی|coming)';
+  const THIS_W = '(?:this|iss|is|اس)';
+  const WEEK_W = '(?:week|hafta|hafte|haftah|ہفتے|ہفتہ)';
+
+  const RE = {
+    // times
+    tBaje: new RegExp(
+      B1 + '(?:(' + DP_ALT + ')\\s*(?:ko\\s*)?)?(\\d{1,2})(?::(\\d{2}))?\\s*(?:baje|bje|bajay|بجے|o\'clock)' + B2 +
+        '(?:\\s*(?:ko\\s*)?(' + DP_ALT + ')' + B2 + ')?', 'giu'),
+    tColon: new RegExp(B1 + '(\\d{1,2})([:.])(\\d{2})(?!\\d)(?:\\s*(am|pm|a\\.m\\.|p\\.m\\.)(?![\\p{L}]))?', 'giu'),
+    tMer: new RegExp(B1 + '(\\d{1,2})\\s*(am|pm|a\\.m\\.|p\\.m\\.)(?![\\p{L}])', 'giu'),
+    // Bare "hai 9" / "at 5" / "kal 9": only after a cue word, and only when the number ends the phrase
+    // (so "Lab 4 kal", "kal 2 quizzes hain", "by 5 Dec", "chapters 1-3" are NOT times).
+    tBare: new RegExp(
+      B1 + '(?:at|by|@|ko|hai|he|hy|hay|hain|kal|aaj|parson|today|tomorrow|tonight|until|till)\\s*(\\d{1,2})(?![\\p{N}:./\\/-])' +
+        '(?=\\s*(?:$|[.,;!?)]|-\\s|(?:tak|tk|sharp|se|ko|hai|he|hy|hay|hain|ho|ga|gi|ka|ki|ke|par|pe|baad|subah|shaam|raat|dopahar)(?![\\p{L}])))', 'gimu'),
+    tWord: new RegExp(B1 + '(eod|end of day|cob|midnight|noon)' + B2, 'giu'),
+    // absolute dates
+    iso: new RegExp('(?<![\\p{N}])(\\d{4})[-/.](\\d{1,2})[-/.](\\d{1,2})(?![\\p{N}])', 'gu'),
+    num: new RegExp('(?<![\\p{N}.\\/-])(\\d{1,2})([\\/.-])(\\d{1,2})(?:\\2(\\d{4}|\\d{2}))?(?![\\p{N}]|[\\/.-]\\p{N})', 'gu'),
+    dm: new RegExp('(?<![\\p{N}])(\\d{1,2})(?:st|nd|rd|th)?\\s*(?:of\\s+)?(' + MONTH_ALT + ')\\.?(?![\\p{L}])(?:\\s*,?\\s*(20\\d{2})(?!\\d))?', 'giu'),
+    md: new RegExp(B1 + '(' + MONTH_ALT + ')\\.?\\s*(\\d{1,2})(?:st|nd|rd|th)?(?![\\p{N}])(?:\\s*,?\\s*(20\\d{2})(?!\\d))?', 'giu'),
+    // relative
+    nextWeek: new RegExp(B1 + NEXT_W + '\\s+' + WEEK_W + '(?!\\s*\\d)' + B2, 'giu'),
+    thisWeek: new RegExp(B1 + THIS_W + '\\s+' + WEEK_W + '(?!\\s*\\d)' + B2, 'giu'),
+    nextWd: new RegExp(B1 + NEXT_W + '\\s+(?:ka\\s+|ke\\s+)?(' + WD_ALT + ')' + B2, 'giu'),
+    lastWd: new RegExp(B1 + '(?:last|pichla|pichle|pichli|پچھلے|پچھلا)\\s+(' + WD_ALT + ')' + B2, 'giu'),
+    dayAfter: new RegExp(B1 + '(?:day after tomorrow|parson|parso|parsoon|parsoo|پرسوں)' + B2, 'giu'),
+    in3: new RegExp(B1 + '(?:narson|narsoo|narsoon|nrson|ترسوں)' + B2, 'giu'),
+    tomorrow: new RegExp(B1 + '(?:tomorrow|tommorow|tomorow|tmrw|tmr|kal|kall|کل)' + B2, 'giu'),
+    today: new RegExp(B1 + '(?:today|tonight|aaj|aj|آج)' + B2, 'giu'),
+    inN1: new RegExp(B1 + 'in\\s+(\\d{1,2})\\s+days?' + B2, 'giu'),
+    inN2: new RegExp(B1 + '(\\d{1,2})\\s*(?:din|days?)\\s*(?:baad|bad|mein|me|later)' + B2, 'giu'),
+    weekN: new RegExp(B1 + '(?:week|wk|hafta|haftah)\\s*#?\\s*(\\d{1,2})(?![\\p{N}])', 'giu'),
+    wd: new RegExp(B1 + '(' + WD_ALT + ')' + B2, 'giu'),
+    past: new RegExp(B1 + '(?:tha|thi|hua|hui|huwa|gaya|gayi|chuka|chuki|was|were|yesterday)' + B2, 'iu'),
+  };
+
+  function firstMatch(re, s, accept) {
+    re.lastIndex = 0;
+    let m;
+    while ((m = re.exec(s))) {
+      if (!accept || accept(m)) return m;
+      if (m[0].length === 0) re.lastIndex++;
+    }
+    return null;
+  }
+  function allMatches(re, s, accept) {
+    re.lastIndex = 0;
+    const out = [];
+    let m;
+    while ((m = re.exec(s))) {
+      if (!accept || accept(m)) out.push(m);
+      if (m[0].length === 0) re.lastIndex++;
+    }
+    return out;
+  }
+  // "peer review" is not Monday.
+  const wdAccept = (s) => (m) =>
+    !(/^(peer|pir)$/i.test(m[1]) && /^\s*(review|feedback|evaluation|assessment|grading|teaching|mentor)/i.test(s.slice(m.index + m[0].length)));
+
+  /* ------------------------------------------------------------------ time */
+  function to24(h, mer, dp) {
+    let assumed = false;
+    if (mer) {
+      const pm = /^p/i.test(mer);
+      h = pm ? (h % 12) + 12 : h % 12;
+    } else if (dp === 'morning') {
+      h = h % 12;
+    } else if (dp === 'afternoon') {
+      if (h >= 1 && h <= 6) h += 12;
+    } else if (dp === 'evening') {
+      if (h < 12) h += 12;
+    } else if (dp === 'night') {
+      if (h === 12) h = 0;
+      else if (h >= 6 && h < 12) h += 12;
+    } else if (h >= 1 && h <= 6) {
+      h += 12;
+      assumed = true;
+    } else if (h <= 12) {
+      assumed = true;
+    }
+    return { h, assumed };
+  }
+
+  function findTime(s) {
+    const cands = [];
+    let m = firstMatch(RE.tBaje, s);
+    if (m) {
+      const dp = dayPartOf(m[1] || m[4] || '') || null;
+      const hh = +m[2], mm = m[3] ? +m[3] : 0;
+      if (hh <= 24 && mm < 60) {
+        const r = to24(hh === 24 ? 0 : hh, null, dp);
+        cands.push({ i: m.index, e: m.index + m[0].length, h: r.h, mm, assumed: r.assumed });
+      }
+    }
+    // "11.59pm" is a time, but "15.10" / "15.10.26" are dates: a dot needs am/pm to count.
+    m = firstMatch(RE.tColon, s, (x) => +x[1] <= 24 && +x[3] < 60 && (x[2] === ':' || !!x[4]));
+    if (m) {
+      const hh = +m[1], mm = +m[3];
+      if (m[4]) {
+        if (hh >= 1 && hh <= 12) cands.push({ i: m.index, e: m.index + m[0].length, h: to24(hh, m[4]).h, mm, assumed: false });
+      } else {
+        const r = hh >= 13 ? { h: hh, assumed: false } : to24(hh, null, null);
+        cands.push({ i: m.index, e: m.index + m[0].length, h: r.h, mm, assumed: r.assumed });
+      }
+    }
+    m = firstMatch(RE.tMer, s, (x) => +x[1] >= 1 && +x[1] <= 12);
+    if (m) cands.push({ i: m.index, e: m.index + m[0].length, h: to24(+m[1], m[2]).h, mm: 0, assumed: false });
+    m = firstMatch(RE.tWord, s);
+    if (m) {
+      const w = m[1].toLowerCase();
+      cands.push({ i: m.index, e: m.index + m[0].length, h: w === 'noon' ? 12 : 23, mm: w === 'noon' ? 0 : 59, assumed: false });
+    }
+    if (!cands.length) {
+      m = firstMatch(RE.tBare, s, (x) => +x[1] >= 1 && +x[1] <= 12);
+      if (m) {
+        const r = to24(+m[1], null, null);
+        const e = m.index + m[0].length;
+        cands.push({ i: e - m[1].length, e, h: r.h, mm: 0, assumed: true });
+      }
+    }
+    if (!cands.length) return null;
+    cands.sort((a, b) => a.i - b.i);
+    const c = cands[0];
+    if (c.h > 23) return null;
+    return { time: pad(c.h) + ':' + pad(c.mm), start: c.i, end: c.e, assumed: c.assumed };
+  }
+
+  /* ------------------------------------------------------------------ date */
+  function findDate(s, ctx) {
+    const { today, ref, start, pastDays } = ctx;
+    const abs = [];
+
+    let m = firstMatch(RE.iso, s, (x) => validDate(+x[1], +x[2] - 1, +x[3]));
+    if (m) abs.push({ i: m.index, e: m.index + m[0].length, date: validDate(+m[1], +m[2] - 1, +m[3]), kind: 'iso', conf: 'high' });
+
+    m = firstMatch(RE.num, s, (x) => {
+      if (!x[4] && x[2] !== '/') return false;
+      let d = +x[1], mo = +x[3];
+      if (mo > 12 && d <= 12) { const t = d; d = mo; mo = t; }
+      return mo >= 1 && mo <= 12 && d >= 1 && d <= 31;
+    });
+    if (m) {
+      let d = +m[1], mo = +m[3], swapped = false;
+      if (mo > 12 && d <= 12) { const t = d; d = mo; mo = t; swapped = true; }
+      let y = m[4] ? (m[4].length === 2 ? 2000 + +m[4] : +m[4]) : null;
+      const dt = y ? validDate(y, mo - 1, d) : inferYear(mo - 1, d, ref, pastDays);
+      if (dt) abs.push({ i: m.index, e: m.index + m[0].length, date: dt, kind: 'numeric', conf: y && !swapped ? 'high' : 'medium' });
+    }
+
+    m = firstMatch(RE.dm, s, (x) => !!validDate(2000, MONTHS[x[2].toLowerCase()], +x[1]) || +x[1] === 29);
+    if (m) {
+      const mo = MONTHS[m[2].toLowerCase()], d = +m[1];
+      const dt = m[3] ? validDate(+m[3], mo, d) : inferYear(mo, d, ref, pastDays);
+      if (dt) abs.push({ i: m.index, e: m.index + m[0].length, date: dt, kind: 'day-month', conf: 'high' });
+    }
+
+    m = firstMatch(RE.md, s, (x) => +x[2] >= 1 && +x[2] <= 31);
+    if (m) {
+      const mo = MONTHS[m[1].toLowerCase()], d = +m[2];
+      const dt = m[3] ? validDate(+m[3], mo, d) : inferYear(mo, d, ref, pastDays);
+      if (dt) abs.push({ i: m.index, e: m.index + m[0].length, date: dt, kind: 'month-day', conf: 'high' });
+    }
+
+    // "Quiz 1 Oct 18": the "1" belongs to the quiz, so "1 Oct" loses to "Oct 18".
+    const dmC = abs.find((a) => a.kind === 'day-month'), mdC = abs.find((a) => a.kind === 'month-day');
+    if (dmC && mdC && mdC.i < dmC.e && /(?:quiz|assignment|asgn|lab|test|project|hw|homework|chapter|ch|part|set|problem|q|week|wk|lecture|lec|#)\s*$/i.test(s.slice(0, dmC.i))) {
+      abs.splice(abs.indexOf(dmC), 1);
+    }
+
+    if (abs.length) {
+      abs.sort((a, b) => a.i - b.i);
+      return abs[0];
+    }
+
+    // "hafta" means both "week" and "Saturday": hide week phrases before looking for a weekday.
+    let sw = s;
+    [RE.nextWeek, RE.thisWeek].forEach((re) => allMatches(re, s).forEach((x) => { sw = blank(sw, x.index, x.index + x[0].length); }));
+    const wdTok = firstMatch(RE.wd, sw, wdAccept(sw));
+    const wd = wdTok ? WORD_TO_WD[wdTok[1].toLowerCase()] : null;
+    const pastWord = RE.past.test(s);
+
+    // "next week" / "agle hafte [monday]"
+    m = firstMatch(RE.nextWeek, s);
+    if (m) {
+      let end = m.index + m[0].length;
+      if (wdTok) {
+        const dt = addDays(mondayOf(today), 7 + ((wd + 6) % 7));
+        return { i: Math.min(m.index, wdTok.index), e: Math.max(end, wdTok.index + wdTok[0].length), date: dt, kind: 'next-week-weekday', conf: 'medium', wdBlank: wdTok };
+      }
+      return { i: m.index, e: end, date: addDays(today, 7), kind: 'next-week', conf: 'medium' };
+    }
+    // "this week" / "is hafta [friday]"
+    m = firstMatch(RE.thisWeek, s);
+    if (m) {
+      const end = m.index + m[0].length;
+      if (wdTok) {
+        const dt = addDays(mondayOf(today), (wd + 6) % 7);
+        return { i: Math.min(m.index, wdTok.index), e: Math.max(end, wdTok.index + wdTok[0].length), date: dt, kind: 'this-week-weekday', conf: dt < today ? 'low' : 'medium', wdBlank: wdTok };
+      }
+      return { i: m.index, e: end, date: addDays(mondayOf(today), 4), kind: 'this-week', conf: 'medium' };
+    }
+    m = firstMatch(RE.nextWd, s);
+    if (m) return { i: m.index, e: m.index + m[0].length, date: nextStrictlyAfter(today, WORD_TO_WD[m[1].toLowerCase()]), kind: 'next-weekday', conf: 'medium' };
+    m = firstMatch(RE.lastWd, s);
+    if (m) return { i: m.index, e: m.index + m[0].length, date: prevStrictlyBefore(today, WORD_TO_WD[m[1].toLowerCase()]), kind: 'last-weekday', conf: 'low' };
+
+    m = firstMatch(RE.dayAfter, s);
+    if (m) return { i: m.index, e: m.index + m[0].length, date: addDays(today, pastWord ? -2 : 2), kind: 'day-after-tomorrow', conf: pastWord ? 'low' : 'high' };
+    m = firstMatch(RE.in3, s);
+    if (m) return { i: m.index, e: m.index + m[0].length, date: addDays(today, 3), kind: 'in-3-days', conf: 'medium' };
+    m = firstMatch(RE.tomorrow, s);
+    if (m) return { i: m.index, e: m.index + m[0].length, date: addDays(today, pastWord ? -1 : 1), kind: 'tomorrow', conf: pastWord ? 'low' : 'high' };
+    m = firstMatch(RE.today, s);
+    if (m) return { i: m.index, e: m.index + m[0].length, date: today, kind: 'today', conf: 'high' };
+    m = firstMatch(RE.inN1, s) || firstMatch(RE.inN2, s);
+    if (m) return { i: m.index, e: m.index + m[0].length, date: addDays(today, +m[1]), kind: 'in-n-days', conf: 'medium' };
+
+    m = firstMatch(RE.weekN, s);
+    if (m) {
+      const n = +m[1];
+      const span = { i: m.index, e: m.index + m[0].length };
+      if (!start) return Object.assign(span, { date: null, kind: 'week-n', conf: 'low', relative: 'Week ' + n });
+      let dt = addDays(start, 7 * (n - 1));
+      let wdb = null;
+      if (wdTok) {
+        dt = addDays(dt, (wd - start.getDay() + 7) % 7);
+        wdb = wdTok;
+      }
+      return Object.assign(span, { date: dt, kind: 'week-n', conf: 'medium', relative: 'Week ' + n, wdBlank: wdb });
+    }
+
+    if (wdTok) {
+      const dt = nextOnOrAfter(today, wd);
+      return { i: wdTok.index, e: wdTok.index + wdTok[0].length, date: dt, kind: 'weekday', conf: 'medium' };
+    }
+    return null;
+  }
+
+  /* ------------------------------------------------------------------ type + title */
+  const TYPE_RES = [
+    ['Quiz', /(?<![\p{L}])(quizzes|quiz|class test|test|tests|کوئز|ٹیسٹ)(?![\p{L}])/iu],
+    ['Assignment', /(?<![\p{L}])(assignments?|assgn|asgn|homework|hw|problem set|pset|worksheet|اسائنمنٹ|اسائینمنٹ|ہوم ورک)(?![\p{L}])/iu],
+    ['Exam', /(?<![\p{L}])(mid-?term|mid term|midsem|mids|finals?(?!\s+(?:project|report|presentation|submission|assignment|lab|draft|viva))|exams?|(?<!research\s)(?<!term\s)paper|sessional|oht|امتحان|مڈ ?ٹرم|فائنل|پیپر)(?![\p{L}])/iu],
+    ['Project', /(?<![\p{L}])(projects?|proposal|reports?|thesis|fyp|term paper|capstone|prototype|پروجیکٹ|رپورٹ)(?![\p{L}])/iu],
+    ['Presentation', /(?<![\p{L}])(presentations?|viva|demo|pitch|seminar|ppt|slides|پریزنٹیشن|وائیوا)(?![\p{L}])/iu],
+    ['Lab', /(?<![\p{L}])(labs?|practicals?|لیب|پریکٹیکل)(?![\p{L}])/iu],
+  ];
+  function detectType(text) {
+    let best = null;
+    for (const [type, re] of TYPE_RES) {
+      const m = re.exec(text);
+      if (m && (!best || m.index < best.i)) best = { type, i: m.index };
+    }
+    return best ? best.type : 'Other';
+  }
+
+  const FILLERS = alt([
+    'he', 'hy', 'hn', 'kaha', 'to', 'extended', 'moved', 'postponed', 'preponed', 'rescheduled', 'shifted', 'karo', 'karna', 'krna', 'kro', 'kardo', 'karen', 'karein', 'kijiye', 'karni', 'karnay', 'hai', 'hain', 'hay', 'hoga',
+    'hogi', 'hongay', 'hoon', 'ho', 'ga', 'gi', 'tak', 'by', 'on', 'at', 'due', 'submit', 'submitted', 'submission',
+    'submissions', 'deadline', 'before', 'until', 'till', 'the', 'is', 'are', 'will', 'be', 'ka', 'ki', 'ke', 'ko', 'ne',
+    'se', 'mein', 'me', 'pe', 'par', 'aur', 'sab', 'sabko', 'please', 'plz', 'pls', 'reminder', 'note', 'dear', 'students',
+    'everyone', 'guys', 'all', 'wala', 'wali', 'lazmi', 'zaroor', 'jama', 'jamma', 'bhejna', 'bhejo', 'send', 'upload',
+    'tha', 'thi', 'agla', 'agle', 'agli', 'next', 'iss', 'this', 'coming', 'yaad', 'rakhen', 'rakhna', 'ہے', 'ہیں', 'تک',
+    'کو', 'کا', 'کی', 'کے', 'جمع', 'کریں', 'کرو', 'ہو', 'گا', 'گی', 'میں', 'پر', 'سے', 'ہوگا', 'ہوگی',
+  ]);
+  const FILLER_RE = new RegExp(B1 + FILLERS + B2, 'giu');
+
+  function buildTitle(blanked, type, original) {
+    let t = blanked
+      .replace(FILLER_RE, ' ')
+      .replace(/\s[-–—:]+\s/g, ' ')
+      .replace(/[,;:|•"“”()[\]!?*_~]+/g, ' ')
+      .replace(/(^|\s)[-–—.]+(?=\s|$)/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .replace(/^[-–—.\s]+|[-–—.\s]+$/g, '');
+    if (t.length < 2) {
+      t = type !== 'Other' ? type : /deadline|due|submit|submission/i.test(original) ? 'Submission' : 'Deadline';
+    }
+    t = t.charAt(0).toUpperCase() + t.slice(1);
+    return t.length > 80 ? t.slice(0, 77).trim() + '…' : t;
+  }
+
+  /* ------------------------------------------------------------------ parse one snippet */
+  /**
+   * parseDeadline(text, {today, ref, semesterStart}) -> {
+   *   title, date:'YYYY-MM-DD'|null, time:'HH:MM'|null, confidence:'high'|'medium'|'low',
+   *   type, notes, original, kind, relative, timeAssumed }
+   */
+  function parseDeadline(text, opts) {
+    opts = opts || {};
+    const today = startOfDay(opts.today || new Date());
+    const start = opts.semesterStart ? (opts.semesterStart instanceof Date ? startOfDay(opts.semesterStart) : fromISO(opts.semesterStart)) : null;
+    const ref = opts.ref ? startOfDay(opts.ref) : start || today;
+    const original = String(text == null ? '' : text).trim();
+    let s = normalize(original);
+
+    const t = findTime(s);
+    if (t) s = blank(s, t.start, t.end);
+
+    const d = findDate(s, { today, ref, start, pastDays: opts.pastDays });
+    if (d) {
+      s = blank(s, d.i, d.e);
+      if (d.wdBlank) s = blank(s, d.wdBlank.index, d.wdBlank.index + d.wdBlank[0].length);
+      if (['iso', 'numeric', 'day-month', 'month-day'].indexOf(d.kind) !== -1) {
+        // "Friday 18 Oct": weekday words are redundant once an exact date exists.
+        allMatches(RE.wd, s, wdAccept(s)).reverse().forEach((m) => { s = blank(s, m.index, m.index + m[0].length); });
+      }
+    }
+
+    const type = detectType(s);
+    const title = buildTitle(s, type, original);
+    const date = d && d.date ? toISO(d.date) : null;
+    return {
+      title,
+      date,
+      time: t ? t.time : null,
+      confidence: date ? d.conf : 'low',
+      type,
+      notes: d && d.relative && !date ? 'RELATIVE: ' + d.relative : '',
+      original,
+      kind: d ? d.kind : t ? 'time-only' : 'none',
+      relative: d && d.relative ? d.relative : null,
+      timeAssumed: !!(t && t.assumed),
+    };
+  }
+
+  /**
+   * Pre-pass used before the AI call: resolves Roman-Urdu / relative dates locally
+   * and returns a hint string so the model has the concrete calendar date as context.
+   */
+  function preParseUrdu(text, today) {
+    const t = startOfDay(today || new Date());
+    // A pinned message is almost never about the past: a yearless date more than 2 weeks gone means next year.
+    const r = parseDeadline(text, { today: t, pastDays: 14 });
+    let hint = 'Reference date (the day the text was written): ' + describeDate(toISO(t)) + ' (' + toISO(t) + ').';
+    if (r.date) {
+      hint += ' Local pre-parser resolved the date as ' + r.date + ' (' + DAY_NAMES[fromISO(r.date).getDay()] + ')' +
+        (r.time ? ' at ' + r.time : '') + ' using rule "' + r.kind + '" (confidence ' + r.confidence + ').';
+    } else {
+      hint += ' Local pre-parser found no concrete date.';
+    }
+    return { annotated: hint + '\n\nText: ' + text, hint, parsed: r };
+  }
+
+  /* ------------------------------------------------------------------ multi-line text (paste mode) */
+  function countAbsDates(s) {
+    return allMatches(RE.iso, s).length + allMatches(RE.dm, s).length + allMatches(RE.md, s).length +
+      allMatches(RE.num, s, (x) => !!x[4] || x[2] === '/').length;
+  }
+  function splitMulti(line) {
+    const n = normalize(line);
+    if (countAbsDates(n) < 2) return [line];
+    const parts = line.split(/\s*(?:,|;|&|\band\b|\baur\b)\s*/i).filter((p) => p.trim());
+    if (parts.length >= 2 && parts.every((p) => countAbsDates(normalize(p)) >= 1)) return parts;
+    return [line];
+  }
+
+  /** Extract every dated / event-looking line from pasted text (e.g. a WhatsApp chat or typed syllabus). */
+  function extractFromText(text, opts) {
+    opts = opts || {};
+    const out = [];
+    String(text || '')
+      .split(/\n|•/)
+      .map((l) => stripWhatsAppPrefix(l).trim())
+      .filter((l) => l.length >= 3)
+      .forEach((line) => {
+        splitMulti(line).forEach((chunk) => {
+          const r = parseDeadline(chunk, opts);
+          if (r.date || r.relative || r.type !== 'Other') {
+            out.push({
+              title: r.title, date: r.date || (r.relative ? 'RELATIVE: ' + r.relative : 'UNKNOWN'),
+              time: r.time, type: r.type, confidence: r.confidence,
+              original: r.original,
+            });
+          }
+        });
+      });
+    return out;
+  }
+
+  /* ------------------------------------------------------------------ AI output handling */
+  function extractJSON(text) {
+    let t = String(text || '').trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '');
+    const tryParse = (x) => { try { return JSON.parse(x); } catch (e) { return undefined; } };
+    let v = tryParse(t);
+    if (v === undefined) {
+      const a = t.indexOf('['), b = t.lastIndexOf(']');
+      if (a !== -1 && b > a) v = tryParse(t.slice(a, b + 1));
+    }
+    if (v === undefined) {
+      const a = t.indexOf('{'), b = t.lastIndexOf('}');
+      if (a !== -1 && b > a) v = tryParse(t.slice(a, b + 1));
+    }
+    if (v === undefined) return null;
+    if (Array.isArray(v)) return v;
+    if (v && typeof v === 'object') {
+      for (const k of Object.keys(v)) if (Array.isArray(v[k])) return v[k];
+      return [v];
+    }
+    return null;
+  }
+
+  function normalizeType(t) {
+    const x = String(t || '').trim().toLowerCase();
+    const hit = TYPES.find((n) => n.toLowerCase() === x);
+    if (hit) return hit;
+    return x ? detectType(x) : 'Other';
+  }
+  const normalizeConfidence = (c) => {
+    const x = String(c || '').trim().toLowerCase();
+    return x === 'high' || x === 'medium' || x === 'low' ? x : 'low';
+  };
+
+  /** Clean one model-produced object into a row. Resolves "RELATIVE: Week N" when a start date is known. */
+  function normalizeEvent(raw, opts) {
+    opts = opts || {};
+    raw = raw || {};
+    let date = String(raw.date == null ? '' : raw.date).trim();
+    let conf = normalizeConfidence(raw.confidence);
+    const iso = /^(\d{4}-\d{2}-\d{2})(?:[T ]|$)/.exec(date); // "2026-10-15T00:00:00" -> "2026-10-15"
+    if (iso && isValidISO(iso[1])) date = iso[1];
+    if (!isValidISO(date)) {
+      const resolved = /relative|week/i.test(date) ? resolveRelative(date, opts.semesterStart) : null;
+      if (resolved) {
+        date = resolved;
+        if (conf === 'high') conf = 'medium';
+      } else if (!date || /^(?:unknown|null|none|n\/a|tbd)$/i.test(date)) {
+        date = 'UNKNOWN';
+        conf = 'low';
+      }
+    }
+    const time = isValidTime(raw.time) ? raw.time : null;
+    return {
+      title: String(raw.title || raw.name || 'Untitled').trim(),
+      date,
+      time,
+      type: normalizeType(raw.type),
+      confidence: conf,
+      notes: String(raw.notes || '').trim(),
+    };
+  }
+
+  const dedupeKey = (e) => String(e.title || '').trim().toLowerCase().replace(/\s+/g, ' ') + '|' + String(e.date || '').trim();
+  function dedupe(events) {
+    const seen = new Set();
+    return events.filter((e) => {
+      const k = dedupeKey(e);
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    });
+  }
+
+  /* ------------------------------------------------------------------ export helpers */
+  function copyAsText(events, course) {
+    return events
+      .map((e) => {
+        const d = isValidISO(e.date) ? describeDate(e.date) : e.date || 'UNKNOWN';
+        return '• ' + d + (e.time ? ' ' + e.time : '') + ' — ' + (course ? course + ' — ' : '') + e.title + (e.type && e.type !== 'Other' ? ' (' + e.type + ')' : '') + (e.notes ? ' — ' + e.notes : '');
+      })
+      .join('\n');
+  }
+
+  /* ------------------------------------------------------------------ .ics */
+  function icsEscape(s) {
+    return String(s == null ? '' : s)
+      .replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n');
+  }
+  function foldLine(line) {
+    const enc = new TextEncoder();
+    if (enc.encode(line).length <= 75) return line;
+    const out = [];
+    let cur = '', bytes = 0, limit = 75;
+    for (const ch of line) {
+      const b = enc.encode(ch).length;
+      if (bytes + b > limit) { out.push(cur); cur = ''; bytes = 0; limit = 74; }
+      cur += ch; bytes += b;
+    }
+    out.push(cur);
+    return out.join('\r\n ');
+  }
+  function hash(str) {
+    let h = 5381;
+    for (let i = 0; i < str.length; i++) h = ((h << 5) + h + str.charCodeAt(i)) | 0;
+    return (h >>> 0).toString(36);
+  }
+  const compact = (iso) => iso.replace(/-/g, '');
+
+  /**
+   * buildICS(events, {course, calName, alarm, alarmTimed, now})
+   * events: [{title, date:'YYYY-MM-DD', time?:'HH:MM', notes?, description?, uidSeed?}]
+   * Rows with an invalid date are skipped (callers validate first). Returns CRLF text.
+   */
+  function buildICS(events, opts) {
+    const o = Object.assign({ course: '', calName: 'Deadlines', alarm: '-P2D', alarmTimed: '-PT1H', now: new Date() }, opts);
+    const stamp = o.now.getUTCFullYear() + pad(o.now.getUTCMonth() + 1) + pad(o.now.getUTCDate()) + 'T' +
+      pad(o.now.getUTCHours()) + pad(o.now.getUTCMinutes()) + pad(o.now.getUTCSeconds()) + 'Z';
+    const L = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//DeadlineSync PK//Deadlines//EN', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', 'X-WR-CALNAME:' + icsEscape(o.calName)];
+    events.forEach((e) => {
+      const d = fromISO(e.date);
+      if (!d) return;
+      const timed = isValidTime(e.time);
+      const summary = (o.course ? o.course + ' — ' : '') + e.title;
+      L.push('BEGIN:VEVENT');
+      L.push('UID:' + hash([e.uidSeed || '', e.title, e.date, e.time || ''].join('|')) + '@deadlinesync.pk');
+      L.push('DTSTAMP:' + stamp);
+      if (timed) {
+        const [hh, mm] = e.time.split(':').map(Number);
+        const s = new Date(d.getFullYear(), d.getMonth(), d.getDate(), hh, mm);
+        const en = new Date(s.getTime() + 60 * 60 * 1000);
+        const f = (x) => x.getFullYear() + pad(x.getMonth() + 1) + pad(x.getDate()) + 'T' + pad(x.getHours()) + pad(x.getMinutes()) + '00';
+        L.push('DTSTART:' + f(s), 'DTEND:' + f(en));
+      } else {
+        L.push('DTSTART;VALUE=DATE:' + compact(e.date), 'DTEND;VALUE=DATE:' + compact(toISO(addDays(d, 1))));
+      }
+      L.push('SUMMARY:' + icsEscape(summary));
+      const desc = e.description != null ? e.description : [e.type && e.type !== 'Other' ? e.type : '', e.notes].filter(Boolean).join(' — ');
+      if (desc) L.push('DESCRIPTION:' + icsEscape(desc));
+      L.push('TRANSP:TRANSPARENT');
+      L.push('BEGIN:VALARM', 'ACTION:DISPLAY', 'DESCRIPTION:' + icsEscape('Reminder: ' + summary), 'TRIGGER:' + (timed ? o.alarmTimed : o.alarm), 'END:VALARM');
+      L.push('END:VEVENT');
+    });
+    L.push('END:VCALENDAR');
+    return L.map(foldLine).join('\r\n') + '\r\n';
+  }
+
+  /* ------------------------------------------------------------------ share / calendar links (no login needed) */
+  function shareText(d) {
+    return '📌 Deadline: ' + d.title + '\n' + describeDate(d.date) + (d.time ? ' at ' + d.time : '') +
+      (d.sourceUrl ? '\nSource: ' + d.sourceUrl : '');
+  }
+  /** One-click "add to Google Calendar" link (opens the pre-filled event form; works with any signed-in account). */
+  function gcalUrl(d) {
+    const day = fromISO(d.date);
+    if (!day) return null;
+    const c = (x) => x.getFullYear() + pad(x.getMonth() + 1) + pad(x.getDate());
+    let dates;
+    if (isValidTime(d.time)) {
+      const [h, m] = d.time.split(':').map(Number);
+      const s = new Date(day.getFullYear(), day.getMonth(), day.getDate(), h, m);
+      const e = new Date(s.getTime() + 3600000);
+      const f = (x) => c(x) + 'T' + pad(x.getHours()) + pad(x.getMinutes()) + '00';
+      dates = f(s) + '/' + f(e);
+    } else {
+      dates = c(day) + '/' + c(addDays(day, 1));
+    }
+    return 'https://calendar.google.com/calendar/render?action=TEMPLATE&text=' + encodeURIComponent(d.title) +
+      '&dates=' + dates + '&details=' + encodeURIComponent((d.original || '') + (d.sourceUrl ? '\n' + d.sourceUrl : ''));
+  }
+  /** wa.me link: with a number it opens a chat with that number (e.g. yourself); without, WhatsApp asks who to send to. */
+  function waUrl(text, number) {
+    const n = String(number || '').replace(/\D/g, '');
+    return 'https://wa.me/' + n + '?text=' + encodeURIComponent(text);
+  }
+  const mailUrl = (d) => 'mailto:?subject=' + encodeURIComponent('Deadline: ' + d.title) + '&body=' + encodeURIComponent(shareText(d));
+
+  return {
+    shareText, gcalUrl, waUrl, mailUrl,
+    TYPES, DAY_NAMES,
+    toISO, fromISO, isValidISO, isValidTime, addDays, startOfDay, describeDate, resolveRelative,
+    normalize, stripWhatsAppPrefix, detectType,
+    parseDeadline, preParseUrdu, extractFromText,
+    extractJSON, normalizeEvent, dedupe, copyAsText,
+    buildICS, icsEscape, foldLine,
+  };
+});

@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DeadlinePK — Pin every deadline from your chats</title>
+<meta name="description" content="Roman Urdu, Urdu and English deadline parsing for WhatsApp and the web. Calendar export, reminders and a daily digest. Works offline.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%237c3aed'/%3E%3Cpath d='M12 5l4 5-3 1v6h-2v-6l-3-1z' fill='white'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300..700&family=Instrument+Serif:ital@1&display=swap" rel="stylesheet">
+<style>
+html,body{background:#000;color:#fff}
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--accent:#16a34a;--violet:#7c3aed;--muted:#a1a1aa;--border:rgba(255,255,255,.16)}
+html{scroll-behavior:smooth}
+body{font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;overflow-x:hidden;line-height:1.5}
+a{color:inherit;text-decoration:none}
+:focus-visible{outline:2px solid #86efac;outline-offset:3px;border-radius:6px}
+.hero{position:relative;min-height:100vh;min-height:100dvh;display:grid;grid-template-rows:auto 1fr auto;isolation:isolate}
+.bg{position:absolute;inset:0;z-index:-2;overflow:hidden}
+.bg video{width:100%;height:100%;object-fit:cover}
+.bg::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.55) 0%,rgba(0,0,0,.15) 35%,rgba(0,0,0,.78) 100%)}
+header{display:flex;align-items:center;justify-content:space-between;padding:22px 40px;gap:16px}
+.logo{display:inline-flex;align-items:center;gap:9px;font-weight:600;letter-spacing:-.03em;font-size:16px}
+.logo span{font-weight:400;opacity:.7}
+nav{display:flex;gap:8px}
+nav a{white-space:nowrap;padding:9px 16px;border:1px solid rgba(198,198,198,.4);border-radius:7px;font-size:14px;background:linear-gradient(105deg,rgba(5,5,5,.7),rgba(60,60,60,.55));transition:border-color .3s,box-shadow .3s}
+nav a:hover{border-color:rgba(235,235,235,.9);box-shadow:0 0 18px rgba(134,239,172,.25)}
+.hero-copy{align-self:end;display:flex;flex-direction:column;align-items:center;text-align:center;padding:8px 24px 64px;max-width:900px;margin:0 auto;width:100%}
+.badge{display:inline-flex;gap:8px;align-items:center;margin-bottom:22px;padding:9px 15px;border-radius:5px;font-size:12.5px;background:linear-gradient(90deg,#4b4b4b,#161616 60%,#0a0a0a);color:#f2f2f2}
+h1{font-weight:500;letter-spacing:-.045em;line-height:1.1;font-size:clamp(34px,5.2vw,64px)}
+h1 em{font-family:"Instrument Serif","Times New Roman",serif;font-style:italic;font-weight:400;font-size:1.08em;letter-spacing:-.03em;color:#86efac}
+.lede{margin-top:18px;max-width:560px;color:var(--muted);font-size:clamp(15px,1.4vw,18px);letter-spacing:-.015em}
+.actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:26px}
+.btn{display:inline-flex;align-items:center;justify-content:center;height:44px;padding:0 20px;border-radius:6px;font-weight:500;font-size:14px;letter-spacing:-.02em;transition:box-shadow .3s,border-color .3s,filter .3s}
+.btn.solid{background:linear-gradient(180deg,#fff,#e7e7e7 48%,#cfcfcf);color:#111;border:1px solid #fff}
+.btn.solid:hover{box-shadow:0 0 26px rgba(134,239,172,.45)}
+.btn.ghost{background:linear-gradient(135deg,rgba(255,255,255,.12),rgba(0,0,0,.5) 46%,rgba(150,170,200,.1));border:1px solid rgba(198,198,198,.55);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+.btn.ghost:hover{border-color:rgba(220,255,230,.85);box-shadow:0 0 24px rgba(134,239,172,.28)}
+.stats{display:flex;justify-content:space-between;gap:24px;padding:0 72px 36px;color:#d8d8d8;font-size:13.5px;letter-spacing:-.015em}
+.stats div{display:inline-flex;align-items:center;gap:12px}
+.stats svg{flex:none}
+.sec{background:#000;padding:96px 40px;border-top:1px solid var(--border)}
+.wrap{max-width:1080px;margin:0 auto}
+.sec h2{font-weight:500;letter-spacing:-.04em;font-size:clamp(28px,3.6vw,44px);line-height:1.1;max-width:720px}
+.sec h2 em{font-family:"Instrument Serif",serif;font-weight:400;font-style:italic;color:#86efac}
+.sub{color:var(--muted);margin-top:14px;max-width:560px}
+.cards{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-top:40px}
+.card{border:1px solid var(--border);border-radius:14px;padding:28px;background:linear-gradient(160deg,rgba(255,255,255,.05),rgba(255,255,255,0))}
+.card .tag{display:inline-block;font-size:12px;padding:4px 10px;border-radius:99px;margin-bottom:16px}
+.card.web .tag{background:rgba(22,163,74,.18);color:#86efac}
+.card.ext .tag{background:rgba(124,58,237,.22);color:#c4b5fd}
+.card h3{font-weight:500;font-size:22px;letter-spacing:-.03em}
+.card p{color:var(--muted);margin:10px 0 18px;font-size:15px}
+.card ul{list-style:none;color:#d4d4d8;font-size:14px;display:grid;gap:8px;margin-bottom:22px}
+.card li::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.6;margin-right:10px;vertical-align:middle}
+.steps{counter-reset:s;display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:40px;list-style:none}
+.steps li{counter-increment:s;border-top:1px solid var(--border);padding-top:16px;font-size:14.5px;color:#d4d4d8}
+.steps li::before{content:"0" counter(s);display:block;font-family:"Instrument Serif",serif;font-style:italic;font-size:30px;color:#86efac;margin-bottom:6px}
+code{font-family:ui-monospace,Consolas,monospace;font-size:12.5px;background:rgba(255,255,255,.08);padding:2px 6px;border-radius:5px;word-break:break-all}
+footer{padding:28px 40px;border-top:1px solid var(--border);color:#71717a;font-size:13px;text-align:center;background:#000}
+.appear{animation:up 1s cubic-bezier(.16,1,.3,1) both;animation-delay:var(--d,.1s)}
+@keyframes up{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+@media(max-width:900px){
+ header{padding:16px 20px}nav a:not(:last-child){display:none}
+ .hero-copy{padding:8px 20px 36px}
+ .stats{flex-direction:column;align-items:center;gap:14px;padding:0 20px 32px;text-align:center}
+ .sec{padding:64px 20px}.cards{grid-template-columns:1fr}.steps{grid-template-columns:1fr 1fr}
+}
+@media(max-width:560px){.actions{flex-direction:column;width:100%}.btn{width:100%}.steps{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<section class="hero" id="top">
+  <div class="bg"><video autoplay muted loop playsinline preload="auto" aria-hidden="true" src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20261022_235442_c62146c2-3f2f-46c0-ab51-649a4aa26cf5.mp4"></video></div>
+  <header>
+    <a class="logo appear" href="#top" aria-label="DeadlinePK home">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect width="24" height="24" rx="6" fill="#7c3aed"/><path d="M12 5l4 5-3 1v6h-2v-6l-3-1z" fill="#fff"/></svg>
+      Deadline<span>PK</span>
+    </a>
+    <nav aria-label="Primary" class="appear" style="--d:.2s">
+      <a href="#products">Products</a>
+      <a href="#install">Install</a>
+      <a href="../web/DeadlineSync-PK.html">Open web app</a>
+    </nav>
+  </header>
+  <div class="hero-copy">
+    <div class="badge appear" style="--d:.2s">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><path d="M12 2.6c.55 0 .88.55 1.08 2.1.62 4.7 1.52 5.6 6.22 6.22 1.55.2 2.1.53 2.1 1.08s-.55.88-2.1 1.08c-4.7.62-5.6 1.52-6.22 6.22-.2 1.55-.53 2.1-1.08 2.1s-.88-.55-1.08-2.1c-.62-4.7-1.52-5.6-6.22-6.22-1.55-.2-2.1-.53-2.1-1.08s.55-.88 2.1-1.08c4.7-.62 5.6-1.52 6.22-6.22C11.12 3.15 11.45 2.6 12 2.6z"/></svg>
+      Roman Urdu · اردو · English
+    </div>
+    <h1 class="appear" style="--d:.35s">“Kal quiz hai.”<br>Now it's a <em>pinned</em> deadline.</h1>
+    <p class="lede appear" style="--d:.55s">Paste a WhatsApp message or select text on any page. DeadlinePK finds the date and time, then sets a reminder, a calendar event and a daily digest.</p>
+    <div class="actions appear" style="--d:.7s">
+      <a class="btn solid" href="../web/DeadlineSync-PK.html">Open the web app</a>
+      <a class="btn ghost" href="#install">Get the Chrome extension</a>
+    </div>
+  </div>
+  <div class="stats">
+    <div class="appear" style="--d:.9s"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#e8e8e8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Understands kal, parson, agla Jumma, 9 baje</div>
+    <div class="appear" style="--d:1.05s"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#e8e8e8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 018 0v3"/></svg>Works offline — no account, no key</div>
+    <div class="appear" style="--d:1.2s"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#e8e8e8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 13l4 4L19 7"/></svg>116 automated tests behind it</div>
+  </div>
+</section>
+
+<section class="sec" id="products">
+  <div class="wrap">
+    <h2>Two tools, one <em>brain</em>.</h2>
+    <p class="sub">Both share the same offline parser, so a message is read the same way in the browser and in the extension.</p>
+    <div class="cards">
+      <article class="card web">
+        <span class="tag">Web app</span>
+        <h3>DeadlineSync PK</h3>
+        <p>Drop a syllabus PDF, a screenshot or pasted text and get an editable table of deadlines.</p>
+        <ul><li>PDF, JPG, PNG, WEBP up to 10 MB, five at a time</li><li>Confidence badges, dedupe, copy as text</li><li>One <code>.ics</code> file for Google Calendar</li></ul>
+        <a class="btn solid" href="../web/DeadlineSync-PK.html">Open DeadlineSync PK</a>
+      </article>
+      <article class="card ext">
+        <span class="tag">Chrome extension</span>
+        <h3>DeadlinePinPK</h3>
+        <p>Select text anywhere, or hover a message on WhatsApp Web, and pin it in one click.</p>
+        <ul><li>Reminders 24 h and 1 h before</li><li>Daily 8 am digest, one tap to WhatsApp</li><li>Per-deadline Google Calendar, WhatsApp and email buttons</li></ul>
+        <a class="btn ghost" href="#install">How to install</a>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="sec" id="install">
+  <div class="wrap">
+    <h2>Install the extension in <em>four</em> steps.</h2>
+    <p class="sub">It isn't on the Chrome Web Store, so you load it from the folder. Takes under a minute.</p>
+    <ol class="steps">
+      <li>Open <code>chrome://extensions</code> in Chrome.</li>
+      <li>Turn on <strong>Developer mode</strong> (top right).</li>
+      <li>Click <strong>Load unpacked</strong> and choose the <code>extension</code> folder.</li>
+      <li>Pin the 📌 icon, then reload any tab that was already open.</li>
+    </ol>
+  </div>
+</section>
+<footer>DeadlinePK · made for students in Pakistan · reminders are local to your browser</footer>
+<script>
+(function(){var v=document.querySelector('.bg video');if(v){var p=v.play&&v.play();if(p&&p.catch)p.catch(function(){});}})();
+</script>
+</body>
+</html>

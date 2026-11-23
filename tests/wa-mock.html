@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>WhatsApp-style mock for DeadlinePinPK manual tests</title>
+<link rel="stylesheet" href="/extension/styles.css">
+<style>
+  body { font: 15px system-ui; background: #efeae2; padding: 30px; }
+  .copyable-text { background: #fff; border-radius: 8px; padding: 8px 12px; margin: 14px 0; width: 340px; }
+  .meta { color: #888; font-size: 11px; }
+</style>
+</head>
+<body>
+  <p id="plain">Reminder: Assignment 3 must be submitted by Friday 11:59pm please.</p>
+  <div class="copyable-text" id="m1" data-pre-plain-text="[10:42 am, 22/11/2026] Sir Ali: ">
+    <span class="selectable-text copyable-text"><span>Quiz kal hai 9 baje</span></span>
+    <div class="meta">10:42 am</div>
+  </div>
+  <div class="copyable-text" id="m2" data-pre-plain-text="[3:05 pm, 11/22/2026] Maham: ">
+    <span class="selectable-text copyable-text"><span>Lab report parson jama karo</span></span>
+  </div>
+  <script src="/extension/core.js"></script>
+</body>
+</html>
