@@ -232,6 +232,7 @@ h1,h2,h3,#mineTitle{font-family:Georgia,"Iowan Old Style","Times New Roman",seri
       <textarea id="quickIn" rows="2" dir="auto" autocomplete="off" placeholder="Paste a message (or several) from your class group, e.g. “Quiz kal 9 baje”" class="min-w-0 flex-1 resize-none rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-base focus-visible:outline-2 focus-visible:outline-brand"></textarea>
       <button type="submit" class="shrink-0 rounded-xl bg-brand px-5 py-3 text-base font-bold text-white hover:bg-brand-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand">📌 Pin</button>
     </form>
+    <button id="pasteBtn" type="button" class="mt-2 text-sm font-semibold text-brand underline underline-offset-2">Paste from clipboard</button>
     <p id="quickMsg" role="status" class="mt-1 min-h-5 text-sm"></p>
     <div id="confirm" hidden class="mt-2 rounded-2xl border-2 border-brand bg-green-50 p-3" aria-live="polite"></div>
     <div id="saveNote" hidden class="mt-2 rounded-2xl border border-gray-200 bg-white p-3 text-sm" aria-live="polite"></div>
@@ -356,7 +357,9 @@ h1,h2,h3,#mineTitle{font-family:Georgia,"Iowan Old Style","Times New Roman",seri
   </section>
 
   <footer class="mt-12 border-t border-gray-200 pt-4 text-center text-sm text-gray-500">
-    Free forever. No login. Built for Pakistani students.<br><span id="app-ext">Want it on WhatsApp Web? <a class="underline" href="DeadlinePinPK.zip" download>Download the DeadlinePinPK extension (.zip)</a>, unzip it, then open <code>chrome://extensions</code>, turn on Developer mode, Load unpacked, choose the unzipped folder. (When running from GitHub Pages the zip is there; if you opened this file from disk, the folder is <code>extension</code>.)</span>
+    Free forever. No login. Built for Pakistani students.<br>
+    <a class="underline" href="#privacy">Privacy</a> · <a class="underline" href="https://github.com/Gi-v/deadline-pk/issues/new" target="_blank" rel="noopener">Report a problem</a> · <a class="underline" href="https://github.com/Gi-v/deadline-pk" target="_blank" rel="noopener">Open source (MIT)</a><br>
+    <span id="privacy" class="mx-auto mt-2 block max-w-xl text-xs">Privacy: your deadlines are saved only on this device. The messages you paste are read by code in your browser and are never uploaded. There are no accounts and no ads. If you add an AI key or connect Google Calendar, only then does data go to Anthropic or Google, and only what you choose to send.</span><span id="app-ext">Want it on WhatsApp Web? <a class="underline" href="DeadlinePinPK.zip" download>Download the DeadlinePinPK extension (.zip)</a>, unzip it, then open <code>chrome://extensions</code>, turn on Developer mode, Load unpacked, choose the unzipped folder. (When running from GitHub Pages the zip is there; if you opened this file from disk, the folder is <code>extension</code>.)</span>
   </footer>
 </div>
 
@@ -853,6 +856,9 @@ function gone(list){if(!list.length)return;var r=ld("deadlinesync.gcal.removed.v
 var today=function(){return DC.toISO(new Date())};
 function daysTo(iso){var a=DC.startOfDay(new Date()),b=DC.fromISO(iso);return Math.round((b-a)/864e5)}
 function rel(d){var n=daysTo(d.date);if(n<0)return{t:"Overdue "+(-n)+"d",c:"bg-red-100 text-red-800"};if(n===0)return{t:"Today"+(d.time?" "+d.time:""),c:"bg-yellow-100 text-yellow-900"};if(n===1)return{t:"Tomorrow"+(d.time?" "+d.time:""),c:"bg-orange-100 text-orange-800"};return{t:"in "+n+" days",c:"bg-gray-100 text-gray-700"}}
+var BASE=location.origin+location.pathname;
+/* One message for the class group: readable lines plus a link that fills the deadlines into a classmate's app. */
+function classMsg(list){return "📌 "+(list.length>1?"Deadlines":"Deadline")+"\n"+list.map(function(d){return "• "+d.title+" — "+DC.describeDate(d.date)+(d.time?" "+d.time:"")}).join("\n")+"\n\nTap to add "+(list.length>1?"them":"it")+" to your calendar: "+DC.shareLink(BASE,list)}
 function key(d){return (d.title||"").toLowerCase().replace(/\s+/g," ").trim()+"|"+d.date}
 function add(items){var n=0,have={};mine.forEach(function(d){have[key(d)]=1});
  items.forEach(function(it){if(!it||!it.title||!DC.isValidISO(it.date))return;var d={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),title:String(it.title).slice(0,120),date:it.date,time:DC.isValidTime(it.time)?it.time:null,type:it.type||"Other",done:false};if(have[key(d)])return;have[key(d)]=1;mine.push(d);n++});
@@ -885,13 +891,12 @@ function render(){
   mid.appendChild(row);
   var act=el("div","flex shrink-0 items-center gap-1");
   var g=el("a","rounded-lg px-2 py-1 text-base hover:bg-gray-100","📅");g.href=DC.gcalUrl(d)||"#";g.target="_blank";g.rel="noopener";g.title="Add to Google Calendar";g.setAttribute("aria-label","Add to Google Calendar");
-  var w=el("a","rounded-lg px-2 py-1 text-base hover:bg-gray-100","💬");w.href=DC.waUrl(DC.shareText(d),"");w.target="_blank";w.rel="noopener";w.title="Send on WhatsApp";w.setAttribute("aria-label","Send on WhatsApp");
+  var w=el("a","rounded-lg px-2 py-1 text-base hover:bg-gray-100","💬");w.href=DC.waUrl(classMsg([d]),"");w.target="_blank";w.rel="noopener";w.title="Send to your class group";w.setAttribute("aria-label","Send to your class group on WhatsApp");
   var x=el("button","rounded-lg px-2 py-1 text-gray-400 hover:bg-gray-100 hover:text-red-600","✕");x.type="button";x.title="Delete";x.setAttribute("aria-label","Delete "+d.title);x.onclick=function(){gone([d]);mine=mine.filter(function(m){return m!==d});save();render()};
   act.appendChild(g);act.appendChild(w);act.appendChild(x);
   li.appendChild(cb);li.appendChild(mid);li.appendChild(act);list.appendChild(li)});
  var wk=open_().filter(function(d){return daysTo(d.date)<=7}).sort(sorter);
- var txt="📌 My deadlines this week\n\n"+(wk.length?wk.map(function(d){return "• "+d.title+" — "+DC.describeDate(d.date)+(d.time?" "+d.time:"")}).join("\n"):"Nothing due 🎉");
- $("shareWeek").href=DC.waUrl(txt,"");
+ $("shareWeek").href=wk.length?DC.waUrl(classMsg(wk),""):DC.waUrl("📌 Nothing due this week 🎉","");
  var n=open_().filter(function(d){return daysTo(d.date)<=0}).length;
  document.title=(n?"("+n+") ":"")+"DeadlineSync PK — Drop your syllabus. Get your calendar.";
 }
@@ -917,7 +922,10 @@ function propose(found){
  ok.onclick=function(){var out=[];rows.forEach(function(r){if(DC.isValidISO(r.d.value)&&r.t.value.trim())out.push({title:r.t.value.trim(),date:r.d.value,time:r.tm.value||null,type:r.it.type})});
   if(!out.length){say("Add a title and a date first.",false);return}
   var n=add(out);box.hidden=true;$("quickIn").value="";if(tab==="done")tab="week";render();offerCalendar(out,n)};
- act.appendChild(ok);act.appendChild(no);box.appendChild(act);box.scrollIntoView({block:"nearest",behavior:"smooth"})}
+ var orig=items[0].original;
+ if(orig){var rep=el("a","ml-auto self-center text-xs underline","Wrong date? Tell us");rep.target="_blank";rep.rel="noopener";
+  rep.href="https://github.com/Gi-v/deadline-pk/issues/new?title="+encodeURIComponent("Wrong date")+"&body="+encodeURIComponent("Message (remove names if you like):\n"+orig+"\n\nApp read: "+items[0].date+" "+(items[0].time||"")+"\nShould be: ");act.appendChild(rep)}
+ act.insertBefore(ok,act.firstChild);act.insertBefore(no,ok.nextSibling);box.appendChild(act);box.scrollIntoView({block:"nearest",behavior:"smooth"})}
 function offerCalendar(items,n){var s=$("saveNote");s.textContent="";s.hidden=false;
  s.appendChild(el("p","font-semibold",n?"Saved ✓":"Already in your list"));
  s.appendChild(el("p","mt-1 text-gray-600","Add it to your phone’s calendar so it reminds you even when this app is closed:"));
@@ -926,6 +934,9 @@ function offerCalendar(items,n){var s=$("saveNote");s.textContent="";s.hidden=fa
  b.onclick=function(e){e.preventDefault();if(items.length===1){window.open(DC.gcalUrl(items[0]),"_blank","noopener")}else{dl("deadlines.ics","text/calendar",ics(items))}};
  s.appendChild(b);
  if(items.length===1){var i=el("button","ml-2 mt-2 rounded-xl border border-gray-300 px-4 py-2.5 font-semibold","⬇ .ics file");i.type="button";i.onclick=function(){dl("deadline.ics","text/calendar",ics(items))};s.appendChild(i)}}
+$("pasteBtn").onclick=function(){var q=$("quickIn");
+ if(navigator.clipboard&&navigator.clipboard.readText){navigator.clipboard.readText().then(function(t){if(t&&t.trim()){q.value=t.trim();propose(DC.extractFromText(t,{}))}else say("Clipboard is empty. Copy a message from your class group first.",false)}).catch(function(){q.focus();say("Your browser blocked clipboard access. Long-press the box and choose Paste.",false)})}
+ else{q.focus();say("Long-press the box and choose Paste.",false)}};
 $("quickForm").addEventListener("submit",function(e){e.preventDefault();var v=$("quickIn").value.trim();if(!v)return;propose(DC.extractFromText(v,{}))});
 $("quickIn").addEventListener("keydown",function(e){if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();$("quickForm").requestSubmit()}});
 $("mineExample").onclick=function(){add([{title:"Quiz",date:today(),time:"09:00",type:"Quiz"},{title:"Assignment 3",date:DC.toISO(DC.addDays(new Date(),2)),time:null,type:"Assignment"},{title:"Midterm exam",date:DC.toISO(DC.addDays(new Date(),6)),time:"10:00",type:"Exam"}]);say("Added 3 examples — delete them with ✕",true)};
@@ -949,7 +960,9 @@ $("shareApp").onclick=function(){var url=location.origin+location.pathname,text=
  if(navigator.share){navigator.share({title:"DeadlineSync PK",text:text}).catch(function(){})}else{window.open(DC.waUrl(text,""),"_blank","noopener")}};
 /* Android "Share to app": WhatsApp -> Share -> DeadlineSync arrives as ?text= */
 try{var qp=new URLSearchParams(location.search),sh=[qp.get("title"),qp.get("text"),qp.get("url")].filter(Boolean).join("\n");
- if(sh.trim()){history.replaceState(null,"",location.pathname);$("quickIn").value=sh.trim();setTimeout(function(){propose(DC.extractFromText(sh,{}));var s=$("mine");if(s)s.scrollIntoView()},300)}}catch(e){}
+ var linked=DC.decodeShare(qp.get("add"));
+ if(linked.length){history.replaceState(null,"",location.pathname);setTimeout(function(){propose(linked);var s=$("mine");if(s)s.scrollIntoView()},300)}
+ else if(sh.trim()){history.replaceState(null,"",location.pathname);$("quickIn").value=sh.trim();setTimeout(function(){propose(DC.extractFromText(sh,{}));var s=$("mine");if(s)s.scrollIntoView()},300)}}catch(e){}
 window.__dpk={getMine:function(){return mine},saveQuiet:function(){sv(KEY,mine)},render:render};
 render();notifyCheck();
 }catch(e){console.error(e)}})();

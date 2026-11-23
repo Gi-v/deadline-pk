@@ -12,7 +12,21 @@ const P = (s, o = {}) => C.parseDeadline(s, { today, ...o });
 
 // ---- Roman Urdu relative days
 t('kal + baje', () => { const r = P('Quiz kal hai 9 baje'); assert.equal(r.date, '2026-11-24'); assert.equal(r.time, '09:00'); assert.equal(r.type, 'Quiz'); assert.equal(r.title, 'Quiz'); assert.equal(r.confidence, 'high'); });
-t('bajey spelling', () => { const r = P('paper kal subha 9 bajey'); assert.equal(r.date, '2026-11-24'); assert.equal(r.time, '09:00'); });
+t('share link round trip', () => {
+  const items = [{ title: 'Quiz, Physics | Ch 3', date: '2026-11-24', time: '09:00', type: 'Quiz' }, { title: 'اسائنمنٹ', date: '2026-11-27', time: null, type: 'Assignment' }];
+  const url = new URL(C.shareLink('https://x.test/app/', items));
+  const back = C.decodeShare(url.searchParams.get('add'));
+  assert.deepEqual(back, [items[0], { ...items[1], time: null }]);
+});
+t('share link rejects junk', () => {
+  assert.deepEqual(C.decodeShare('<script>|2026-13-45|99:99|Quiz'), []);
+  assert.deepEqual(C.decodeShare('%E0%A4%A|2026-11-24'), []);
+  assert.deepEqual(C.decodeShare(''), []);
+  const r = C.decodeShare('Test|2026-11-24|25:00|Hacker');
+  assert.equal(r.length, 1); assert.equal(r[0].time, null); assert.equal(r[0].type, 'Other');
+  assert.equal(C.decodeShare(Array(50).fill('A|2026-11-24').join(',')).length, 20);
+});
+t('bajey spelling',() => { const r = P('paper kal subha 9 bajey'); assert.equal(r.date, '2026-11-24'); assert.equal(r.time, '09:00'); });
 t('kal past tense',() => { const r = P('Quiz kal tha'); assert.equal(r.date, '2026-11-22'); assert.equal(r.confidence, 'low'); });
 t('parson', () => assert.equal(P('Lab report parson submit karo').date, '2026-11-25'));
 t('narsoon', () => assert.equal(P('Viva narsoon').date, '2026-11-26'));

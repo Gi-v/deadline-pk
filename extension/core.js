@@ -697,6 +697,25 @@
     const n = String(number || '').replace(/\D/g, '');
     return 'https://wa.me/' + n + '?text=' + encodeURIComponent(text);
   }
+  /** Deep link a classmate can tap: ?add=<title|date|time|type,...>. No server; the link itself carries the deadline. */
+  function encodeShare(items) {
+    return (items || []).slice(0, 20).map((d) => [d.title, d.date, d.time || '', d.type || ''].map((x) => encodeURIComponent(String(x))).join('|')).join(',');
+  }
+  /** Inverse of encodeShare, strictly validated (links come from strangers): returns only well-formed deadlines. */
+  function decodeShare(str) {
+    const out = [];
+    String(str || '').split(',').slice(0, 20).forEach((part) => {
+      const f = part.split('|');
+      if (f.length < 2) return;
+      let title, date, time, type;
+      try { [title, date, time, type] = f.map((x) => decodeURIComponent(x || '')); } catch (e) { return; }
+      title = String(title).replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, 120);
+      if (!title || !isValidISO(date)) return;
+      out.push({ title, date, time: isValidTime(time) ? time : null, type: TYPES.indexOf(type) >= 0 ? type : 'Other' });
+    });
+    return out;
+  }
+  function shareLink(base, items) { return base + '?add=' + encodeURIComponent(encodeShare(items)); }
   const mailUrl = (d) => 'mailto:?subject=' + encodeURIComponent('Deadline: ' + d.title) + '&body=' + encodeURIComponent(shareText(d));
 
   /* ---------------------------------------------------------------- real Google Calendar sync (API v3) */
@@ -770,7 +789,7 @@
 
   return {
     buildGoogleEvent, syncToGoogle,
-    shareText, gcalUrl, waUrl, mailUrl,
+    shareText, gcalUrl, waUrl, mailUrl, encodeShare, decodeShare, shareLink,
     TYPES, DAY_NAMES,
     toISO, fromISO, isValidISO, isValidTime, addDays, startOfDay, describeDate, resolveRelative,
     normalize, stripWhatsAppPrefix, detectType,
