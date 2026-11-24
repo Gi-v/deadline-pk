@@ -520,6 +520,19 @@
     return [line];
   }
 
+  /** Short course tag from a message: "CS-201", "[OS]", "DSA:" ... or '' when none is obvious. */
+  const COURSE_STOP = new Set(['QUIZ', 'EXAM', 'MID', 'MIDS', 'FINAL', 'DUE', 'NOTE', 'URGENT', 'LAB', 'OK', 'AM', 'PM', 'ASAP', 'FYI', 'TEST', 'HW', 'PDF', 'GMT', 'PKT', 'NB', 'PS', 'RE', 'IMP']);
+  function extractCourse(text) {
+    const s = String(text || '');
+    let m = s.match(/\b([A-Z]{2,4})[- ]?(\d{3})\b/);
+    if (m && !COURSE_STOP.has(m[1])) return m[1] + m[2];
+    m = s.match(/^\s*(?:\[|\()?([A-Z]{2,6})(?:\]|\))?\s*[:\-–]/);
+    if (m && !COURSE_STOP.has(m[1])) return m[1];
+    m = s.match(/\[([A-Z]{2,6})\]/);
+    if (m && !COURSE_STOP.has(m[1])) return m[1];
+    return '';
+  }
+
   /** Extract every dated / event-looking line from pasted text (e.g. a WhatsApp chat or typed syllabus). */
   function extractFromText(text, opts) {
     opts = opts || {};
@@ -536,6 +549,7 @@
               title: r.title, date: r.date || (r.relative ? 'RELATIVE: ' + r.relative : 'UNKNOWN'),
               time: r.time, type: r.type, confidence: r.confidence,
               original: r.original, alternatives: r.alternatives,
+              course: extractCourse(chunk),
             });
           }
         });
@@ -816,7 +830,7 @@
     TYPES, DAY_NAMES,
     toISO, fromISO, isValidISO, isValidTime, addDays, startOfDay, describeDate, resolveRelative,
     normalize, stripWhatsAppPrefix, detectType,
-    parseDeadline, preParseUrdu, extractFromText,
+    parseDeadline, preParseUrdu, extractFromText, extractCourse,
     extractJSON, normalizeEvent, dedupe, copyAsText,
     buildICS, icsEscape, foldLine,
   };

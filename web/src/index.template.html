@@ -243,6 +243,7 @@ h1,h2,h3,#mineTitle{font-family:Georgia,"Iowan Old Style","Times New Roman",seri
     <div id="confirm" hidden class="mt-2 rounded-2xl border-2 border-brand bg-green-50 p-3" aria-live="polite"></div>
     <div id="saveNote" hidden class="mt-2 rounded-2xl border border-gray-200 bg-white p-3 text-sm" aria-live="polite"></div>
     <div id="mineTabs" role="tablist" aria-label="Deadline views" class="mt-2 flex gap-1 overflow-x-auto"></div>
+    <div id="courseBar" class="mt-2 flex gap-1 overflow-x-auto" hidden></div>
     <ul id="mineList" class="mt-3 space-y-2"></ul>
     <div id="mineEmpty" class="mt-3 rounded-2xl border-2 border-dashed border-gray-300 p-6 text-center text-gray-600">
       <p class="font-semibold text-gray-800">Nothing pinned yet. Three steps:</p>
@@ -875,9 +876,10 @@ function rel(d){var n=daysTo(d.date);if(n<0)return{t:"Overdue "+(-n)+"d",c:"bg-r
 var BASE=location.origin+location.pathname;
 /* One message for the class group: readable lines plus a link that fills the deadlines into a classmate's app. */
 function classMsg(list){return "📌 "+(list.length>1?"Deadlines":"Deadline")+"\n"+list.map(function(d){return "• "+d.title+" — "+DC.describeDate(d.date)+(d.time?" "+d.time:"")}).join("\n")+"\n\nTap to add "+(list.length>1?"them":"it")+" to your calendar: "+DC.shareLink(BASE,list)}
+var courseF="";
 function key(d){return (d.title||"").toLowerCase().replace(/\s+/g," ").trim()+"|"+d.date}
 function add(items){var n=0,have={};mine.forEach(function(d){have[key(d)]=1});
- items.forEach(function(it){if(!it||!it.title||!DC.isValidISO(it.date))return;var d={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),title:String(it.title).slice(0,120),date:it.date,time:DC.isValidTime(it.time)?it.time:null,type:it.type||"Other",done:false};if(have[key(d)])return;have[key(d)]=1;mine.push(d);n++});
+ items.forEach(function(it){if(!it||!it.title||!DC.isValidISO(it.date))return;var d={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),title:String(it.title).slice(0,120),date:it.date,time:DC.isValidTime(it.time)?it.time:null,type:it.type||"Other",course:String(it.course||"").replace(/[^A-Za-z0-9-]/g,"").slice(0,10).toUpperCase(),done:false};if(have[key(d)])return;have[key(d)]=1;mine.push(d);n++});
  if(n){save();sv("dpk_seen",1);render();notifyCheck()}return n}
 window.__dpkPin=function(it){propose([it]);var s=$("mine");if(s&&s.scrollIntoView)s.scrollIntoView({behavior:"smooth",block:"start"})};
 function say(t,ok){var m=$("quickMsg");m.textContent=t;m.className="mt-1 min-h-5 text-sm "+(ok?"text-green-700":"text-red-700")}
@@ -892,7 +894,10 @@ function render(){
   var b=el("button","shrink-0 rounded-full px-4 py-1.5 text-sm font-semibold "+(tab===p[0]?"bg-brand text-white":"bg-gray-100 text-gray-700 hover:bg-gray-200"),p[1]+(c?" · "+c:""));
   b.type="button";b.setAttribute("role","tab");b.setAttribute("aria-selected",String(tab===p[0]));b.onclick=function(){tab=p[0];render()};tabs.appendChild(b)});
  var list=$("mineList");list.textContent="";
- var rows=mine.filter(function(d){return inTab(d)}).sort(sorter);
+ var cs=[];mine.forEach(function(d){if(d.course&&cs.indexOf(d.course)<0)cs.push(d.course)});if(cs.indexOf(courseF)<0)courseF="";
+ var cbar=$("courseBar");cbar.textContent="";cbar.hidden=cs.length<2;
+ if(cs.length>1)[""].concat(cs).forEach(function(c){var cb2=el("button","shrink-0 min-h-9 rounded-full border-2 border-gray-800 px-3 py-1 text-xs font-bold "+(courseF===c?"bg-yellow-200":"bg-white"),c||"All courses");cb2.type="button";cb2.onclick=function(){courseF=c;render()};cbar.appendChild(cb2)});
+ var rows=mine.filter(function(d){return inTab(d)&&(!courseF||d.course===courseF)}).sort(sorter);
  $("mineEmpty").hidden=mine.length>0;$("mineTools").hidden=mine.length===0;
  if(mine.length&&!rows.length){list.appendChild(el("li","rounded-xl bg-gray-100 p-4 text-center text-sm text-gray-600",tab==="today"?"Nothing due today 🎉":tab==="done"?"Nothing marked done yet.":"Nothing here."))}
  rows.forEach(function(d){var r=rel(d),li=el("li","flex items-start gap-3 rounded-xl border bg-white p-3 "+(d.done?"border-gray-200 opacity-60":"border-gray-200"));
@@ -903,6 +908,7 @@ function render(){
   var row=el("div","mt-1 flex flex-wrap items-center gap-1.5 text-xs");
   if(!d.done)row.appendChild(el("span","rounded-full px-2 py-0.5 font-semibold "+r.c,r.t));
   row.appendChild(el("span","text-gray-500",DC.describeDate(d.date)+(d.time?" · "+d.time:"")));
+  if(d.course)row.appendChild(el("span","rounded-full bg-yellow-200 px-2 py-0.5 font-bold text-gray-900",d.course));
   if(d.type&&d.type!=="Other")row.appendChild(el("span","rounded-full bg-gray-100 px-2 py-0.5 text-gray-600",d.type));
   mid.appendChild(row);
   if(!d.done){var qa=el("div","mt-2 flex flex-wrap gap-2 text-xs");
@@ -927,7 +933,7 @@ function propose(found){
  if(!items.length){say("Couldn’t find a date in that. Try “Quiz Friday 9 baje” or “Report 15 Dec”.",false);return}
  var fs=$("fastSave");
  if(fs&&fs.checked&&items.length===1&&!items[0]._assumed&&items[0].confidence==="high"&&!(items[0].alternatives||[]).length){
-  var one=items[0],o1={title:one.title,date:one.date,time:one.time||null,type:one.type},n1=add([o1]);
+  var one=items[0],o1={title:one.title,date:one.date,time:one.time||null,type:one.type,course:one.course},n1=add([o1]);
   $("confirm").hidden=true;$("quickIn").value="";if(tab==="done")tab="week";render();offerCalendar([o1],n1,n1?function(){mine=mine.filter(function(d){return key(d)!==key(o1)});save();render();$("saveNote").hidden=true;say("Removed.",true)}:null);return}
  var box=$("confirm");box.textContent="";box.hidden=false;$("saveNote").hidden=true;say("");
  box.appendChild(el("p","mb-2 text-sm font-semibold text-green-900","Check "+(items.length>1?"these "+items.length+" deadlines":"this deadline")+" before saving:"));
@@ -949,7 +955,7 @@ function propose(found){
  var ok=el("button","rounded-xl bg-brand px-5 py-2.5 font-bold text-white hover:bg-brand-dark","Save"+(items.length>1?" selected":"")+" · Mehfooz karein");ok.type="button";
  var no=el("button","rounded-xl border border-gray-300 bg-white px-4 py-2.5 font-semibold","Cancel");no.type="button";
  no.onclick=function(){box.hidden=true};
- ok.onclick=function(){var out=[];rows.forEach(function(r){if(r.cb&&!r.cb.checked)return;if(DC.isValidISO(r.d.value)&&r.t.value.trim())out.push({title:r.t.value.trim(),date:r.d.value,time:r.tm.value||null,type:r.it.type})});
+ ok.onclick=function(){var out=[];rows.forEach(function(r){if(r.cb&&!r.cb.checked)return;if(DC.isValidISO(r.d.value)&&r.t.value.trim())out.push({title:r.t.value.trim(),date:r.d.value,time:r.tm.value||null,type:r.it.type,course:r.it.course})});
   if(!out.length){say("Add a title and a date first.",false);return}
   var n=add(out);box.hidden=true;$("quickIn").value="";if(tab==="done")tab="week";render();offerCalendar(out,n)};
  var orig=items[0].original;

@@ -261,6 +261,15 @@ t('google event: all-day vs timed, midnight rollover, reminders', () => {
     assert.equal(r.stats.failed, 2); assert.deepEqual(r.removedLeft, ['x']);
   });
 
-  console.log(`core tests: ${pass} passed, ${fail} failed`);
+  await run('course tags: codes, prefixes, brackets; not common words', async () => {
+    assert.equal(C.extractCourse('CS-201 quiz kal 9 baje'), 'CS201');
+    assert.equal(C.extractCourse('OS: assignment due Friday'), 'OS');
+    assert.equal(C.extractCourse('[DSA] lab report 15 Dec'), 'DSA');
+    assert.equal(C.extractCourse('Quiz: kal 9 baje'), '');
+    assert.equal(C.extractCourse('assignment due friday'), '');
+    assert.equal(C.extractFromText('MTH101 midterm 20 Dec 10am', {})[0].course, 'MTH101');
+  });
+
+  console.log(`core tests:${pass} passed, ${fail} failed`);
   process.exit(fail ? 1 : 0);
 })();
