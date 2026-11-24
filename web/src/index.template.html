@@ -905,6 +905,11 @@ function render(){
   row.appendChild(el("span","text-gray-500",DC.describeDate(d.date)+(d.time?" · "+d.time:"")));
   if(d.type&&d.type!=="Other")row.appendChild(el("span","rounded-full bg-gray-100 px-2 py-0.5 text-gray-600",d.type));
   mid.appendChild(row);
+  if(!d.done){var qa=el("div","mt-2 flex flex-wrap gap-2 text-xs");
+   if(dd<0)[["+1 day",1],["+1 week",7]].forEach(function(p){var rb=el("button","min-h-9 rounded-full border-2 border-gray-800 bg-white px-3 py-1 font-semibold","Missed? "+p[0]);rb.type="button";
+    rb.onclick=function(){d.date=DC.toISO(DC.addDays(new Date(),p[1]));save();render()};qa.appendChild(rb)});
+   var sh=el("a","min-h-9 rounded-full border border-gray-300 bg-white px-3 py-1.5 font-semibold","💬 Share");sh.href=DC.waUrl(classMsg([d]),"");sh.target="_blank";sh.rel="noopener";qa.appendChild(sh);
+   mid.appendChild(qa)}
   var act=el("div","flex shrink-0 items-center gap-1");
   var g=el("a","rounded-lg px-2 py-1 text-base hover:bg-gray-100","📅");g.href=DC.gcalUrl(d)||"#";g.target="_blank";g.rel="noopener";g.title="Add to Google Calendar";g.setAttribute("aria-label","Add to Google Calendar");
   var w=el("a","rounded-lg px-2 py-1 text-base hover:bg-gray-100","💬");w.href=DC.waUrl(classMsg([d]),"");w.target="_blank";w.rel="noopener";w.title="Send to your class group";w.setAttribute("aria-label","Send to your class group on WhatsApp");
@@ -993,7 +998,7 @@ var fsEl=$("fastSave");if(fsEl){fsEl.checked=ld("dpk_fast",1)!==0;fsEl.onchange=
 if(standalone||ld("dpk_seen",0)||/[?&]new=1/.test(location.search)){var lpEl=document.querySelector(".lp");if(lpEl)lpEl.hidden=true;if(!location.hash&&!/[?&]add=/.test(location.search))setTimeout(function(){try{$("quickIn").focus()}catch(e){}},300)}
 if(mine.length)sv("dpk_seen",1);
 if(/^https?:$/.test(location.protocol)){var l=document.createElement("link");l.rel="manifest";l.href="manifest.webmanifest";document.head.appendChild(l);
- if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(function(){})}
+ if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").then(function(reg){reg.addEventListener("updatefound",function(){var w=reg.installing;if(!w)return;w.addEventListener("statechange",function(){if(w.state==="installed"&&navigator.serviceWorker.controller){var t=document.createElement("button");t.type="button";t.id="updToast";t.textContent="New version ready — tap to refresh";t.style.cssText="position:fixed;left:12px;right:12px;bottom:12px;z-index:50;padding:14px;border:2px solid #1d1b16;border-radius:12px;background:#ffe35c;font-weight:700";t.onclick=function(){location.reload()};document.body.appendChild(t)}})})}).catch(function(){})}
 $("backupBtn").onclick=function(){dl("deadlinepk-backup.json","application/json",JSON.stringify({v:1,mine:mine}))};
 $("restoreInput").onchange=function(){var f=this.files&&this.files[0];if(!f)return;var r=new FileReader();r.onload=function(){try{var o=JSON.parse(String(r.result));var a=Array.isArray(o)?o:o.mine;if(!Array.isArray(a))throw 0;var n=add(a.filter(function(x){return x&&x.title&&DC.isValidISO(x.date)}));say("Restored "+n+" deadline"+(n===1?"":"s")+".",true)}catch(e){say("That file isn’t a DeadlinePK backup.",false)}};r.readAsText(f);this.value=""};
 $("shareApp").onclick=function(){var url=location.origin+location.pathname,text="Never miss a class deadline — paste a message from our group and it makes a calendar reminder (kal, parson, 9 baje all work). Free, no login: "+url;
