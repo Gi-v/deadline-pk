@@ -183,10 +183,6 @@ h1,h2,h3,#mineTitle{font-family:Georgia,"Iowan Old Style","Times New Roman",seri
       <h1 class="text-2xl font-extrabold tracking-tight text-brand">DeadlineSync <span class="text-base font-medium text-gray-500">PK</span></h1>
       <p class="sr-only">Drop your syllabus. Get your calendar.</p>
     </div>
-    <button id="settingsBtn" type="button" aria-expanded="false" aria-controls="settings"
-      class="shrink-0 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 focus-visible:outline-2 focus-visible:outline-brand">
-      ⚙ AI key
-    </button>
   </header>
 
   <!-- Settings -->
@@ -231,10 +227,11 @@ h1,h2,h3,#mineTitle{font-family:Georgia,"Iowan Old Style","Times New Roman",seri
   <section id="mine" class="mb-8 scroll-mt-4" aria-labelledby="mineTitle">
     <div class="flex flex-wrap items-end justify-between gap-2">
       <h2 id="mineTitle" class="text-xl font-bold">My deadlines</h2>
-      <div class="flex gap-2">
-        <button id="installBtn" type="button" hidden class="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-semibold hover:bg-gray-100">⬇ Install app</button>
-        <button id="notifyBtn" type="button" class="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-semibold hover:bg-gray-100">🔔 Remind me</button>
-      </div>
+    </div>
+    <div id="installCard" hidden class="mt-3 flex flex-wrap items-center gap-2 rounded-2xl border-2 border-gray-800 bg-white p-3 text-sm">
+      <p id="installText" class="min-w-0 flex-1 font-semibold"></p>
+      <button id="installBtn" type="button" hidden class="rounded-xl bg-brand px-4 py-2.5 font-bold text-white">⬇ Install app</button>
+      <button id="installX" type="button" aria-label="Dismiss" class="rounded-lg px-3 py-2 text-gray-500">✕</button>
     </div>
     <form id="quickForm" class="mt-3 flex items-stretch gap-2">
       <label for="quickIn" class="sr-only">Paste a message</label>
@@ -249,6 +246,7 @@ h1,h2,h3,#mineTitle{font-family:Georgia,"Iowan Old Style","Times New Roman",seri
     <ul id="mineList" class="mt-3 space-y-2"></ul>
     <div id="mineEmpty" class="mt-3 rounded-2xl border-2 border-dashed border-gray-300 p-6 text-center text-gray-600">
       <p class="font-semibold text-gray-800">Nothing pinned yet. Three steps:</p>
+      <p class="text-xs text-gray-500" dir="ltr">Class group se message copy karein → yahan paste karein → Calendar mein daalein.</p>
       <ol class="mx-auto mt-2 max-w-sm space-y-1 text-left text-sm">
         <li><strong>1.</strong> Copy a deadline message from your class group and paste it above (or use <em>Share → DeadlineSync</em> once the app is installed).</li>
         <li><strong>2.</strong> Check the date it found. Fix it if it's wrong, then Save.</li>
@@ -263,12 +261,21 @@ h1,h2,h3,#mineTitle{font-family:Georgia,"Iowan Old Style","Times New Roman",seri
     </div>
     <p class="mt-3 text-xs text-gray-500">Your list is saved only on this device — no account, nothing uploaded. For reminders that work with the app closed, tap 📅 to add each deadline to your phone's calendar.</p>
     <button id="shareApp" type="button" class="mt-3 rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold hover:bg-gray-100">📤 Share this app with your class group</button>
+    <a href="flyer.html" target="_blank" rel="noopener" class="mt-3 ml-2 inline-block rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold hover:bg-gray-100">🖨 Printable flyer</a>
   </section>
 
   <!-- More: advanced tools, hidden by default so the main screen stays simple -->
   <details id="more" class="mb-6 rounded-2xl border border-gray-200 p-3 sm:p-4">
     <summary class="cursor-pointer text-base font-bold">More tools <span class="text-sm font-normal text-gray-500">— backup, Google sync, scan a syllabus</span></summary>
     <div class="mt-3 space-y-5">
+      <div>
+        <h3 class="font-semibold">Preferences</h3>
+        <div class="mt-2 flex flex-wrap gap-2">
+          <button id="settingsBtn" type="button" aria-expanded="false" aria-controls="settings" class="rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold hover:bg-gray-100">⚙ AI key</button>
+          <button id="notifyBtn" type="button" class="rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold hover:bg-gray-100">🔔 Remind me while app is open</button>
+        </div>
+        <label class="mt-2 flex items-center gap-2 text-sm"><input id="fastSave" type="checkbox" checked> Save clear messages in one tap (with Undo)</label>
+      </div>
       <div>
         <h3 class="font-semibold">Back up your deadlines</h3>
         <p class="text-xs text-gray-500">Your list lives only in this browser. Download a copy before clearing data or changing phones.</p>
@@ -871,7 +878,7 @@ function classMsg(list){return "📌 "+(list.length>1?"Deadlines":"Deadline")+"\
 function key(d){return (d.title||"").toLowerCase().replace(/\s+/g," ").trim()+"|"+d.date}
 function add(items){var n=0,have={};mine.forEach(function(d){have[key(d)]=1});
  items.forEach(function(it){if(!it||!it.title||!DC.isValidISO(it.date))return;var d={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),title:String(it.title).slice(0,120),date:it.date,time:DC.isValidTime(it.time)?it.time:null,type:it.type||"Other",done:false};if(have[key(d)])return;have[key(d)]=1;mine.push(d);n++});
- if(n){save();render();notifyCheck()}return n}
+ if(n){save();sv("dpk_seen",1);render();notifyCheck()}return n}
 window.__dpkPin=function(it){propose([it]);var s=$("mine");if(s&&s.scrollIntoView)s.scrollIntoView({behavior:"smooth",block:"start"})};
 function say(t,ok){var m=$("quickMsg");m.textContent=t;m.className="mt-1 min-h-5 text-sm "+(ok?"text-green-700":"text-red-700")}
 function open_(){return mine.filter(function(d){return !d.done})}
@@ -913,10 +920,15 @@ function dl(name,type,text){var b=new Blob([text],{type:type}),u=URL.createObjec
 function propose(found){
  var items=found.filter(function(f){return f.date||f.time}).map(function(f){return Object.assign({},f,{date:f.date||today(),_assumed:!f.date})});
  if(!items.length){say("Couldn’t find a date in that. Try “Quiz Friday 9 baje” or “Report 15 Dec”.",false);return}
+ var fs=$("fastSave");
+ if(fs&&fs.checked&&items.length===1&&!items[0]._assumed&&items[0].confidence==="high"&&!(items[0].alternatives||[]).length){
+  var one=items[0],o1={title:one.title,date:one.date,time:one.time||null,type:one.type},n1=add([o1]);
+  $("confirm").hidden=true;$("quickIn").value="";if(tab==="done")tab="week";render();offerCalendar([o1],n1,n1?function(){mine=mine.filter(function(d){return key(d)!==key(o1)});save();render();$("saveNote").hidden=true;say("Removed.",true)}:null);return}
  var box=$("confirm");box.textContent="";box.hidden=false;$("saveNote").hidden=true;say("");
  box.appendChild(el("p","mb-2 text-sm font-semibold text-green-900","Check "+(items.length>1?"these "+items.length+" deadlines":"this deadline")+" before saving:"));
  var rows=[];
  items.forEach(function(it){var r=el("div","mb-2 rounded-xl bg-white p-2 text-sm");
+  var cb=null;if(items.length>1){var lab=el("label","mb-1 flex items-center gap-2 text-xs font-semibold text-gray-600");cb=document.createElement("input");cb.type="checkbox";cb.checked=!it._assumed;cb.setAttribute("aria-label","Include");lab.appendChild(cb);lab.appendChild(document.createTextNode("Include"));r.appendChild(lab)}
   var t=el("input","w-full rounded-lg border border-gray-300 px-2 py-1.5 font-medium");t.type="text";t.value=it.title;t.dir="auto";t.setAttribute("aria-label","Title");
   var row=el("div","mt-1 flex flex-wrap gap-2");
   var d=el("input","rounded-lg border border-gray-300 px-2 py-1.5");d.type="date";d.value=it.date;d.setAttribute("aria-label","Date");
@@ -927,26 +939,29 @@ function propose(found){
   (it.alternatives||[]).forEach(function(a){if(!DC.isValidISO(a))return;
    var alt=el("button","mt-2 mr-2 rounded-full border-2 border-gray-800 bg-white px-3 py-1 text-xs font-semibold","Did you mean "+DC.describeDate(a)+"?");alt.type="button";
    alt.onclick=function(){var cur=d.value;d.value=a;hint.textContent=DC.describeDate(a);hint.className="self-center text-xs text-gray-500";alt.textContent="Switched ✓ (undo)";alt.onclick=function(){d.value=cur;hint.textContent=DC.describeDate(cur);alt.remove()}};r.appendChild(alt)});
-  box.appendChild(r);rows.push({it:it,t:t,d:d,tm:tm})});
+  box.appendChild(r);rows.push({it:it,t:t,d:d,tm:tm,cb:cb})});
  var act=el("div","flex gap-2");
- var ok=el("button","rounded-xl bg-brand px-5 py-2.5 font-bold text-white hover:bg-brand-dark","Save"+(items.length>1?" all":""));ok.type="button";
+ var ok=el("button","rounded-xl bg-brand px-5 py-2.5 font-bold text-white hover:bg-brand-dark","Save"+(items.length>1?" selected":"")+" · Mehfooz karein");ok.type="button";
  var no=el("button","rounded-xl border border-gray-300 bg-white px-4 py-2.5 font-semibold","Cancel");no.type="button";
  no.onclick=function(){box.hidden=true};
- ok.onclick=function(){var out=[];rows.forEach(function(r){if(DC.isValidISO(r.d.value)&&r.t.value.trim())out.push({title:r.t.value.trim(),date:r.d.value,time:r.tm.value||null,type:r.it.type})});
+ ok.onclick=function(){var out=[];rows.forEach(function(r){if(r.cb&&!r.cb.checked)return;if(DC.isValidISO(r.d.value)&&r.t.value.trim())out.push({title:r.t.value.trim(),date:r.d.value,time:r.tm.value||null,type:r.it.type})});
   if(!out.length){say("Add a title and a date first.",false);return}
   var n=add(out);box.hidden=true;$("quickIn").value="";if(tab==="done")tab="week";render();offerCalendar(out,n)};
  var orig=items[0].original;
  if(orig){var rep=el("a","ml-auto self-center text-xs underline","Wrong date? Tell us");rep.target="_blank";rep.rel="noopener";
   rep.href="https://github.com/Gi-v/deadline-pk/issues/new?title="+encodeURIComponent("Wrong date")+"&body="+encodeURIComponent("Message (remove names if you like):\n"+orig+"\n\nApp read: "+items[0].date+" "+(items[0].time||"")+"\nShould be: ");act.appendChild(rep)}
  act.insertBefore(ok,act.firstChild);act.insertBefore(no,ok.nextSibling);box.appendChild(act);box.scrollIntoView({block:"nearest",behavior:"smooth"})}
-function offerCalendar(items,n){var s=$("saveNote");s.textContent="";s.hidden=false;
- s.appendChild(el("p","font-semibold",n?"Saved ✓":"Already in your list"));
+function icsOf(l){return DC.buildICS(l.map(function(d){return{title:d.title,date:d.date,time:d.time,type:d.type,notes:""}}),{calName:"My deadlines",alarmSet:"student",appUrl:BASE})}
+function offerCalendar(items,n,undo){var s=$("saveNote");s.textContent="";s.hidden=false;
+ s.appendChild(el("p","font-semibold",n?"Saved ✓ · Mehfooz ho gaya":"Already in your list"));
  s.appendChild(el("p","mt-1 text-gray-600","Add it to your phone’s calendar so it reminds you even when this app is closed:"));
- var b=el("a","mt-2 inline-block rounded-xl bg-brand px-4 py-2.5 font-bold text-white hover:bg-brand-dark","📅 Add to calendar"+(items.length>1?" ("+items.length+")":""));b.href="#";
- var ics=function(l){return DC.buildICS(l.map(function(d){return{title:d.title,date:d.date,time:d.time,type:d.type,notes:""}}),{calName:"My deadlines"})};
- b.onclick=function(e){e.preventDefault();if(items.length===1){window.open(DC.gcalUrl(items[0]),"_blank","noopener")}else{dl("deadlines.ics","text/calendar",ics(items))}};
+ var pref=ld("dpk_cal","g"),canG=items.length===1;if(!canG)pref="ics";
+ var b=el("a","mt-2 inline-block rounded-xl bg-brand px-4 py-2.5 font-bold text-white hover:bg-brand-dark","📅 Add to calendar · Calendar mein daalein"+(items.length>1?" ("+items.length+")":""));b.href="#";
+ b.onclick=function(e){e.preventDefault();if(pref==="g"&&canG){window.open(DC.gcalUrl(items[0]),"_blank","noopener")}else{dl("deadlines.ics","text/calendar",icsOf(items))}};
  s.appendChild(b);
- if(items.length===1){var i=el("button","ml-2 mt-2 rounded-xl border border-gray-300 px-4 py-2.5 font-semibold","⬇ .ics file");i.type="button";i.onclick=function(){dl("deadline.ics","text/calendar",ics(items))};s.appendChild(i)}}
+ if(canG){var i=el("button","ml-2 mt-2 rounded-xl border border-gray-300 px-4 py-2.5 font-semibold",pref==="g"?"⬇ .ics file instead":"Google Calendar instead");i.type="button";
+  i.onclick=function(){sv("dpk_cal",pref==="g"?"ics":"g");offerCalendar(items,n,undo)};s.appendChild(i)}
+ if(undo){var u=el("button","ml-2 mt-2 rounded-xl border border-gray-300 px-4 py-2.5 font-semibold","↩ Undo");u.type="button";u.onclick=undo;s.appendChild(u)}}
 $("pasteBtn").onclick=function(){var q=$("quickIn");
  if(navigator.clipboard&&navigator.clipboard.readText){navigator.clipboard.readText().then(function(t){if(t&&t.trim()){q.value=t.trim();propose(DC.extractFromText(t,{}))}else say("Clipboard is empty. Copy a message from your class group first.",false)}).catch(function(){q.focus();say("Your browser blocked clipboard access. Long-press the box and choose Paste.",false)})}
  else{q.focus();say("Long-press the box and choose Paste.",false)}};
@@ -955,7 +970,7 @@ $("quickIn").addEventListener("keydown",function(e){if(e.key==="Enter"&&!e.shift
 $("mineExample").onclick=function(){add([{title:"Quiz",date:today(),time:"09:00",type:"Quiz"},{title:"Assignment 3",date:DC.toISO(DC.addDays(new Date(),2)),time:null,type:"Assignment"},{title:"Midterm exam",date:DC.toISO(DC.addDays(new Date(),6)),time:"10:00",type:"Exam"}]);say("Added 3 examples — delete them with ✕",true)};
 $("clearDone").onclick=function(){gone(mine.filter(function(d){return d.done}));mine=mine.filter(function(d){return !d.done});save();render()};
 $("icsAll").onclick=function(){var ev=open_().map(function(d){return{title:d.title,date:d.date,time:d.time,type:d.type,notes:""}});if(!ev.length){say("Nothing open to export",false);return}
- var b=new Blob([DC.buildICS(ev,{calName:"My deadlines"})],{type:"text/calendar"}),u=URL.createObjectURL(b),a=document.createElement("a");a.href=u;a.download="my-deadlines.ics";document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(u)},4000)};
+ var b=new Blob([DC.buildICS(ev,{calName:"My deadlines",alarmSet:"student",appUrl:BASE})],{type:"text/calendar"}),u=URL.createObjectURL(b),a=document.createElement("a");a.href=u;a.download="my-deadlines.ics";document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(u)},4000)};
 var sb=$("saveMineBtn");if(sb)sb.onclick=function(){var ok=(window.__dpkRows?window.__dpkRows():[]).filter(function(r){return DC.isValidISO(r.date)});var n=add(ok);var s=$("mine");say(n?("Saved "+n+" to My deadlines ✓"):"Nothing new to save",!!n);if(s)s.scrollIntoView({behavior:"smooth",block:"start"})};
 function notifyCheck(){try{if(!("Notification" in window)||Notification.permission!=="granted")return;var done=ld(NKEY,{});
  open_().forEach(function(d){var n=daysTo(d.date),b=n===0?"today":n===1?"tomorrow":null;if(!b)return;var k=d.id+":"+b;if(done[k])return;done[k]=1;
@@ -963,8 +978,20 @@ function notifyCheck(){try{if(!("Notification" in window)||Notification.permissi
 $("notifyBtn").onclick=function(){if(!("Notification" in window)){say("This browser can’t show notifications.",false);return}
  Notification.requestPermission().then(function(p){if(p==="granted"){say("Reminders on — you’ll be nudged today/tomorrow while the app is open.",true);notifyCheck()}else say("Notifications are blocked in your browser settings.",false)})};
 setInterval(notifyCheck,300000);
-var dip=null;window.addEventListener("beforeinstallprompt",function(e){e.preventDefault();dip=e;$("installBtn").hidden=false});
-$("installBtn").onclick=function(){if(dip){dip.prompt();dip=null;$("installBtn").hidden=true}};
+/* Device-aware install card + landing skip + fast-save setting */
+window.dpkDevice=function(ua){ua=ua||"";if(/FBAN|FBAV|Instagram|WhatsApp|; wv\)/i.test(ua))return"inapp";if(/iPhone|iPad|iPod/i.test(ua))return"ios";if(/Android/i.test(ua))return"android";return"desktop"};
+var standalone=false;try{standalone=matchMedia("(display-mode: standalone)").matches||navigator.standalone===true}catch(e){}
+var dip=null,dev=window.dpkDevice(navigator.userAgent);
+function showInstall(msg,btn){if(standalone||ld("dpk_noinstall",0))return;$("installText").textContent=msg;$("installBtn").hidden=!btn;$("installCard").hidden=false}
+window.addEventListener("beforeinstallprompt",function(e){e.preventDefault();dip=e;showInstall("Keep it on your home screen — one tap to open.",true)});
+if(dev==="ios")showInstall("iPhone: tap Share ⬆ then “Add to Home Screen”.",false);
+if(dev==="inapp")showInstall("Tap ⋮ then “Open in Chrome” first, then you can install it.",false);
+$("installBtn").onclick=function(){if(dip){dip.prompt();dip=null;$("installCard").hidden=true}};
+$("installX").onclick=function(){sv("dpk_noinstall",1);$("installCard").hidden=true};
+window.addEventListener("appinstalled",function(){$("installCard").hidden=true});
+var fsEl=$("fastSave");if(fsEl){fsEl.checked=ld("dpk_fast",1)!==0;fsEl.onchange=function(){sv("dpk_fast",fsEl.checked?1:0)}}
+if(standalone||ld("dpk_seen",0)||/[?&]new=1/.test(location.search)){var lpEl=document.querySelector(".lp");if(lpEl)lpEl.hidden=true;if(!location.hash&&!/[?&]add=/.test(location.search))setTimeout(function(){try{$("quickIn").focus()}catch(e){}},300)}
+if(mine.length)sv("dpk_seen",1);
 if(/^https?:$/.test(location.protocol)){var l=document.createElement("link");l.rel="manifest";l.href="manifest.webmanifest";document.head.appendChild(l);
  if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(function(){})}
 $("backupBtn").onclick=function(){dl("deadlinepk-backup.json","application/json",JSON.stringify({v:1,mine:mine}))};

@@ -42,5 +42,24 @@ t('daily tracker + PWA pieces present', () => {
   assert.ok(m.icons.some((i) => i.sizes === '512x512') && m.icons.some((i) => i.sizes === '192x192'));
 });
 
+t('v2.5 easy-start pieces present', () => {
+  ['id="installCard"', 'id="fastSave"', 'dpkDevice', 'dpk_cal', 'alarmSet:"student"'].forEach((x) => assert.ok(html.includes(x), x));
+  const root = join(dirname(fileURLToPath(import.meta.url)), '..', 'web');
+  const m = JSON.parse(readFileSync(join(root, 'manifest.webmanifest'), 'utf8'));
+  assert.ok(m.shortcuts && m.shortcuts[0].url.includes('new=1'));
+  const fl = readFileSync(join(root, 'flyer.html'), 'utf8');
+  assert.ok(fl.includes('<svg') && fl.includes('gi-v.github.io/deadline-pk'));
+  assert.ok(!/(src|href)="https?:/i.test(fl));
+});
+t('device detection', () => {
+  const m = html.match(/window\.dpkDevice=function\(ua\)\{[^\n]*?\};/);
+  assert.ok(m, 'helper found');
+  const w = {}; new vm.Script(m[0].replace('window.', 'w.')).runInNewContext({ w });
+  assert.equal(w.dpkDevice('Mozilla/5.0 (Linux; Android 13) Chrome/120 Mobile'), 'android');
+  assert.equal(w.dpkDevice('Mozilla/5.0 (iPhone; CPU iPhone OS 17_0) Safari'), 'ios');
+  assert.equal(w.dpkDevice('Mozilla/5.0 (Linux; Android 13; wv) FBAV/400'), 'inapp');
+  assert.equal(w.dpkDevice('Mozilla/5.0 (Windows NT 10.0) Chrome/120'), 'desktop');
+});
+
 console.log(`web tests: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

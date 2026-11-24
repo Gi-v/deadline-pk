@@ -19,6 +19,14 @@ t('"next Thursday" offers the other reading', () => {
   assert.deepEqual(P('Quiz kal 9 baje').alternatives, []);
   assert.equal(C.extractFromText('Lab test next Thursday', { today: new Date(2026, 10, 23) })[0].alternatives[0], '2026-12-03');
 });
+t('student alarm set: two alarms per event and the app link in the description', () => {
+  const timed = C.buildICS([{ title: 'Quiz', date: '2026-11-24', time: '09:00' }], { alarmSet: 'student', appUrl: 'https://x.test/app/' });
+  assert.deepEqual([...timed.matchAll(/TRIGGER:(.*)\r/g)].map((m) => m[1]), ['-P1D', '-PT1H']);
+  assert.ok(timed.includes('DESCRIPTION:Open your deadlines: https://x.test/app/'));
+  const allDay = C.buildICS([{ title: 'Report', date: '2026-11-24' }], { alarmSet: 'student' });
+  assert.deepEqual([...allDay.matchAll(/TRIGGER:(.*)\r/g)].map((m) => m[1]), ['-PT6H', 'PT8H']);
+  assert.equal([...C.buildICS([{ title: 'A', date: '2026-11-24' }]).matchAll(/BEGIN:VALARM/g)].length, 1); // default unchanged
+});
 t('postponed: weekday is the new date, not "kal"', () => { const r = P('kal ka quiz postpone ho gaya hai, ab Thursday ko hoga'); assert.equal(r.date, '2026-11-26'); });
 t('day-part + bare hour is a time', () => { const r = P('Quiz tomorrow evening 6'); assert.equal(r.date, '2026-11-24'); assert.equal(r.time, '18:00'); assert.equal(P('Marks morning 10 questions hain').time, null); });
 t('jumay spelling', () => { assert.equal(P('jumay ko 2 baje seminar hai').date, '2026-11-27'); });

@@ -652,7 +652,7 @@
   const compact = (iso) => iso.replace(/-/g, '');
 
   /**
-   * buildICS(events, {course, calName, alarm, alarmTimed, now})
+   * buildICS(events, {course, calName, alarm, alarmTimed, alarmSet:'student', appUrl, now})
    * events: [{title, date:'YYYY-MM-DD', time?:'HH:MM', notes?, description?, uidSeed?}]
    * Rows with an invalid date are skipped (callers validate first). Returns CRLF text.
    */
@@ -680,9 +680,12 @@
       }
       L.push('SUMMARY:' + icsEscape(summary));
       const desc = e.description != null ? e.description : [e.type && e.type !== 'Other' ? e.type : '', e.notes].filter(Boolean).join(' — ');
-      if (desc) L.push('DESCRIPTION:' + icsEscape(desc));
+      const fullDesc = [desc, o.appUrl ? 'Open your deadlines: ' + o.appUrl : ''].filter(Boolean).join('\n');
+      if (fullDesc) L.push('DESCRIPTION:' + icsEscape(fullDesc));
       L.push('TRANSP:TRANSPARENT');
-      L.push('BEGIN:VALARM', 'ACTION:DISPLAY', 'DESCRIPTION:' + icsEscape('Reminder: ' + summary), 'TRIGGER:' + (timed ? o.alarmTimed : o.alarm), 'END:VALARM');
+      // 'student' alarm set: timed = a day before + an hour before; all-day = 6 pm the evening before + 8 am that morning.
+      const triggers = o.alarmSet === 'student' ? (timed ? ['-P1D', '-PT1H'] : ['-PT6H', 'PT8H']) : [timed ? o.alarmTimed : o.alarm];
+      triggers.forEach((tr) => L.push('BEGIN:VALARM', 'ACTION:DISPLAY', 'DESCRIPTION:' + icsEscape('Reminder: ' + summary), 'TRIGGER:' + tr, 'END:VALARM'));
       L.push('END:VEVENT');
     });
     L.push('END:VCALENDAR');

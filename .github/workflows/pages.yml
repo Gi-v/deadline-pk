@@ -25,7 +25,7 @@ jobs:
           mkdir _site
           cp web/DeadlineSync-PK.html _site/index.html
           (cd extension && zip -r ../_site/DeadlinePinPK.zip . -x '*.DS_Store')
-          cp web/manifest.webmanifest web/sw.js web/og.jpg web/privacy.html _site/
+          cp web/manifest.webmanifest web/sw.js web/og.jpg web/privacy.html web/flyer.html _site/
           cp -r web/icons _site/icons
           touch _site/.nojekyll
       - uses: actions/upload-pages-artifact@v3
