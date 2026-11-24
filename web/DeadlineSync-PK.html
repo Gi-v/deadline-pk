@@ -1841,7 +1841,7 @@ $("installBtn").onclick=function(){if(dip){dip.prompt();dip=null;$("installCard"
 $("installX").onclick=function(){sv("dpk_noinstall",1);$("installCard").hidden=true};
 window.addEventListener("appinstalled",function(){$("installCard").hidden=true});
 var fsEl=$("fastSave");if(fsEl){fsEl.checked=ld("dpk_fast",1)!==0;fsEl.onchange=function(){sv("dpk_fast",fsEl.checked?1:0)}}
-if(standalone||ld("dpk_seen",0)||/[?&]new=1/.test(location.search)){var lpEl=document.querySelector(".lp");if(lpEl)lpEl.hidden=true;if(!location.hash&&!/[?&]add=/.test(location.search))setTimeout(function(){try{$("quickIn").focus()}catch(e){}},300)}
+if(standalone||/[?&]new=1/.test(location.search)){var lpEl=document.querySelector(".lp");if(lpEl)lpEl.hidden=true;if(!location.hash&&!/[?&]add=/.test(location.search))setTimeout(function(){try{$("quickIn").focus()}catch(e){}},300)}
 if(mine.length)sv("dpk_seen",1);
 if(/^https?:$/.test(location.protocol)){var l=document.createElement("link");l.rel="manifest";l.href="manifest.webmanifest";document.head.appendChild(l);
  if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").then(function(reg){reg.addEventListener("updatefound",function(){var w=reg.installing;if(!w)return;w.addEventListener("statechange",function(){if(w.state==="installed"&&navigator.serviceWorker.controller){var t=document.createElement("button");t.type="button";t.id="updToast";t.textContent="New version ready — tap to refresh";t.style.cssText="position:fixed;left:12px;right:12px;bottom:12px;z-index:50;padding:14px;border:2px solid #1d1b16;border-radius:12px;background:#ffe35c;font-weight:700";t.onclick=function(){location.reload()};document.body.appendChild(t)}})})}).catch(function(){})}
