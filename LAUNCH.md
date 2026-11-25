@@ -56,3 +56,9 @@ One-time $5 developer fee (you pay). Package: zip the `extension/` folder (alrea
 - [ ] Link preview looks right when pasted into WhatsApp (WhatsApp caches previews; test with a fresh `?v=` link)
 - [ ] Pilot numbers met
 - [ ] Privacy page linked everywhere; feedback channel set
+
+## Group-sharing pilot checklist (does the cold start actually work?)
+1. Pick one real class group. Pin one real deadline in the app, tap **Share** and send the WhatsApp message (links now carry `?src=share`, no tracking).
+2. After 24 h ask in the group, by show of hands: who opened the link? who tapped **Add to my calendar**? who kept it in the app?
+3. Success = at least 3 of 10 classmates add a deadline. If fewer, ask the ones who did not what stopped them and fix that first.
+4. Also try: a full chat export (WhatsApp → Export chat → Without media) dropped into **More tools**, and a text syllabus PDF scanned offline (no key needed). Note any wrong dates.

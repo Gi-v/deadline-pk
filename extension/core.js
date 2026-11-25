@@ -575,6 +575,8 @@
         splitMulti(line).forEach((chunk) => {
           const r = parseDeadline(chunk, opts);
           if (r.cancelled) return;
+          // Syllabus mode: topic rows ("Week 1  Introduction") and "released/posted" lines are not deadlines.
+          if (opts.syllabus && (r.type === 'Other' || (/\b(?:release[sd]?|assigned|posted|handed out|uploaded)\b/i.test(chunk) && !/\b(?:due|deadline|submit|submission|by)\b/i.test(chunk)))) return;
           if (r.date || r.relative || r.type !== 'Other') {
             out.push({
               title: r.title, date: r.date || (r.relative ? 'RELATIVE: ' + r.relative : 'UNKNOWN'),
@@ -868,7 +870,7 @@
   }
   /** Deep link a classmate can tap: ?add=<title|date|time|type,...>. No server; the link itself carries the deadline. */
   function encodeShare(items) {
-    return (items || []).slice(0, 20).map((d) => [d.title, d.date, d.time || '', d.type || ''].map((x) => encodeURIComponent(String(x))).join('|')).join(',');
+    return (items || []).slice(0, 20).map((d) => [d.title, d.date, d.time || '', d.type || '', d.course || ''].map((x) => encodeURIComponent(String(x))).join('|')).join(',');
   }
   /** Inverse of encodeShare, strictly validated (links come from strangers): returns only well-formed deadlines. */
   function decodeShare(str) {
@@ -876,15 +878,16 @@
     String(str || '').split(',').slice(0, 20).forEach((part) => {
       const f = part.split('|');
       if (f.length < 2) return;
-      let title, date, time, type;
-      try { [title, date, time, type] = f.map((x) => decodeURIComponent(x || '')); } catch (e) { return; }
+      let title, date, time, type, course;
+      try { [title, date, time, type, course] = f.map((x) => decodeURIComponent(x || '')); } catch (e) { return; }
+      course = /^[A-Za-z0-9-]{1,10}$/.test(course || '') ? course.toUpperCase() : '';
       title = String(title).replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, 120);
       if (!title || !isValidISO(date)) return;
-      out.push({ title, date, time: isValidTime(time) ? time : null, type: TYPES.indexOf(type) >= 0 ? type : 'Other' });
+      out.push({ title, date, time: isValidTime(time) ? time : null, type: TYPES.indexOf(type) >= 0 ? type : 'Other', course });
     });
     return out;
   }
-  function shareLink(base, items) { return base + '?add=' + encodeURIComponent(encodeShare(items)); }
+  function shareLink(base, items) { return base + '?src=share&add=' + encodeURIComponent(encodeShare(items)); }
   const mailUrl = (d) => 'mailto:?subject=' + encodeURIComponent('Deadline: ' + d.title) + '&body=' + encodeURIComponent(shareText(d));
 
   /* ---------------------------------------------------------------- real Google Calendar sync (API v3) */

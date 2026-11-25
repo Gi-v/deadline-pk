@@ -967,6 +967,8 @@ h1,h2,h3,#mineTitle{font-family:Georgia,"Iowan Old Style","Times New Roman",seri
         splitMulti(line).forEach((chunk) => {
           const r = parseDeadline(chunk, opts);
           if (r.cancelled) return;
+          // Syllabus mode: topic rows ("Week 1  Introduction") and "released/posted" lines are not deadlines.
+          if (opts.syllabus && (r.type === 'Other' || (/\b(?:release[sd]?|assigned|posted|handed out|uploaded)\b/i.test(chunk) && !/\b(?:due|deadline|submit|submission|by)\b/i.test(chunk)))) return;
           if (r.date || r.relative || r.type !== 'Other') {
             out.push({
               title: r.title, date: r.date || (r.relative ? 'RELATIVE: ' + r.relative : 'UNKNOWN'),
@@ -1260,7 +1262,7 @@ h1,h2,h3,#mineTitle{font-family:Georgia,"Iowan Old Style","Times New Roman",seri
   }
   /** Deep link a classmate can tap: ?add=<title|date|time|type,...>. No server; the link itself carries the deadline. */
   function encodeShare(items) {
-    return (items || []).slice(0, 20).map((d) => [d.title, d.date, d.time || '', d.type || ''].map((x) => encodeURIComponent(String(x))).join('|')).join(',');
+    return (items || []).slice(0, 20).map((d) => [d.title, d.date, d.time || '', d.type || '', d.course || ''].map((x) => encodeURIComponent(String(x))).join('|')).join(',');
   }
   /** Inverse of encodeShare, strictly validated (links come from strangers): returns only well-formed deadlines. */
   function decodeShare(str) {
@@ -1268,15 +1270,16 @@ h1,h2,h3,#mineTitle{font-family:Georgia,"Iowan Old Style","Times New Roman",seri
     String(str || '').split(',').slice(0, 20).forEach((part) => {
       const f = part.split('|');
       if (f.length < 2) return;
-      let title, date, time, type;
-      try { [title, date, time, type] = f.map((x) => decodeURIComponent(x || '')); } catch (e) { return; }
+      let title, date, time, type, course;
+      try { [title, date, time, type, course] = f.map((x) => decodeURIComponent(x || '')); } catch (e) { return; }
+      course = /^[A-Za-z0-9-]{1,10}$/.test(course || '') ? course.toUpperCase() : '';
       title = String(title).replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, 120);
       if (!title || !isValidISO(date)) return;
-      out.push({ title, date, time: isValidTime(time) ? time : null, type: TYPES.indexOf(type) >= 0 ? type : 'Other' });
+      out.push({ title, date, time: isValidTime(time) ? time : null, type: TYPES.indexOf(type) >= 0 ? type : 'Other', course });
     });
     return out;
   }
-  function shareLink(base, items) { return base + '?add=' + encodeURIComponent(encodeShare(items)); }
+  function shareLink(base, items) { return base + '?src=share&add=' + encodeURIComponent(encodeShare(items)); }
   const mailUrl = (d) => 'mailto:?subject=' + encodeURIComponent('Deadline: ' + d.title) + '&body=' + encodeURIComponent(shareText(d));
 
   /* ---------------------------------------------------------------- real Google Calendar sync (API v3) */
@@ -1687,7 +1690,7 @@ Extract all deadlines from this syllabus. If a date has no year, use the semeste
       } else {
         files.forEach((f) => jobs.push((async () => {
           const t = await offlineText(f);
-          const evs = DC.extractFromText(t, { semesterStart: start || null })
+          const evs = DC.extractFromText(t, { semesterStart: start || null, syllabus: true })
             .filter((o) => (DC.isValidISO(o.date) || /^RELATIVE/.test(o.date)))
             .map((o) => ({ title: o.title, date: DC.isValidISO(o.date) ? o.date : 'UNKNOWN', time: o.time, type: o.type, confidence: o.confidence === 'high' ? 'medium' : 'low', notes: o.original.slice(0, 140) }));
           return { label: f.name, events: evs };
@@ -1903,9 +1906,9 @@ function daysTo(iso){var a=DC.startOfDay(new Date()),b=DC.fromISO(iso);return Ma
 function rel(d){var n=daysTo(d.date);if(n<0)return{t:"Overdue "+(-n)+"d",c:"bg-red-100 text-red-800"};if(n===0)return{t:"Today"+(d.time?" "+d.time:""),c:"bg-yellow-100 text-yellow-900"};if(n===1)return{t:"Tomorrow"+(d.time?" "+d.time:""),c:"bg-orange-100 text-orange-800"};return{t:"in "+n+" days",c:"bg-gray-100 text-gray-700"}}
 var BASE=location.origin+location.pathname;
 /* One message for the class group: readable lines plus a link that fills the deadlines into a classmate's app. */
-function classMsg(list){return "📌 "+(list.length>1?"Deadlines":"Deadline")+"\n"+list.map(function(d){return "• "+d.title+" — "+DC.describeDate(d.date)+(d.time?" "+d.time:"")}).join("\n")+"\n\nTap to add "+(list.length>1?"them":"it")+" to your calendar: "+DC.shareLink(BASE,list)}
-var courseF="";
-function key(d){return (d.title||"").toLowerCase().replace(/\s+/g," ").trim()+"|"+d.date}
+function classMsg(list){var line=function(d){return "• "+d.title+" — "+DC.describeDate(d.date)+(d.time?" "+d.time:"")},cs=[];list.forEach(function(d){if(d.course&&cs.indexOf(d.course)<0)cs.push(d.course)});
+ var body=cs.length>1?cs.concat([""]).map(function(c){var g=list.filter(function(d){return(d.course||"")===c});return g.length?(c?"*"+c+"*\n":"")+g.map(line).join("\n"):""}).filter(Boolean).join("\n\n"):list.map(line).join("\n");
+ return "📌 "+(list.length>1?"Deadlines":"Deadline")+"\n"+body+"\n\nTap to add "+(list.length>1?"them":"it")+" to your calendar: "+DC.shareLink(BASE,list)}
 function add(items){var n=0,have={};mine.forEach(function(d){have[key(d)]=1});
  items.forEach(function(it){if(!it||!it.title||!DC.isValidISO(it.date))return;var d={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),title:String(it.title).slice(0,120),date:it.date,time:DC.isValidTime(it.time)?it.time:null,type:it.type||"Other",course:String(it.course||"").replace(/[^A-Za-z0-9-]/g,"").slice(0,10).toUpperCase(),original:String(it.original||"").slice(0,300),done:false};if(have[key(d)])return;have[key(d)]=1;mine.push(d);n++});
  if(n){save();sv("dpk_seen",1);render();notifyCheck()}return n}
@@ -1982,9 +1985,9 @@ function propose(found){
   $("confirm").hidden=true;$("quickIn").value="";if(tab==="done")tab="week";render();offerCalendar([o1],n1,n1?function(){mine=mine.filter(function(d){return key(d)!==key(o1)});save();render();$("saveNote").hidden=true;say("Removed.",true)}:null);return}
  var box=$("confirm");box.textContent="";box.hidden=false;$("saveNote").hidden=true;say("");
  box.appendChild(el("p","mb-2 text-sm font-semibold text-green-900","Check "+(items.length>1?"these "+items.length+" deadlines":"this deadline")+" before saving:"));
- var rows=[];
+ var rows=[],lastGroup="";
  items.forEach(function(it){var r=el("div","mb-2 rounded-xl bg-white p-2 text-sm");
-  var cb=null;if(items.length>1){var lab=el("label","mb-1 flex items-center gap-2 text-xs font-semibold text-gray-600");cb=document.createElement("input");cb.type="checkbox";cb.checked=!it._assumed;cb.setAttribute("aria-label","Include");lab.appendChild(cb);lab.appendChild(document.createTextNode("Include"));r.appendChild(lab)}
+  var cb=null;if(items.length>1){var lab=el("label","mb-1 flex items-center gap-2 text-xs font-semibold text-gray-600");cb=document.createElement("input");cb.type="checkbox";cb.checked=!it._assumed&&!(it.fromChat&&it.confidence==="low");cb.setAttribute("aria-label","Include");lab.appendChild(cb);lab.appendChild(document.createTextNode("Include"));r.appendChild(lab)}
   if(it.sender){r.appendChild(el("p","mb-1 text-xs text-gray-500","From "+it.sender+(it.sentAt?" · sent "+DC.describeDate(it.sentAt):"")))}
   var t=el("input","w-full rounded-lg border border-gray-300 px-2 py-1.5 font-medium");t.type="text";t.value=it.title;t.dir="auto";t.setAttribute("aria-label","Title");
   var row=el("div","mt-1 flex flex-wrap gap-2");
@@ -1996,6 +1999,7 @@ function propose(found){
   (it.alternatives||[]).forEach(function(a){if(!DC.isValidISO(a))return;
    var alt=el("button","mt-2 mr-2 rounded-full border-2 border-gray-800 bg-white px-3 py-1 text-xs font-semibold","Did you mean "+DC.describeDate(a)+"?");alt.type="button";
    alt.onclick=function(){var cur=d.value;d.value=a;hint.textContent=DC.describeDate(a);hint.className="self-center text-xs text-gray-500";alt.textContent="Switched ✓ (undo)";alt.onclick=function(){d.value=cur;hint.textContent=DC.describeDate(cur);alt.remove()}};r.appendChild(alt)});
+  if(it.fromChat&&it.date!==lastGroup){lastGroup=it.date;box.appendChild(el("p","mb-1 mt-3 text-xs font-extrabold uppercase tracking-wide text-gray-700",DC.describeDate(it.date)))}
   box.appendChild(r);rows.push({it:it,t:t,d:d,tm:tm,cb:cb})});
  var act=el("div","flex gap-2");
  var ok=el("button","rounded-xl bg-brand px-5 py-2.5 font-bold text-white hover:bg-brand-dark","Save"+(items.length>1?" selected":"")+" · Mehfooz karein");ok.type="button";
@@ -2082,7 +2086,7 @@ $("shareApp").onclick=function(){var url=location.origin+location.pathname,text=
 /* A classmate's shared link: no install, no account. One tap puts it in the calendar. */
 function welcomeShared(list){var box=$("confirm");box.textContent="";box.hidden=false;$("saveNote").hidden=true;say("");
  box.appendChild(el("p","mb-1 text-base font-bold","A classmate shared "+list.length+" deadline"+(list.length>1?"s":"")+" with you"));
- var ul=el("ul","mb-3 space-y-1 text-sm");list.forEach(function(d){var li=el("li","rounded-lg bg-white px-3 py-2");li.dir="auto";li.textContent=d.title+" — "+DC.describeDate(d.date)+(d.time?" · "+d.time:"");ul.appendChild(li)});box.appendChild(ul);
+ var ul=el("ul","mb-3 space-y-1 text-sm");list.forEach(function(d){var li=el("li","rounded-lg bg-white px-3 py-2");li.dir="auto";li.textContent=(d.course?d.course+" · ":"")+d.title+" — "+DC.describeDate(d.date)+(d.time?" · "+d.time:"");ul.appendChild(li)});box.appendChild(ul);
  var cal=el("button","w-full rounded-xl bg-brand px-4 py-3 text-base font-bold text-white","📅 Add to my calendar · Calendar mein daalein");cal.type="button";
  cal.onclick=function(){if(list.length===1&&ld("dpk_cal","g")==="g"&&DC.gcalUrl(list[0])){window.open(DC.gcalUrl(list[0]),"_blank","noopener")}else{dl("deadlines.ics","text/calendar",icsOf(list))}};
  var keep=el("button","mt-2 w-full rounded-xl border-2 border-gray-800 bg-white px-4 py-3 font-bold","Keep in my deadlines (check first)");keep.type="button";keep.onclick=function(){propose(list)};

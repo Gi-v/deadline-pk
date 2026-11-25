@@ -34,7 +34,10 @@ t('share link round trip',() => {
   const items = [{ title: 'Quiz, Physics | Ch 3', date: '2026-11-24', time: '09:00', type: 'Quiz' }, { title: 'اسائنمنٹ', date: '2026-11-27', time: null, type: 'Assignment' }];
   const url = new URL(C.shareLink('https://x.test/app/', items));
   const back = C.decodeShare(url.searchParams.get('add'));
-  assert.deepEqual(back, [items[0], { ...items[1], time: null }]);
+  assert.deepEqual(back, [{ ...items[0], course: '' }, { ...items[1], time: null, course: '' }]);
+  const c = C.decodeShare(new URL(C.shareLink('https://x.test/', [{ title: 'Quiz', date: '2026-11-24', time: '', type: 'Quiz', course: 'cs-301' }])).searchParams.get('add'));
+  assert.equal(c[0].course, 'CS-301');
+  assert.equal(C.decodeShare('Q|2026-11-24||Quiz|<b>x</b>')[0].course, '');
 });
 t('share link rejects junk', () => {
   assert.deepEqual(C.decodeShare('<script>|2026-13-45|99:99|Quiz'), []);
@@ -44,6 +47,20 @@ t('share link rejects junk', () => {
   assert.equal(r.length, 1); assert.equal(r[0].time, null); assert.equal(r[0].type, 'Other');
   assert.equal(C.decodeShare(Array(50).fill('A|2026-11-24').join(',')).length, 20);
 });
+t('syllabus outline fixture',() => {
+  const txt = ['CS-301 Operating Systems','Week 1   Introduction','Week 2   Processes   Assignment 1 released','Week 3   Scheduling   Quiz 1','Week 8   Midterm exam','Week 10  Deadlocks   Quiz 2 — 14 April 2027','Week 16  Final exam: 2 June 2027, 9:00 AM','Quiz 3: 28/04/2027'].join('\n');
+  const r = C.extractFromText(txt, { semesterStart: '2027-02-01', syllabus: true });
+  const has = (d) => r.some((x) => x.date === d);
+  assert.ok(has('2027-02-15') && has('2027-03-22') && has('2027-04-14') && has('2027-06-02') && has('2027-04-28'));
+  assert.ok(!r.some((x) => /introduction|released/i.test(x.title)));
+});
+t('urdu chat export',() => {
+  const chat = '22/11/2026, 9:15 pm - Ali: کل کوئز ہے 9 بجے\n22/11/2026, 9:16 pm - Zara: ٹھیک ہے';
+  const r = C.parseChatExport(chat, { today: new Date(2026, 10, 23), days: 7 });
+  assert.equal(r.stats.scanned, 2);
+  assert.ok(r.items.length >= 1 && r.items[0].date === '2026-11-23');
+});
+t('share link carries src',() => { assert.match(C.shareLink('https://x.test/', [{ title: 'A', date: '2026-11-24' }]), /\?src=share&add=/); });
 t('bajey spelling',() => { const r = P('paper kal subha 9 bajey'); assert.equal(r.date, '2026-11-24'); assert.equal(r.time, '09:00'); });
 t('kal past tense',() => { const r = P('Quiz kal tha'); assert.equal(r.date, '2026-11-22'); assert.equal(r.confidence, 'low'); });
 t('parson', () => assert.equal(P('Lab report parson submit karo').date, '2026-11-25'));
