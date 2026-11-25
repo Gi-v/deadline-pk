@@ -105,7 +105,7 @@ The parser is deliberately **offline and rule-based**: Roman Urdu day words (`ka
 ```powershell
 npm install
 npm run build      # icons + extension/core.js + web app + flyer
-npm test           # 110 core · 24 extension · 10 web
+npm test           # 113 core · 24 extension · 10 web
 node tools/serve.mjs   # http://127.0.0.1:5173
 ```
 
