@@ -2030,10 +2030,19 @@ $("backupBtn").onclick=function(){dl("deadlinepk-backup.json","application/json"
 $("restoreInput").onchange=function(){var f=this.files&&this.files[0];if(!f)return;var r=new FileReader();r.onload=function(){try{var o=JSON.parse(String(r.result));var a=Array.isArray(o)?o:o.mine;if(!Array.isArray(a))throw 0;var n=add(a.filter(function(x){return x&&x.title&&DC.isValidISO(x.date)}));say("Restored "+n+" deadline"+(n===1?"":"s")+".",true)}catch(e){say("That file isn’t a DeadlinePK backup.",false)}};r.readAsText(f);this.value=""};
 $("shareApp").onclick=function(){var url=location.origin+location.pathname,text="Never miss a class deadline — paste a message from our group and it makes a calendar reminder (kal, parson, 9 baje all work). Free, no login: "+url;
  if(navigator.share){navigator.share({title:"DeadlineSync PK",text:text}).catch(function(){})}else{window.open(DC.waUrl(text,""),"_blank","noopener")}};
+/* A classmate's shared link: no install, no account. One tap puts it in the calendar. */
+function welcomeShared(list){var box=$("confirm");box.textContent="";box.hidden=false;$("saveNote").hidden=true;say("");
+ box.appendChild(el("p","mb-1 text-base font-bold","A classmate shared "+list.length+" deadline"+(list.length>1?"s":"")+" with you"));
+ var ul=el("ul","mb-3 space-y-1 text-sm");list.forEach(function(d){var li=el("li","rounded-lg bg-white px-3 py-2");li.dir="auto";li.textContent=d.title+" — "+DC.describeDate(d.date)+(d.time?" · "+d.time:"");ul.appendChild(li)});box.appendChild(ul);
+ var cal=el("button","w-full rounded-xl bg-brand px-4 py-3 text-base font-bold text-white","📅 Add to my calendar · Calendar mein daalein");cal.type="button";
+ cal.onclick=function(){if(list.length===1&&ld("dpk_cal","g")==="g"&&DC.gcalUrl(list[0])){window.open(DC.gcalUrl(list[0]),"_blank","noopener")}else{dl("deadlines.ics","text/calendar",icsOf(list))}};
+ var keep=el("button","mt-2 w-full rounded-xl border-2 border-gray-800 bg-white px-4 py-3 font-bold","Keep in my deadlines (check first)");keep.type="button";keep.onclick=function(){propose(list)};
+ var no=el("button","mt-2 w-full px-4 py-2 text-sm text-gray-600 underline","No thanks");no.type="button";no.onclick=function(){box.hidden=true};
+ box.appendChild(cal);box.appendChild(keep);box.appendChild(no)}
 /* Android "Share to app": WhatsApp -> Share -> DeadlineSync arrives as ?text= */
 try{var qp=new URLSearchParams(location.search),sh=[qp.get("title"),qp.get("text"),qp.get("url")].filter(Boolean).join("\n");
  var linked=DC.decodeShare(qp.get("add"));
- if(linked.length){history.replaceState(null,"",location.pathname);setTimeout(function(){propose(linked);var s=$("mine");if(s)s.scrollIntoView()},300)}
+ if(linked.length){history.replaceState(null,"",location.pathname);setTimeout(function(){welcomeShared(linked);var s=$("mine");if(s)s.scrollIntoView()},300)}
  else if(sh.trim()){history.replaceState(null,"",location.pathname);$("quickIn").value=sh.trim();setTimeout(function(){propose(DC.extractFromText(sh,{}));var s=$("mine");if(s)s.scrollIntoView()},300)}}catch(e){}
 window.__dpk={getMine:function(){return mine},saveQuiet:function(){sv(KEY,mine)},render:render};
 render();notifyCheck();
