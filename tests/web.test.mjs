@@ -43,7 +43,7 @@ t('daily tracker + PWA pieces present', () => {
 });
 
 t('v2.5 easy-start pieces present', () => {
-  ['id="todayBar"', 'id="pasteFab"', 'function undoBar', 'isFastSaveSafe', 'id="updToast"', 'Missed? ', 'id="installCard"', 'id="fastSave"', 'dpkDevice', 'dpk_cal', 'alarmSet:"student"'].forEach((x) => assert.ok(html.includes(x), x));
+  ['id="chatFile"', 'importChat', 'id="todayBar"', 'id="pasteFab"', 'function undoBar', 'isFastSaveSafe', 'id="updToast"', 'Missed? ', 'id="installCard"', 'id="fastSave"', 'dpkDevice', 'dpk_cal', 'alarmSet:"student"'].forEach((x) => assert.ok(html.includes(x), x));
   const root = join(dirname(fileURLToPath(import.meta.url)), '..', 'web');
   const m = JSON.parse(readFileSync(join(root, 'manifest.webmanifest'), 'utf8'));
   assert.ok(m.shortcuts && m.shortcuts[0].url.includes('new=1'));

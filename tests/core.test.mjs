@@ -292,6 +292,57 @@ t('google event: all-day vs timed, midnight rollover, reminders', () => {
     assert.ok(!/inshallah/i.test(ex('Quiz 2 on Thursday inshallah')[0].title));
   });
 
+  const CHAT_ANDROID = `22/11/2026, 9:15 pm - Messages and calls are end-to-end encrypted. No one outside of this chat can read them.
+22/11/2026, 9:16 pm - Ali created group "CS-101 Section B"
+23/11/2026, 10:02 am - Sir Ahmed: Assignment 3 submit karni hai Friday tak, midnight
+23/11/2026, 10:05 am - Hamza: <Media omitted>
+23/11/2026, 11:30 am - CR Ali: Quiz kal 9 baje
+lab mein aana
+24/11/2026, 8:00 am - Zara: Reminder: quiz tomorrow 9 baje
+24/11/2026, 8:10 am - Hamza: lol
+24/11/2026, 9:00 pm - Sir Ahmed: Class kal cancel hai, make up class Saturday 11 am
+25/11/2026, 7:00 am - Ali: This message was deleted
+25/11/2026, 7:30 am - Ali: OOP project proposal due on 30 nov
+20/10/2026, 7:30 am - Ali: Old quiz kal`;
+  await run('chat export: android format, anchoring, skips, dedupe, past filter', async () => {
+    const r = C.parseChatExport(CHAT_ANDROID, { today: new Date(2026, 10, 25) });
+    const got = r.items.map((i) => i.date + ' ' + (i.time || '-') + ' ' + i.title);
+    assert.deepEqual(got, ['2026-11-25 09:00 Quiz', '2026-11-27 23:59 Assignment 3', '2026-11-28 11:00 Make up class', '2026-11-30 - OOP project proposal']);
+    assert.equal(r.items[1].sender, 'Sir Ahmed');
+    assert.equal(r.stats.scanned, 6);
+  });
+  await run('chat export: iPhone bracket format, month-first detection, tiny window', async () => {
+    const ios = '[23/11/26, 10:02:11 AM] Sir Ahmed: Midterm 14 Dec 9am\n[24/11/26, 8:00:01 PM] Zara: Quiz parson 10 baje';
+    const r = C.parseChatExport(ios, { today: new Date(2026, 10, 25) });
+    assert.deepEqual(r.items.map((i) => i.date + ' ' + i.time), ['2026-11-26 10:00', '2026-12-14 09:00']);
+    assert.equal(C.parseChatMessages('11/23/2026, 10:02 AM - Sir: Quiz tomorrow 9am')[0].sentAt.getDate(), 23);
+    assert.equal(C.parseChatExport(CHAT_ANDROID, { today: new Date(2026, 10, 25), days: 1 }).stats.scanned, 4);
+  });
+  await run('chat export: 600-message chat parses fast', async () => {
+    let big = '';
+    for (let i = 0; i < 600; i++) big += `2${(i % 8) + 1}/11/2026, 9:${String(10 + (i % 40))} am - P${i % 9}: ${i % 7 === 0 ? 'Quiz kal 9 baje' : 'ok sir thanks ji'}\n`;
+    const t0 = Date.now();
+    const r = C.parseChatExport(big, { today: new Date(2026, 10, 25) });
+    assert.ok(Date.now() - t0 < 1500, 'took ' + (Date.now() - t0));
+    assert.ok(r.stats.messages >= 500);
+  });
+  await run('chat export: reads _chat.txt out of a zip (stored and deflated)', async () => {
+    const zlib = await import('node:zlib');
+    const mkZip = (name, data, deflate) => {
+      const body = deflate ? zlib.deflateRawSync(Buffer.from(data)) : Buffer.from(data);
+      const nm = Buffer.from(name), raw = Buffer.from(data);
+      const lh = Buffer.alloc(30); lh.writeUInt32LE(0x04034b50, 0); lh.writeUInt16LE(20, 4); lh.writeUInt16LE(deflate ? 8 : 0, 8); lh.writeUInt32LE(body.length, 18); lh.writeUInt32LE(raw.length, 22); lh.writeUInt16LE(nm.length, 26);
+      const cd = Buffer.alloc(46); cd.writeUInt32LE(0x02014b50, 0); cd.writeUInt16LE(deflate ? 8 : 0, 10); cd.writeUInt32LE(body.length, 20); cd.writeUInt32LE(raw.length, 24); cd.writeUInt16LE(nm.length, 28); cd.writeUInt32LE(0, 42);
+      const ee = Buffer.alloc(22); ee.writeUInt32LE(0x06054b50, 0); ee.writeUInt16LE(1, 8); ee.writeUInt16LE(1, 10); ee.writeUInt32LE(46 + nm.length, 12); ee.writeUInt32LE(30 + nm.length + body.length, 16);
+      return Buffer.concat([lh, nm, body, cd, nm, ee]);
+    };
+    for (const d of [false, true]) {
+      const txt = await C.zipReadChatText(new Uint8Array(mkZip('_chat.txt', CHAT_ANDROID, d)));
+      assert.equal(txt, CHAT_ANDROID);
+    }
+    await assert.rejects(C.zipReadChatText(new Uint8Array([1, 2, 3, 4])));
+  });
+
   console.log(`core tests:${pass} passed, ${fail} failed`);
   process.exit(fail ? 1 : 0);
 })();

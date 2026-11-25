@@ -241,7 +241,11 @@ h1,h2,h3,#mineTitle{font-family:Georgia,"Iowan Old Style","Times New Roman",seri
       <textarea id="quickIn" rows="2" dir="auto" autocomplete="off" placeholder="Paste a message (or several) from your class group, e.g. “Quiz kal 9 baje”" class="min-w-0 flex-1 resize-none rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-base focus-visible:outline-2 focus-visible:outline-brand"></textarea>
       <button type="submit" class="shrink-0 rounded-xl bg-brand px-5 py-3 text-base font-bold text-white hover:bg-brand-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand">📌 Pin</button>
     </form>
-    <button id="pasteBtn" type="button" class="mt-2 text-sm font-semibold text-brand underline underline-offset-2">Paste from clipboard</button>
+    <div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
+      <button id="pasteBtn" type="button" class="text-sm font-semibold text-brand underline underline-offset-2">Paste from clipboard</button>
+      <label class="cursor-pointer text-sm font-semibold text-brand underline underline-offset-2">📂 Import a whole WhatsApp chat<input id="chatFile" type="file" accept=".txt,.zip,text/plain,application/zip" class="sr-only"></label>
+    </div>
+    <p class="text-xs text-gray-500">Chat export: group → ⋮ → More → Export chat → <em>Without media</em>, then pick the file here. Read on your phone only.</p>
     <p id="quickMsg" role="status" class="mt-1 min-h-5 text-sm"></p>
     <div id="confirm" hidden class="mt-2 rounded-2xl border-2 border-brand bg-green-50 p-3" aria-live="polite"></div>
     <div id="saveNote" hidden class="mt-2 rounded-2xl border border-gray-200 bg-white p-3 text-sm" aria-live="polite"></div>
@@ -953,7 +957,7 @@ function propose(found){
   var nc=el("button","rounded-xl border border-gray-300 bg-white px-4 py-2.5 font-semibold","OK");nc.type="button";nc.onclick=function(){nb.hidden=true};
   nr.appendChild(mb);nr.appendChild(nc);nb.appendChild(nr);return}
  var fs=$("fastSave");
- if(fs&&fs.checked&&items.length===1&&!items[0]._assumed&&!items[0]._manual&&DC.isFastSaveSafe(items[0],items[0].original)){
+ if(fs&&fs.checked&&items.length===1&&!items[0]._assumed&&!items[0]._manual&&!items[0].fromChat&&DC.isFastSaveSafe(items[0],items[0].original)){
   var one=items[0],o1={title:one.title,date:one.date,time:one.time||null,type:one.type,course:one.course,original:one.original},n1=add([o1]);
   $("confirm").hidden=true;$("quickIn").value="";if(tab==="done")tab="week";render();offerCalendar([o1],n1,n1?function(){mine=mine.filter(function(d){return key(d)!==key(o1)});save();render();$("saveNote").hidden=true;say("Removed.",true)}:null);return}
  var box=$("confirm");box.textContent="";box.hidden=false;$("saveNote").hidden=true;say("");
@@ -961,6 +965,7 @@ function propose(found){
  var rows=[];
  items.forEach(function(it){var r=el("div","mb-2 rounded-xl bg-white p-2 text-sm");
   var cb=null;if(items.length>1){var lab=el("label","mb-1 flex items-center gap-2 text-xs font-semibold text-gray-600");cb=document.createElement("input");cb.type="checkbox";cb.checked=!it._assumed;cb.setAttribute("aria-label","Include");lab.appendChild(cb);lab.appendChild(document.createTextNode("Include"));r.appendChild(lab)}
+  if(it.sender){r.appendChild(el("p","mb-1 text-xs text-gray-500","From "+it.sender+(it.sentAt?" · sent "+DC.describeDate(it.sentAt):"")))}
   var t=el("input","w-full rounded-lg border border-gray-300 px-2 py-1.5 font-medium");t.type="text";t.value=it.title;t.dir="auto";t.setAttribute("aria-label","Title");
   var row=el("div","mt-1 flex flex-wrap gap-2");
   var d=el("input","rounded-lg border border-gray-300 px-2 py-1.5");d.type="date";d.value=it.date;d.setAttribute("aria-label","Date");
@@ -994,6 +999,24 @@ function offerCalendar(items,n,undo){var s=$("saveNote");s.textContent="";s.hidd
  if(canG){var i=el("button","ml-2 mt-2 rounded-xl border border-gray-300 px-4 py-2.5 font-semibold",pref==="g"?"⬇ .ics file instead":"Google Calendar instead");i.type="button";
   i.onclick=function(){sv("dpk_cal",pref==="g"?"ics":"g");offerCalendar(items,n,undo)};s.appendChild(i)}
  if(undo){var u=el("button","ml-2 mt-2 rounded-xl border border-gray-300 px-4 py-2.5 font-semibold","↩ Undo");u.type="button";u.onclick=undo;s.appendChild(u)}}
+/* Whole-chat import: .txt or .zip from WhatsApp "Export chat"; read in the browser only */
+function importChat(text){var days=14,show=function(){var r=DC.parseChatExport(text,{today:new Date(),days:days});
+  if(!r.stats.messages){say("That doesn’t look like a WhatsApp chat export. Use Export chat → Without media.",false);return}
+  if(!r.items.length){propose([]);var c0=$("confirm");c0.firstChild.textContent="Read "+r.stats.scanned+" messages from the last "+days+" days — no upcoming deadlines found.";chips(c0,r);return}
+  propose(r.items.map(function(i){return Object.assign({},i,{fromChat:true})}));var box=$("confirm");
+  var h=box.firstChild;h.textContent="Found "+r.items.length+" upcoming deadline"+(r.items.length>1?"s":"")+" in "+r.stats.scanned+" messages. Untick any you don’t want:";chips(box,r)};
+ function chips(box,r){var bar=el("div","mb-2 flex flex-wrap items-center gap-2 text-xs");
+  [7,14,30,60].forEach(function(n){var b=el("button","min-h-9 rounded-full border-2 border-gray-800 px-3 py-1 font-bold "+(n===days?"bg-yellow-200":"bg-white"),"Last "+n+" days");b.type="button";b.onclick=function(){days=n;show()};bar.appendChild(b)});
+  var cbs=function(){return[].slice.call(box.querySelectorAll('input[type=checkbox]'))};
+  var all=el("button","min-h-9 rounded-full bg-white px-3 py-1 font-semibold underline","Select all / none");all.type="button";all.onclick=function(){var l=cbs(),on=l.some(function(x){return !x.checked});l.forEach(function(x){x.checked=on})};
+  if(r.items.length>1)bar.appendChild(all);box.insertBefore(bar,box.children[1])}
+ show()}
+$("chatFile").addEventListener("change",function(e){var f=e.target.files&&e.target.files[0];e.target.value="";if(!f)return;
+ if(f.size>60*1024*1024){say("That file is too big for a chat export.",false);return}
+ say("Reading chat…",true);
+ var go=function(t){try{importChat(t)}catch(x){say("Couldn’t read that file.",false)}};
+ if(/\.zip$/i.test(f.name)||f.type==="application/zip"){f.arrayBuffer().then(function(b){return DC.zipReadChatText(b)}).then(go).catch(function(){say("Couldn’t open that zip. Export again with “Without media”.",false)})}
+ else f.text().then(go).catch(function(){say("Couldn’t read that file.",false)})});
 $("pasteBtn").onclick=function(){var q=$("quickIn");
  if(navigator.clipboard&&navigator.clipboard.readText){navigator.clipboard.readText().then(function(t){if(t&&t.trim()){q.value=t.trim();propose(DC.extractFromText(t,{}))}else say("Clipboard is empty. Copy a message from your class group first.",false)}).catch(function(){q.focus();say("Your browser blocked clipboard access. Long-press the box and choose Paste.",false)})}
  else{q.focus();say("Long-press the box and choose Paste.",false)}};

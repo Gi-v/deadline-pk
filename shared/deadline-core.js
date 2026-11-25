@@ -588,6 +588,107 @@
     return out;
   }
 
+  /* ------------------------------------------------------------------ whole-chat export (WhatsApp "Export chat") */
+  // Android: "22/11/2026, 9:15 pm - Name: text"   iPhone: "[22/11/26, 9:15:03 pm] Name: text"
+  const CHAT_HEAD = /^‎?\[?(\d{1,2})[\/.](\d{1,2})[\/.](\d{2,4}),?\s+(\d{1,2}):(\d{2})(?::\d{2})?\s*([ap]\.?m\.?)?\]?\s*(?:-\s*)?(.*)$/i;
+  const CHAT_SKIP = /^(?:<media omitted>|<attached:.*>|image omitted|video omitted|sticker omitted|audio omitted|document omitted|gif omitted|this message was deleted|you deleted this message|null|‎?messages and calls are end-to-end encrypted.*)$/i;
+  function parseChatMessages(text) {
+    const lines = String(text || '').replace(/\r/g, '').replace(/^﻿/, '').split('\n');
+    const raw = [];
+    let dayFirst = 0, monthFirst = 0;
+    let cur = null;
+    lines.forEach((line) => {
+      const m = CHAT_HEAD.exec(line);
+      const ok = m && +m[4] <= 23 && +m[5] <= 59 && +m[1] <= 31 && +m[2] <= 31 && (!m[6] || +m[4] <= 12);
+      if (ok) {
+        if (+m[1] > 12) dayFirst++; else if (+m[2] > 12) monthFirst++;
+        const rest = (m[7] || '').replace(/^‎/, '');
+        const sm = /^([^:\n]{1,60}?):\s?([\s\S]*)$/.exec(rest);
+        cur = { m, sender: sm ? sm[1].trim() : '', text: sm ? sm[2] : '', system: !sm };
+        raw.push(cur);
+      } else if (cur && !cur.system) {
+        cur.text += '\n' + line;
+      }
+    });
+    const dfirst = monthFirst > dayFirst ? false : true; // Pakistan default: day first
+    const out = [];
+    raw.forEach((r) => {
+      if (r.system) return;
+      let [, a, b, y, hh, mi, ap] = r.m;
+      let day = dfirst ? +a : +b, mon = dfirst ? +b : +a, yr = +y < 100 ? 2000 + +y : +y, h = +hh;
+      if (ap) { const pm = /^p/i.test(ap); if (pm && h < 12) h += 12; if (!pm && h === 12) h = 0; }
+      const when = new Date(yr, mon - 1, day, h, +mi);
+      if (isNaN(+when) || when.getMonth() !== mon - 1) return;
+      const t = r.text.trim();
+      if (!t || CHAT_SKIP.test(t)) return;
+      out.push({ sentAt: when, sender: r.sender, text: t });
+    });
+    return out;
+  }
+
+  /**
+   * parseChatExport(text, {today, days=30, includePast=false}) -> {items, stats}
+   * Every message is read as of the day it was SENT, so "kal" in a 3-day-old message points at the right day.
+   */
+  function parseChatExport(text, opts) {
+    opts = opts || {};
+    const today = startOfDay(opts.today || new Date());
+    const days = opts.days == null ? 30 : opts.days;
+    const msgs = parseChatMessages(text);
+    const since = addDays(today, -days);
+    const seen = new Map();
+    let scanned = 0;
+    msgs.forEach((m) => {
+      if (startOfDay(m.sentAt) < since) return;
+      scanned++;
+      extractFromText(m.text, { today: startOfDay(m.sentAt) }).forEach((it) => {
+        if (!isValidISO(it.date)) return;
+        if (!opts.includePast && fromISO(it.date) < today) return;
+        const k = [it.course || '', it.type, it.date, it.time || '', (it.title || '').toLowerCase().replace(/\s+/g, ' ')].join('|');
+        const loose = [it.course || '', it.type, it.date].join('|');
+        if (seen.has(k)) return;
+        // "Quiz kal" then "Reminder: quiz tomorrow" -> same course+type+date: keep the first, richer one
+        if (it.type !== 'Other' && seen.has('L' + loose)) return;
+        seen.set(k, 1); seen.set('L' + loose, 1);
+        seen.set(k + '#', Object.assign({}, it, { sender: m.sender, sentAt: toISO(startOfDay(m.sentAt)), fromChat: true }));
+      });
+    });
+    const items = [];
+    seen.forEach((v, k) => { if (k.endsWith('#')) items.push(v); });
+    items.sort((a, b) => (a.date === b.date ? (a.time || '99').localeCompare(b.time || '99') : a.date < b.date ? -1 : 1));
+    return { items, stats: { messages: msgs.length, scanned, found: items.length, first: msgs[0] ? toISO(startOfDay(msgs[0].sentAt)) : null, last: msgs.length ? toISO(startOfDay(msgs[msgs.length - 1].sentAt)) : null } };
+  }
+
+  /** Read the first .txt (prefer _chat.txt) out of a WhatsApp export .zip (ArrayBuffer/Uint8Array). Browser + Node 18+. */
+  async function zipReadChatText(buf) {
+    const u = buf instanceof Uint8Array ? buf : new Uint8Array(buf);
+    const dv = new DataView(u.buffer, u.byteOffset, u.byteLength);
+    let eocd = -1;
+    for (let i = u.length - 22; i >= Math.max(0, u.length - 65557); i--) { if (dv.getUint32(i, true) === 0x06054b50) { eocd = i; break; } }
+    if (eocd < 0) throw new Error('Not a zip file');
+    const n = dv.getUint16(eocd + 10, true);
+    let p = dv.getUint32(eocd + 16, true);
+    const ents = [];
+    for (let i = 0; i < n; i++) {
+      if (dv.getUint32(p, true) !== 0x02014b50) break;
+      const method = dv.getUint16(p + 10, true), csize = dv.getUint32(p + 20, true), usize = dv.getUint32(p + 24, true);
+      const nl = dv.getUint16(p + 28, true), el = dv.getUint16(p + 30, true), cl = dv.getUint16(p + 32, true), off = dv.getUint32(p + 42, true);
+      const name = new TextDecoder().decode(u.subarray(p + 46, p + 46 + nl));
+      ents.push({ name, method, csize, usize, off });
+      p += 46 + nl + el + cl;
+    }
+    const txt = ents.filter((e) => /\.txt$/i.test(e.name) && e.usize < 50 * 1024 * 1024);
+    txt.sort((a, b) => (/_chat\.txt$/i.test(b.name) - /_chat\.txt$/i.test(a.name)) || b.usize - a.usize);
+    const e = txt[0];
+    if (!e) throw new Error('No chat text file inside the zip');
+    const ln = dv.getUint16(e.off + 26, true), le = dv.getUint16(e.off + 28, true);
+    const data = u.subarray(e.off + 30 + ln + le, e.off + 30 + ln + le + e.csize);
+    if (e.method === 0) return new TextDecoder().decode(data);
+    if (e.method !== 8) throw new Error('Unsupported zip compression');
+    const ds = new Blob([data]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+    return new TextDecoder().decode(await new Response(ds).arrayBuffer());
+  }
+
   /* ------------------------------------------------------------------ AI output handling */
   function extractJSON(text) {
     let t = String(text || '').trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '');
@@ -861,7 +962,7 @@
     TYPES, DAY_NAMES,
     toISO, fromISO, isValidISO, isValidTime, addDays, startOfDay, describeDate, resolveRelative,
     normalize, stripWhatsAppPrefix, detectType,
-    parseDeadline, preParseUrdu, extractFromText, extractCourse, isFastSaveSafe,
+    parseDeadline, preParseUrdu, extractFromText, extractCourse, isFastSaveSafe, parseChatExport, parseChatMessages, zipReadChatText,
     extractJSON, normalizeEvent, dedupe, copyAsText,
     buildICS, icsEscape, foldLine,
   };
