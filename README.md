@@ -68,6 +68,7 @@ Client IDs are public, not secrets. While the consent screen is in "Testing" onl
 
 ## Change log
 - **v2.5.0** — easy start: returning/installed users skip the pitch and land on the paste box; device-aware install card (Android button, iPhone steps, WhatsApp in-app browser hint); one-tap save with Undo for clear single messages (toggle in More tools); remembered calendar choice (Google vs .ics) with two reminders per event and an app link; per-row checkboxes for pasted chats; Roman Urdu labels; icon long-press shortcut + `?new=1`; printable `flyer.html` with QR. Tests: 104 core, 24 extension, 9 web.
+- **v3.0.0** — from a student dogfood session: fast-save only for clear single messages (no cancellations, questions, thanks, multi-time lists); "cancel" clauses ignored and make-up classes use their own day; "tonight/aj raat" = today 23:59; chatter shows "No deadline in that message" with Add-it-myself; noisy words trimmed from titles and the original message is kept (tap a title); sticky Today/Tomorrow/Overdue bar, floating Paste button, app-icon badge; labelled row buttons, delete with Undo; backup nudge.
 - **v2.7.2** — the landing hero is shown to everyone in the browser again; only the installed app (and `?new=1`) skips it.
 - **v2.7.1** — Content-Security-Policy meta tag (no off-site scripts/frames/objects; connections HTTPS only). Found by an OWASP ZAP scan.
 - **v2.7.0** — course tags: the parser picks up codes like CS-201, "OS:" and [DSA]; rows show a chip and a filter bar appears once you have two or more courses.

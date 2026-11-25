@@ -148,6 +148,8 @@ h1,h2,h3,#mineTitle{font-family:Georgia,"Iowan Old Style","Times New Roman",seri
 #mineList li button:first-child{min-width:34px;min-height:34px}}
 @media(prefers-reduced-motion:reduce){#mineList li,#confirm,#saveNote{animation:none!important}html{scroll-behavior:auto}}
 </style>
+<a id="todayBar" href="#mine" hidden style="position:sticky;top:0;z-index:40;display:block;padding:10px 16px;text-align:center;font:700 14px system-ui,sans-serif;background:#ffe35c;color:#1d1b16;border-bottom:2px solid #1d1b16;text-decoration:none"></a>
+<button id="pasteFab" type="button" hidden aria-label="Paste a message" style="position:fixed;right:14px;bottom:14px;z-index:40;padding:14px 18px;border:2px solid #1d1b16;border-radius:999px;background:#1f7a4d;color:#fff;font:700 15px system-ui,sans-serif;box-shadow:3px 3px 0 #1d1b16">📌 Paste</button>
 <section class="lp" aria-label="Introduction">
   <div class="lp-wrap">
     <div class="lp-left">
@@ -256,6 +258,7 @@ h1,h2,h3,#mineTitle{font-family:Georgia,"Iowan Old Style","Times New Roman",seri
       </ol>
       <button id="mineExample" type="button" class="mt-3 text-sm font-medium text-brand underline underline-offset-2">Try with an example</button>
     </div>
+    <p id="bkNudge" hidden class="mt-3 rounded-xl border-2 border-gray-800 bg-yellow-100 p-3 text-sm"><strong>Your list lives only on this phone.</strong> <button id="bkNow" type="button" class="ml-1 font-bold underline">⬇ Back up now</button></p>
     <div id="mineTools" class="mt-3 flex flex-wrap gap-2" hidden>
       <a id="shareWeek" target="_blank" rel="noopener" class="rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold hover:bg-gray-100" href="#mine">💬 Send this week to WhatsApp</a>
       <button id="icsAll" type="button" class="rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold hover:bg-gray-100">📅 Download calendar file</button>
@@ -880,7 +883,7 @@ function classMsg(list){return "📌 "+(list.length>1?"Deadlines":"Deadline")+"\
 var courseF="";
 function key(d){return (d.title||"").toLowerCase().replace(/\s+/g," ").trim()+"|"+d.date}
 function add(items){var n=0,have={};mine.forEach(function(d){have[key(d)]=1});
- items.forEach(function(it){if(!it||!it.title||!DC.isValidISO(it.date))return;var d={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),title:String(it.title).slice(0,120),date:it.date,time:DC.isValidTime(it.time)?it.time:null,type:it.type||"Other",course:String(it.course||"").replace(/[^A-Za-z0-9-]/g,"").slice(0,10).toUpperCase(),done:false};if(have[key(d)])return;have[key(d)]=1;mine.push(d);n++});
+ items.forEach(function(it){if(!it||!it.title||!DC.isValidISO(it.date))return;var d={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),title:String(it.title).slice(0,120),date:it.date,time:DC.isValidTime(it.time)?it.time:null,type:it.type||"Other",course:String(it.course||"").replace(/[^A-Za-z0-9-]/g,"").slice(0,10).toUpperCase(),original:String(it.original||"").slice(0,300),done:false};if(have[key(d)])return;have[key(d)]=1;mine.push(d);n++});
  if(n){save();sv("dpk_seen",1);render();notifyCheck()}return n}
 window.__dpkPin=function(it){propose([it]);var s=$("mine");if(s&&s.scrollIntoView)s.scrollIntoView({behavior:"smooth",block:"start"})};
 function say(t,ok){var m=$("quickMsg");m.textContent=t;m.className="mt-1 min-h-5 text-sm "+(ok?"text-green-700":"text-red-700")}
@@ -915,26 +918,43 @@ function render(){
   if(!d.done){var qa=el("div","mt-2 flex flex-wrap gap-2 text-xs");
    if(dd<0)[["+1 day",1],["+1 week",7]].forEach(function(p){var rb=el("button","min-h-9 rounded-full border-2 border-gray-800 bg-white px-3 py-1 font-semibold","Missed? "+p[0]);rb.type="button";
     rb.onclick=function(){d.date=DC.toISO(DC.addDays(new Date(),p[1]));save();render()};qa.appendChild(rb)});
+   var g=el("a","min-h-9 rounded-full border-2 border-gray-800 bg-white px-3 py-1.5 font-semibold","📅 Calendar");g.href=DC.gcalUrl(d)||"#";g.target="_blank";g.rel="noopener";qa.appendChild(g);
    var sh=el("a","min-h-9 rounded-full border border-gray-300 bg-white px-3 py-1.5 font-semibold","💬 Share");sh.href=DC.waUrl(classMsg([d]),"");sh.target="_blank";sh.rel="noopener";qa.appendChild(sh);
    mid.appendChild(qa)}
-  var act=el("div","flex shrink-0 items-center gap-1");
-  var g=el("a","rounded-lg px-2 py-1 text-base hover:bg-gray-100","📅");g.href=DC.gcalUrl(d)||"#";g.target="_blank";g.rel="noopener";g.title="Add to Google Calendar";g.setAttribute("aria-label","Add to Google Calendar");
-  var w=el("a","rounded-lg px-2 py-1 text-base hover:bg-gray-100","💬");w.href=DC.waUrl(classMsg([d]),"");w.target="_blank";w.rel="noopener";w.title="Send to your class group";w.setAttribute("aria-label","Send to your class group on WhatsApp");
-  var x=el("button","rounded-lg px-2 py-1 text-gray-400 hover:bg-gray-100 hover:text-red-600","✕");x.type="button";x.title="Delete";x.setAttribute("aria-label","Delete "+d.title);x.onclick=function(){gone([d]);mine=mine.filter(function(m){return m!==d});save();render()};
-  act.appendChild(g);act.appendChild(w);act.appendChild(x);
+  if(d.original&&d.original.trim()!==d.title){t.className="font-semibold"+(d.done?" line-through":"");t.style.cursor="pointer";t.setAttribute("role","button");t.setAttribute("tabindex","0");
+   var src=el("p","mt-1 hidden rounded-lg bg-gray-50 p-2 text-xs text-gray-600","From: “"+d.original+"”");src.dir="auto";mid.insertBefore(src,row.nextSibling);
+   var tg=function(){src.classList.toggle("hidden")};t.onclick=tg;t.onkeydown=function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault();tg()}}}
+  var act=el("div","flex shrink-0 items-center");
+  var x=el("button","min-h-9 min-w-9 rounded-lg px-2 py-1 text-gray-500 hover:bg-gray-100 hover:text-red-600","🗑");x.type="button";x.title="Delete";x.setAttribute("aria-label","Delete "+d.title);
+  x.onclick=function(){mine=mine.filter(function(m){return m!==d});save();render();undoBar("Deleted “"+d.title+"”",function(){mine.push(d);save();render()},function(){gone([d])})};
+  act.appendChild(x);
   li.appendChild(cb);li.appendChild(mid);li.appendChild(act);list.appendChild(li)});
  var wk=open_().filter(function(d){return daysTo(d.date)<=7}).sort(sorter);
  $("shareWeek").href=wk.length?DC.waUrl(classMsg(wk),""):DC.waUrl("📌 Nothing due this week 🎉","");
  var n=open_().filter(function(d){return daysTo(d.date)<=0}).length;
  document.title=(n?"("+n+") ":"")+"DeadlineSync PK — Drop your syllabus. Get your calendar.";
+ try{if(navigator.setAppBadge){if(n)navigator.setAppBadge(n);else navigator.clearAppBadge()}}catch(e){}
+ var op=open_(),tb=$("todayBar"),c0=op.filter(function(d){return daysTo(d.date)===0}).length,c1=op.filter(function(d){return daysTo(d.date)===1}).length;
+ if(tb){tb.hidden=!op.length;var parts=[];if(n-c0>0)parts.push("Overdue "+(n-c0));parts.push("Today "+c0);parts.push("Tomorrow "+c1);tb.textContent="📌 "+parts.join(" · ")+" — open my list ↓"}
+ var bk=$("bkNudge");if(bk)bk.hidden=!(mine.length>=5&&Date.now()-ld("dpk_bk",0)>30*864e5);
 }
+var undoT=null;
+function undoBar(msg,onUndo,onFinal){var s=$("saveNote");s.textContent="";s.hidden=false;if(undoT){clearTimeout(undoT);undoT=null}
+ s.appendChild(el("p","font-semibold",msg));var u=el("button","mt-2 rounded-xl border-2 border-gray-800 bg-white px-4 py-2.5 font-bold","↩ Undo");u.type="button";var done=false;
+ u.onclick=function(){if(done)return;done=true;clearTimeout(undoT);onUndo();s.hidden=true};s.appendChild(u);
+ undoT=setTimeout(function(){if(!done){done=true;onFinal();s.hidden=true}},6000)}
 function dl(name,type,text){var b=new Blob([text],{type:type}),u=URL.createObjectURL(b),a=document.createElement("a");a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(u)},4000)}
 function propose(found){
- var items=found.filter(function(f){return f.date||f.time}).map(function(f){return Object.assign({},f,{date:f.date||today(),_assumed:!f.date})});
- if(!items.length){say("Couldn’t find a date in that. Try “Quiz Friday 9 baje” or “Report 15 Dec”.",false);return}
+ var items=found.filter(function(f){return f._manual||DC.isValidISO(f.date)||f.time}).map(function(f){var ok=DC.isValidISO(f.date);return Object.assign({},f,{date:ok?f.date:today(),_assumed:!ok&&!f._manual})});
+ if(!items.length){var nb=$("confirm");nb.textContent="";nb.hidden=false;$("saveNote").hidden=true;say("");
+  nb.appendChild(el("p","mb-2 text-sm font-semibold","No deadline in that message. Nothing saved."));
+  var nr=el("div","flex gap-2"),mb=el("button","rounded-xl bg-brand px-4 py-2.5 font-bold text-white","✍ Add it myself");mb.type="button";
+  mb.onclick=function(){propose([{_manual:1,title:"",date:today(),time:null,type:"Other",confidence:"low"}])};
+  var nc=el("button","rounded-xl border border-gray-300 bg-white px-4 py-2.5 font-semibold","OK");nc.type="button";nc.onclick=function(){nb.hidden=true};
+  nr.appendChild(mb);nr.appendChild(nc);nb.appendChild(nr);return}
  var fs=$("fastSave");
- if(fs&&fs.checked&&items.length===1&&!items[0]._assumed&&items[0].confidence==="high"&&!(items[0].alternatives||[]).length){
-  var one=items[0],o1={title:one.title,date:one.date,time:one.time||null,type:one.type,course:one.course},n1=add([o1]);
+ if(fs&&fs.checked&&items.length===1&&!items[0]._assumed&&!items[0]._manual&&DC.isFastSaveSafe(items[0],items[0].original)){
+  var one=items[0],o1={title:one.title,date:one.date,time:one.time||null,type:one.type,course:one.course,original:one.original},n1=add([o1]);
   $("confirm").hidden=true;$("quickIn").value="";if(tab==="done")tab="week";render();offerCalendar([o1],n1,n1?function(){mine=mine.filter(function(d){return key(d)!==key(o1)});save();render();$("saveNote").hidden=true;say("Removed.",true)}:null);return}
  var box=$("confirm");box.textContent="";box.hidden=false;$("saveNote").hidden=true;say("");
  box.appendChild(el("p","mb-2 text-sm font-semibold text-green-900","Check "+(items.length>1?"these "+items.length+" deadlines":"this deadline")+" before saving:"));
@@ -956,7 +976,7 @@ function propose(found){
  var ok=el("button","rounded-xl bg-brand px-5 py-2.5 font-bold text-white hover:bg-brand-dark","Save"+(items.length>1?" selected":"")+" · Mehfooz karein");ok.type="button";
  var no=el("button","rounded-xl border border-gray-300 bg-white px-4 py-2.5 font-semibold","Cancel");no.type="button";
  no.onclick=function(){box.hidden=true};
- ok.onclick=function(){var out=[];rows.forEach(function(r){if(r.cb&&!r.cb.checked)return;if(DC.isValidISO(r.d.value)&&r.t.value.trim())out.push({title:r.t.value.trim(),date:r.d.value,time:r.tm.value||null,type:r.it.type,course:r.it.course})});
+ ok.onclick=function(){var out=[];rows.forEach(function(r){if(r.cb&&!r.cb.checked)return;if(DC.isValidISO(r.d.value)&&r.t.value.trim())out.push({title:r.t.value.trim(),date:r.d.value,time:r.tm.value||null,type:r.it.type,course:r.it.course,original:r.it.original})});
   if(!out.length){say("Add a title and a date first.",false);return}
   var n=add(out);box.hidden=true;$("quickIn").value="";if(tab==="done")tab="week";render();offerCalendar(out,n)};
  var orig=items[0].original;
@@ -990,6 +1010,12 @@ function notifyCheck(){try{if(!("Notification" in window)||Notification.permissi
 $("notifyBtn").onclick=function(){if(!("Notification" in window)){say("This browser can’t show notifications.",false);return}
  Notification.requestPermission().then(function(p){if(p==="granted"){say("Reminders on — you’ll be nudged today/tomorrow while the app is open.",true);notifyCheck()}else say("Notifications are blocked in your browser settings.",false)})};
 setInterval(notifyCheck,300000);
+/* Quick-paste button (shows when the paste box is off-screen), backup nudge */
+(function(){var f=$("pasteFab"),qf=$("quickForm");if(!f||!qf)return;
+ f.onclick=function(){qf.scrollIntoView({behavior:"smooth",block:"center"});setTimeout(function(){$("quickIn").focus()},400)};
+ if("IntersectionObserver" in window){new IntersectionObserver(function(es){f.hidden=es[0].isIntersecting},{threshold:0.1}).observe(qf)}else f.hidden=false;
+ var bb=$("backupBtn"),bn=$("bkNow");if(bb)bb.addEventListener("click",function(){sv("dpk_bk",Date.now());var n=$("bkNudge");if(n)n.hidden=true});
+ if(bn)bn.onclick=function(){if(bb)bb.click()}})();
 /* Device-aware install card + landing skip + fast-save setting */
 window.dpkDevice=function(ua){ua=ua||"";if(/FBAN|FBAV|Instagram|WhatsApp|; wv\)/i.test(ua))return"inapp";if(/iPhone|iPad|iPod/i.test(ua))return"ios";if(/Android/i.test(ua))return"android";return"desktop"};
 var standalone=false;try{standalone=matchMedia("(display-mode: standalone)").matches||navigator.standalone===true}catch(e){}

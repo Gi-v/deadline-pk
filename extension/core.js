@@ -418,7 +418,7 @@
   }
 
   const FILLERS = alt([
-    'he', 'hy', 'hn', 'jama', 'karwana', 'karwao', 'karwani', 'shift', 'gayi', 'gaya', 'morning', 'evening', 'afternoon', 'kaha', 'to', 'extended', 'moved', 'postponed', 'preponed', 'rescheduled', 'shifted', 'karo', 'karna', 'krna', 'kro', 'kardo', 'karen', 'karein', 'kijiye', 'karni', 'karnay', 'hai', 'hain', 'hay', 'hoga',
+    'inshallah', 'insha', 'allah', 'check', 'sir', 'kab', 'kuch', 'bataya', 'ab', 'postpone', 'postpones', 'he', 'hy', 'hn', 'jama', 'karwana', 'karwao', 'karwani', 'shift', 'gayi', 'gaya', 'morning', 'evening', 'afternoon', 'kaha', 'to', 'extended', 'moved', 'postponed', 'preponed', 'rescheduled', 'shifted', 'karo', 'karna', 'krna', 'kro', 'kardo', 'karen', 'karein', 'kijiye', 'karni', 'karnay', 'hai', 'hain', 'hay', 'hoga',
     'hogi', 'hongay', 'hoon', 'ho', 'ga', 'gi', 'tak', 'by', 'on', 'at', 'due', 'submit', 'submitted', 'submission',
     'submissions', 'deadline', 'before', 'until', 'till', 'the', 'is', 'are', 'will', 'be', 'ka', 'ki', 'ke', 'ko', 'ne',
     'se', 'mein', 'me', 'pe', 'par', 'aur', 'sab', 'sabko', 'please', 'plz', 'pls', 'reminder', 'note', 'dear', 'students',
@@ -444,6 +444,22 @@
     return t.length > 80 ? t.slice(0, 77).trim() + '…' : t;
   }
 
+  const CANCEL_RE = /\b(?:cancel(?:l?ed)?|cancle|cancal)\b/i;
+  const CANCEL_CLAUSE_RE = /[^,.;\n]*\b(?:cancel(?:l?ed)?|cancle|cancal)\b[^,.;\n]*[,.;]?/i;
+
+  /** True only when saving this single parsed item without a confirm card is very unlikely to be wrong. */
+  function isFastSaveSafe(it, text) {
+    const s = String(text || (it && it.original) || '');
+    if (!it || it.confidence !== 'high' || !isValidISO(it.date)) return false;
+    if (it.alternatives && it.alternatives.length) return false;
+    if (/[?؟]/.test(s) || s.split('\n').filter((l) => l.trim()).length > 1) return false;
+    if (/\b(?:cancel(?:l?ed)?|postpone[d]?|preponed|re-?schedule[d]?|thanks?|thank you|shukriya|i will|i'll|i have|main ne|maine)\b/i.test(s)) return false;
+    if ((s.match(/\b\d{1,2}(?::\d{2})?\s*(?:am|pm)\b/gi) || []).length > 1) return false;
+    const dueWord = /\b(?:due|deadline|submit|submission|last date|jama)\b/i.test(s);
+    if (it.type === 'Other' && !dueWord) return false;
+    return true;
+  }
+
   /* ------------------------------------------------------------------ parse one snippet */
   /**
    * parseDeadline(text, {today, ref, semesterStart}) -> {
@@ -458,8 +474,19 @@
     const original = String(text == null ? '' : text).trim();
     let s = normalize(original);
 
-    const t = findTime(s);
+    // "Class kal cancel hai, make up class Saturday": the cancelled clause is not a date for anything.
+    let hadCancel = false;
+    if (CANCEL_RE.test(s)) {
+      hadCancel = true;
+      s = s.replace(CANCEL_CLAUSE_RE, ' ');
+    }
+
+    let t = findTime(s);
     if (t) s = blank(s, t.start, t.end);
+    else {
+      const night = /\b(?:tonight|(?:aj|aaj|abhi)\s+raat(?:\s+tak)?|raat\s+tak)\b/i.exec(s);
+      if (night) { t = { time: '23:59', start: night.index, end: night.index + night[0].length, assumed: false }; s = blank(s, t.start, t.end); }
+    }
 
     const d = findDate(s, { today, ref, start, pastDays: opts.pastDays });
     if (d) {
@@ -473,12 +500,15 @@
 
     const type = detectType(s);
     const title = buildTitle(s, type, original);
-    const date = d && d.date ? toISO(d.date) : null;
+    let date = d && d.date ? toISO(d.date) : null;
+    // "tonight" / "aj raat tak" with no other date means today.
+    if (!date && t && t.time === '23:59' && /\b(?:tonight|raat)\b/i.test(original) && !hadCancel) date = toISO(today);
     return {
+      cancelled: hadCancel && !date && !t,
       title,
       date,
       time: t ? t.time : null,
-      confidence: date ? d.conf : 'low',
+      confidence: date ? (d ? d.conf : 'high') : 'low',
       type,
       notes: d && d.relative && !date ? 'RELATIVE: ' + d.relative : '',
       original,
@@ -544,6 +574,7 @@
       .forEach((line) => {
         splitMulti(line).forEach((chunk) => {
           const r = parseDeadline(chunk, opts);
+          if (r.cancelled) return;
           if (r.date || r.relative || r.type !== 'Other') {
             out.push({
               title: r.title, date: r.date || (r.relative ? 'RELATIVE: ' + r.relative : 'UNKNOWN'),
@@ -830,7 +861,7 @@
     TYPES, DAY_NAMES,
     toISO, fromISO, isValidISO, isValidTime, addDays, startOfDay, describeDate, resolveRelative,
     normalize, stripWhatsAppPrefix, detectType,
-    parseDeadline, preParseUrdu, extractFromText, extractCourse,
+    parseDeadline, preParseUrdu, extractFromText, extractCourse, isFastSaveSafe,
     extractJSON, normalizeEvent, dedupe, copyAsText,
     buildICS, icsEscape, foldLine,
   };

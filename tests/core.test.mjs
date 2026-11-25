@@ -270,6 +270,28 @@ t('google event: all-day vs timed, midnight rollover, reminders', () => {
     assert.equal(C.extractFromText('MTH101 midterm 20 Dec 10am', {})[0].course, 'MTH101');
   });
 
+  await run('student dogfood: cancellations, make-up, chatter, fast-save safety', async () => {
+    const T = new Date(2026, 10, 25); // Wed 25 Nov 2026
+    const ex = (m) => C.extractFromText(m, { today: T });
+    assert.deepEqual(ex('Class kal cancel hai'), []);
+    const mk = ex('Class kal cancel hai, make up class Saturday 11 am')[0];
+    assert.equal(mk.date, '2026-11-28'); assert.equal(mk.time, '11:00');
+    assert.equal(C.isFastSaveSafe(mk, mk.original), false);
+    const night = ex('aj raat tak form fill kar do')[0];
+    assert.equal(night.date, '2026-11-25'); assert.equal(night.time, '23:59');
+    const thanks = ex('Thanks sir, I will submit by tonight')[0];
+    assert.equal(C.isFastSaveSafe(thanks, thanks.original), false);
+    const q = ex('Assignment kab tak submit karni hai? Sir ne kuch bataya?')[0];
+    assert.ok(!C.isValidISO(q.date)); assert.equal(C.isFastSaveSafe(q, q.original), false);
+    const chat = ex('Sir has uploaded the slides on LMS, check karo')[0];
+    assert.ok(!C.isValidISO(chat.date));
+    const viva = ex('Viva schedule: Ali 10am, Sara 10:30, Hamza 11am on 3rd Dec')[0];
+    assert.equal(C.isFastSaveSafe(viva, viva.original), false);
+    const ok = ex('Quiz kal 9 baje')[0];
+    assert.equal(C.isFastSaveSafe(ok, ok.original), true);
+    assert.ok(!/inshallah/i.test(ex('Quiz 2 on Thursday inshallah')[0].title));
+  });
+
   console.log(`core tests:${pass} passed, ${fail} failed`);
   process.exit(fail ? 1 : 0);
 })();
