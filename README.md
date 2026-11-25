@@ -1,91 +1,135 @@
-# DeadlinePK — DeadlineSync PK (web) + DeadlinePinPK (Chrome extension)
+<div align="center">
 
-Pakistan-first deadline tools: Roman-Urdu / Urdu-script / English, WhatsApp-aware, **works offline without any account or key**.
+# 📌 DeadlinePK
 
-| Deliverable | File | Open it by |
+**"kal quiz hai"** &nbsp;→&nbsp; **Thu 26 Nov · 09:00** &nbsp;→&nbsp; **a reminder in your phone's own calendar.**
+
+Made for Pakistani students whose deadlines live in WhatsApp class groups.<br>
+Roman Urdu · اردو · English &nbsp;·&nbsp; no account &nbsp;·&nbsp; nothing leaves your phone
+
+**[Open the app](https://gi-v.github.io/deadline-pk/)** &nbsp;·&nbsp; [Printable flyer](https://gi-v.github.io/deadline-pk/flyer.html) &nbsp;·&nbsp; [Privacy](https://gi-v.github.io/deadline-pk/privacy.html) &nbsp;·&nbsp; [Changelog](CHANGELOG.md)
+
+</div>
+
+---
+
+## The problem, as a transcript
+
+```text
+CS-101 · Section B                                    43 members
+─────────────────────────────────────────────────────────────────
+Hamza      guys sir ne kaha test aa raha hai
+Sir Ahmed  Assignment 3 submit karni hai Friday tak, midnight
+CR Ali     [photo] datesheet.jpg
+Zara       kal ka test postpone ho gaya, ab next week Tuesday
+Hamza      lol
+           … 387 more messages …
+You        wait, when was the assignment due?
+```
+
+Nobody forgets on purpose. The date is just buried. DeadlinePK digs it out the moment you paste or share the message, shows you what it found, and hands it to the calendar app you already trust to wake you up.
+
+## What it actually does
+
+| You paste | It reads | Notes |
 |---|---|---|
-| Web app (one self-contained file) | `web/DeadlineSync-PK.html` | double-click it |
-| Chrome extension | `extension/` | load unpacked (steps below) |
+| `Quiz kal 9 baje` | tomorrow, 09:00 | one tap to save, Undo if it's wrong |
+| `Assignment 3 submit karni hai Friday tak, midnight` | Friday, 23:59 | asks you to confirm |
+| `aj raat tak form fill kar do` | today, 23:59 | |
+| `Class kal cancel hai, make up class Saturday 11 am` | Saturday, 11:00 | the *cancelled* "kal" is ignored |
+| `kal ka test postpone ho gaya, ab next week Tuesday` | the new Tuesday | not tomorrow |
+| `CS-301 mid term 14th Dec 9am Hall B` | 14 Dec, 09:00, tagged CS301 | course chip + filter |
+| `Sir has uploaded the slides on LMS` | **nothing** | says so, saves nothing |
+| `Thanks sir, I will submit by tonight` | asks first | chatter never saves silently |
 
-## Web app — DeadlineSync PK
-Drop up to 5 PDFs / JPG / PNG / WEBP (≤10 MB each), or paste text (WhatsApp chat, typed syllabus). Optional semester start date (turns "Week 3" into a date) and course name (prefixed to every event). Edit any cell, delete rows, add rows, then **Add to Google Calendar** (downloads `deadlines-<course>.ics`) or **Copy as text**.
+The design rule is simple: **a wrong date is worse than no app.** So the app saves in one tap only when a message is clear and single. Anything ambiguous ("next Thursday"), multi-line, a question, a cancellation or a postponement goes to a confirm card with "Did you mean…?" chips.
 
-- **PDF / photo reading needs a Claude API key** → click **⚙ AI key** (top right), paste key, Save. Stored only in your browser's localStorage, sent only to the endpoint shown. Default model `claude-sonnet-4-6` (editable).
-- **Pasted text works with no key**, using the built-in offline parser. If a key is set and the API call fails, pasted text silently falls back to the offline parser.
-- Images are scaled to ≤1800 px before upload (WhatsApp photos are huge or blurry; also keeps under the API's 5 MB image limit). You can also Ctrl+V a screenshot.
-- Low-confidence rows are yellow with ⚠️; rows with an invalid date turn red on export and are skipped (valid ones still export). Typing `15 Dec` or `Friday` in a date box converts to `YYYY-MM-DD`.
-- Import into Google Calendar: Settings → Import & export → Import → choose the `.ics`. (A direct "add" link isn't possible without a Google login; the `.ics` route needs no account, as required.)
+## The daily loop (target: 3 taps)
 
-## Chrome extension — DeadlinePinPK
-### Load this extension
-1. Open `chrome://extensions`
-2. Switch **Developer mode** on (top right)
-3. Click **Load unpacked**
-4. Choose the folder `C:\Users\Jjhyg\OneDrive\Desktop\test\deadline-pk\extension`
-5. Pin 📌 from the puzzle-piece menu. Reload any tab that was already open (content scripts only attach to new page loads).
-
-### Use it
-- Select text on any page → **📌 Pin Deadline**. Or right-click → **📌 Pin as deadline**.
-- On **web.whatsapp.com**, hover a message → 📌 appears beside the bubble → one click pins the whole message. The message's own date is used, so an old "kal" resolves to the day after it was *sent*.
-- Popup: tabs All / Today / This Week / Done, expand a card for the original text + edit, ✓ Done / 🗑 Delete, swipe a card left = done, paste a message into the top box to pin without selecting, **Export .ics**, **Clear Done**. Badge on the icon = open deadlines.
-- Reminders: timed deadline → notification 24 h and 1 h before. Date-only → 6 pm the day before and 8 am the day of. Click a notification to open the source page.
-- ⚙ in the popup opens Settings: optional API key so Claude double-checks hard messages (selected text is sent to Anthropic **only** if a key is saved and the switch is on).
-
-## Deliberate differences from the original brief (and why)
-1. **No "proxy already configured".** A browser app / extension has no hidden proxy, so a keyless Claude call cannot work. Instead: a full offline parser, plus an optional user-supplied key (or custom endpoint if you run a proxy).
-2. **Tailwind is compiled and inlined** (not the CDN) so the HTML is truly single-file, instant and works offline. Built with Tailwind 4.3.3 via `tools/build.mjs`.
-3. **WhatsApp 📌 is a floating overlay**, not nodes injected inside the bubble: WhatsApp is a React app and re-renders would delete injected nodes (and could break its layout).
-4. **Real PNG icons** (generated by `tools/make-icons.mjs`) — Chrome notifications and the manifest need PNG files, not an emoji.
-5. **Added** (not in the brief): options page, context-menu pin, quick-add box, message-date anchoring, WhatsApp-export prefix stripping (`[10:42 am, 22/11/2026] Name:`), paste-a-screenshot, Urdu-script support.
-
-## Offline parser understands
-`kal` (tomorrow; yesterday if "tha/thi/hua") · `parson` · `narsoon` · `aaj` · `agla/agle + weekday` · `is hafta` (Fri) · `agle hafte` (+7) · `Somwar Mangal Budh Jumerat Jumma Hafta(Sat) Itwar` (+ English, + Urdu script) · `9 baje` with `subah / dopahar / shaam / raat` · `11:59pm` · `Friday tak` · `Oct 18`, `15th October`, `15/10`, `15/10/2026`, `2026-10-15` · `Week 5` · `in 3 days`, `3 din baad` · Urdu digits `۹`. Day-first dates (Pakistan convention). "peer review" is not Monday; "chapters 1-3" is not 1 March.
-
-## Develop
+```mermaid
+flowchart LR
+  A["Long-press message<br>in WhatsApp"] --> B["Share → DeadlinePK<br>(or paste)"]
+  B --> C{"Clear and single?"}
+  C -- yes --> D["Saved ✓ + Undo"]
+  C -- no --> E["Confirm card:<br>fix date, tick rows"]
+  E --> D
+  D --> F["📅 Calendar<br>two reminders set"]
+  D --> G["💬 Share to class<br>one tap for everyone"]
 ```
-cd deadline-pk
-npm install          # tailwind + postcss (Windows binaries; the parent folder's node_modules is Linux-only)
-npm run build        # icons + extension/core.js + web/DeadlineSync-PK.html
-npm test             # 131 tests: parser/ICS core, extension background (mocked chrome.*), built web app
-node tools/serve.mjs # http://127.0.0.1:5173 for browser testing; tests/wa-mock.html = fake WhatsApp page
+
+- **Install it** once from Chrome (Android) or Share → Add to Home Screen (iPhone). The icon long-press has a "Paste a message" shortcut, and shows how many things are due.
+- **Reminders come from your phone's calendar**, not from this app: a day before and an hour before for timed items, the evening before and the morning of for all-day ones. The app can be closed.
+- **Send it to the group.** Every deadline has a WhatsApp share whose link fills the deadline into a classmate's app. One student pins; the whole section is covered.
+
+## Four ways in
+
+| | What | Where |
+|---|---|---|
+| 📱 **Web app / PWA** | paste, share-target, list, calendar, backup | [gi-v.github.io/deadline-pk](https://gi-v.github.io/deadline-pk/) |
+| 💻 **Chrome extension** | 📌 beside every message on WhatsApp Web, right-click pin anywhere | `extension/` (Web Store listing pending) |
+| 🖨 **Flyer** | one page with a QR code, in English and Roman Urdu, for class notice boards | [flyer.html](https://gi-v.github.io/deadline-pk/flyer.html) |
+| 📄 **Syllabus scanner** | optional: PDFs and photos via your own Claude key | *More tools* in the web app |
+
+## The privacy promise, and how it is enforced
+
+Your list lives in your browser (`localStorage`). There is no server and no account.
+
+- The page ships a strict **Content-Security-Policy**; the code has **no `innerHTML`**, `eval` or `document.write`; links from strangers (`?add=`) are validated field by field.
+- Optional Google Calendar sync uses only the `calendar.app.created` scope: it can touch **its own "DeadlinePK" calendar and nothing else.**
+- The extension asks for access to `web.whatsapp.com` only. "Any website" is an opt-in setting.
+- Scanned in public: Lighthouse (98 accessibility / 100 best practices / 100 SEO), retire.js, eslint-plugin-security, web-ext lint, and an OWASP ZAP baseline + active scan, all clean of real findings. See [CHANGELOG](CHANGELOG.md).
+
+## What it will not do (honest list)
+
+- It does **not** ring on its own when the app is closed. The calendar does. Real push notifications need a server this project deliberately does not have.
+- It is **not** tested on real students yet. The parser is checked on ~125 messages I wrote myself (about 94% exact); the misses are mostly deliberate ambiguity. [LAUNCH.md](LAUNCH.md) has the pilot plan.
+- iPhone cannot receive Share-from-WhatsApp (Apple limitation); paste works.
+- WhatsApp cannot be auto-sent without the paid Business API; the app opens a message and **you** press send.
+
+## Under the hood
+
+```text
+shared/deadline-core.js   ← the only source of truth: parser, ICS, share links, Google sync logic
+   ├─ copied → extension/core.js          (generated)
+   └─ inlined → web/DeadlineSync-PK.html  (generated, one self-contained file, Tailwind compiled in)
+web/src/index.template.html   the web UI source
+extension/                    Manifest V3: background worker, content script, popup, options
+tools/build.mjs               build + QR flyer;   tests/  core · extension (mocked chrome.*) · built web app
 ```
-**Source of truth:** `shared/deadline-core.js` (parser, ICS, AI-output cleanup). `extension/core.js` and the inlined copy in the web app are generated — don't edit them. Web UI source: `web/src/index.template.html`.
 
-Known limits: Chrome's "Load unpacked" and live WhatsApp Web were not available to the automated test run — the extension is verified through a mocked `chrome.*` API, the real popup and content script running in a browser page, and a WhatsApp-shaped mock page (`tests/wa-mock.html`). WhatsApp changes its markup often; if the hover 📌 stops appearing, the selector is `div[data-pre-plain-text]` in `extension/content.js`. AI reading of scanned/handwritten syllabi was tested against a mocked API, not a live key.
+The parser is deliberately **offline and rule-based**: Roman Urdu day words (`kal`, `parson`, `agla Jumma`), `9 baje` with `subah/shaam/raat`, Urdu-script digits, day-first dates, week-of-semester, `in 3 days / 3 din baad`, plus traps it must not fall for ("chapters 1-3" is not 1 March; "peer review" is not Monday; a cancelled "kal" is not a deadline).
 
-## Publish on GitHub Pages
-The repo ships `.github/workflows/pages.yml`: on every push to `main` it runs the tests, then publishes the web app as the site root (`index.html`) and the extension as `DeadlinePinPK.zip` next to it. One-time setup after pushing: repo **Settings → Pages → Source: GitHub Actions**. Built files are committed on purpose (run `npm run build` before committing) so CI needs no npm install.
+### Run it
 
-## Google Calendar sync (real, two-way for what you pin)
-**🔗 Connect Google Calendar** in My deadlines signs in with Google (Identity Services, no server) and writes to its own **"DeadlinePK"** calendar via the Calendar API — so your other calendars are never touched. Add / edit / tick done / delete in the app and the events follow (auto-sync while the sign-in is fresh, ~1 h; otherwise press Sync). Scope used: `calendar.app.created` only.
+```powershell
+npm install
+npm run build      # icons + extension/core.js + web app + flyer
+npm test           # 106 core · 24 extension · 9 web
+node tools/serve.mjs   # http://127.0.0.1:5173
+```
 
-**One-time setup (needs a Google account — I cannot do this for you):**
-1. console.cloud.google.com → new project → enable **Google Calendar API**.
-2. OAuth consent screen → External → add your Gmail as **test user** → add scope `.../auth/calendar.app.created`.
-3. Credentials → OAuth client ID → **Web application** → Authorized JavaScript origins: `https://gi-v.github.io` (and `http://localhost:5173` for dev).
-4. Put the Client ID in `web/config.json` (`{"googleClientId": "…"}`), run `npm run build`, commit, push — every visitor can then just click Connect. Or paste it into the page's ⚙ settings box to use it on one device only.
-Client IDs are public, not secrets. While the consent screen is in "Testing" only listed test users can sign in (max 100); publish it for everyone (this scope is non-sensitive, so no Google review is normally required).
+Load the extension: `chrome://extensions` → Developer mode → **Load unpacked** → pick the `extension/` folder. Built files are committed on purpose, so CI needs no `npm install`; pushes to `main` run the tests and deploy to GitHub Pages (`.github/workflows/pages.yml`).
 
-## Change log
-- **v2.5.0** — easy start: returning/installed users skip the pitch and land on the paste box; device-aware install card (Android button, iPhone steps, WhatsApp in-app browser hint); one-tap save with Undo for clear single messages (toggle in More tools); remembered calendar choice (Google vs .ics) with two reminders per event and an app link; per-row checkboxes for pasted chats; Roman Urdu labels; icon long-press shortcut + `?new=1`; printable `flyer.html` with QR. Tests: 104 core, 24 extension, 9 web.
-- **v3.0.0** — from a student dogfood session: fast-save only for clear single messages (no cancellations, questions, thanks, multi-time lists); "cancel" clauses ignored and make-up classes use their own day; "tonight/aj raat" = today 23:59; chatter shows "No deadline in that message" with Add-it-myself; noisy words trimmed from titles and the original message is kept (tap a title); sticky Today/Tomorrow/Overdue bar, floating Paste button, app-icon badge; labelled row buttons, delete with Undo; backup nudge.
-- **v2.7.2** — the landing hero is shown to everyone in the browser again; only the installed app (and `?new=1`) skips it.
-- **v2.7.1** — Content-Security-Policy meta tag (no off-site scripts/frames/objects; connections HTTPS only). Found by an OWASP ZAP scan.
-- **v2.7.0** — course tags: the parser picks up codes like CS-201, "OS:" and [DSA]; rows show a chip and a filter bar appears once you have two or more courses.
-- **v2.6.0** — overdue items get "Missed? +1 day / +1 week" reschedule buttons; every row has a one-tap WhatsApp Share; "New version ready — tap to refresh" toast ends stale-cache confusion.
-- **2026-11-23 — extension v1.1.0** Narrower permissions for the Chrome Web Store: no more access to all websites at install. The content script runs only on web.whatsapp.com; on other pages use right-click → "📌 Pin as deadline" (no extra permission; shows a system notification). Settings has an opt-in "Show the 📌 button on any website" that asks Chrome for the optional all-sites permission and registers the script (and can be switched off). Covered by mocked chrome.* tests (24 extension tests); **not yet loaded in real Chrome** — reload the unpacked extension, then check WhatsApp Web and right-click pin.
-- **2026-11-23 — v2.4.0** Trust + launch prep. **"Did you mean…?" chips** on the confirm card when a phrase is ambiguous ("next Thursday" → this coming or the one after; parser returns `alternatives`). Parser: `kal ka quiz postpone ho gaya, ab Thursday ko hoga` now uses the new weekday; "evening 6" / "shaam 5" read as times; `jumay`, `bajey/bajy` spellings. Checked on 3 self-written batches (~125 messages; 42–45 of 45, 45 of 50, 29 of 30 exact; remaining misses are deliberate/ambiguous such as "midnight" = 23:59). Standalone `privacy.html`, `LAUNCH.md` (pilot script, Chrome Web Store text, OAuth publish steps, checklist), link-preview image `og.jpg`, bigger phone tap targets. 103 core tests. These are synthetic messages, not real students.
-- **2026-11-23 — v2.3.0** Growth loop and trust. **Send to class group**: the WhatsApp button on a deadline (and "Send this week") now includes a link (`?add=…`); a classmate taps it, sees the confirm card prefilled, saves in one tap — no backend. Links from strangers are strictly validated (`decodeShare`: valid date, time, type, ≤20 items, 120-char titles). "Wrong date? Tell us" on the confirm card opens a prefilled GitHub issue. "Paste from clipboard" button. Privacy note + report-a-problem links in the footer. Redesign to a paper-notebook look. +2 tests (99 core). Still needed for launch: real class messages, Android test, name/domain, Chrome Web Store, Google OAuth publish.
-- **2026-11-23 — v2.2.0** Phone-first. **Share from WhatsApp** (installed PWA appears in the Android Share menu via `share_target`), **confirm-before-save card** (edit title/date/time; yellow warning when the date was assumed), one-tap **Add to calendar** after saving (Google link or .ics, so the phone's own calendar does the reminding), backup/restore JSON, "Share with your class group" button, Open Graph tags for link previews. Scanner and Google sync tucked under "More". Not yet tested: installed-PWA share on a real Android phone; real class-group messages.
-- **2026-11-23 — v2.1.0** Real Google Calendar sync (see above). Core: `buildGoogleEvent`, `syncToGoogle` (idempotent: update-not-duplicate, done/removed items deleted, 404 recreated, 401 re-auth). +5 tests, sync flow also exercised in the browser against a mocked Google. Confirmed against real Google on 2026-11-23: the owner signed in with a test-user account and the app reported "synced". (Not independently verified by calendar inspection, and only test users can sign in until the OAuth app is published.)
-- **2026-11-23 — v2.0.0** Built for daily use, not one-off extraction. The web app now opens on **My deadlines**: paste one or many WhatsApp messages → pinned (saved in the browser, no account), tabs Today / This week / All / Done, tick off, per-item 📅 Google Calendar and 💬 WhatsApp, "Send this week to WhatsApp", download all as .ics, "🔔 Remind me" (browser notifications while the app is open). The syllabus scanner moved below and can "Save to My deadlines". Installable PWA (manifest + offline service worker, green icons) on https hosting. Messages with a time but no date ("Quiz he 9") pin for today. Landing copy rewritten around the real problem (deadlines buried in class groups). +1 test (117 total).
-- **2026-11-23 — v1.3.0** Hero is now alive: a live demo box runs the real parser as you type (cycles examples, you can type your own), drifting colour glows, same optional video. Added GitHub Pages workflow (site + extension zip), `.gitignore`, zip download link in the page footer.
-- **2026-11-23 — v1.2.2** The landing hero is now inside the web app itself (`web/DeadlineSync-PK.html`): hero first, "Start" scrolls to the tool, extension install steps in the footer. The hero video is an optional online-only extra (not loaded offline or with reduced motion), so the file still works as a single offline file.
-- **2026-11-23 — v1.2.1** Added `site/index.html`: a landing page for both tools (hero with background video, products, 4-step install). Links to `../web/DeadlineSync-PK.html`, so keep the folder layout. Built with the MotionSites web-builder skill.
-- **2026-11-23 — v1.2.0** **Daily digest**: every day at your chosen hour (default 8:00; Settings → Daily digest) one notification summarising overdue / today / tomorrow / next-7-days. Click it → WhatsApp opens with the digest pre-typed (to your saved number; you press send). Silent on days with nothing due. +3 tests (116 total).
-- **2026-11-23 — v1.1.1** Parser fixes: bare hour after a cue word ("Quiz he 9", "at 5", "kal 9") is now a time, and "he/hy/hai" no longer leak into titles; traps stay safe ("Lab 4 kal", "kal 2 quizzes hain", "by 5 Dec", "chapters 1-3", "hai 15 marks"). Titles drop "moved to / extended to / ne kaha". Quick-pin treats yearless dates more than 14 days past as next year. AI dates like `2026-10-15T00:00:00` are accepted; "none/null" → unknown. +16 tests (113 total).
-- **2026-11-23 — v1.1.0** Extension loaded and verified by the user in real Chrome (popup + pin work). Added per-deadline **📅 Google Calendar** (pre-filled event link, no login), **💬 WhatsApp** (opens a chat with your own saved number or a contact you choose, reminder pre-typed; you press send — WhatsApp can't be auto-sent without the paid Business API) and **✉️ Email** buttons; WhatsApp number setting in the options page. +2 tests (97 total).
-- **2026-11-23 — v1.0.0** First complete build. Shared core + 71 parser/ICS tests; background worker (queueing, dedupe, alarms, badge, AI merge/fallback) + 18 tests; popup, options page, content script; web app with Tailwind compiled inline. Fixed during testing: "agla hafta" was read as Saturday; "Quiz 1 Oct 18" parsed as 1 Oct; "15.10.26" read as a time; AI prompt conflated today with a WhatsApp message's date; Urdu-script event words (مڈ ٹرم) weren't typed; selected popup tab faded on hover.
+If WhatsApp's markup changes and the hover 📌 disappears, the selector to update is `div[data-pre-plain-text]` in `extension/content.js`.
 
-## License
-MIT — see [LICENSE](LICENSE).
+### Optional: Google Calendar sync
+
+"Connect Google Calendar" writes to its own calendar through the Calendar API with no server. Put your OAuth **Client ID** (public, not a secret) in `web/config.json` and rebuild. Setup steps are in [LAUNCH.md](LAUNCH.md).
+
+## Roadmap
+
+- [ ] Pilot with ~10 students across 2–3 class groups, then fix the top three complaints
+- [ ] Chrome Web Store listing for the extension
+- [ ] A short name and a `.pk` domain
+- [ ] Real push reminders (small Cloudflare Worker, opt-in)
+- [ ] Feedback channel that isn't GitHub
+
+---
+
+<div align="center">
+
+MIT licensed · built in one long conversation with Claude · [LICENSE](LICENSE)
+
+*If it saved you from a missed quiz, send it to your class group.*
+
+</div>
