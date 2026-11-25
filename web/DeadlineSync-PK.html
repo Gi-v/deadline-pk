@@ -1905,12 +1905,22 @@ var today=function(){return DC.toISO(new Date())};
 function daysTo(iso){var a=DC.startOfDay(new Date()),b=DC.fromISO(iso);return Math.round((b-a)/864e5)}
 function rel(d){var n=daysTo(d.date);if(n<0)return{t:"Overdue "+(-n)+"d",c:"bg-red-100 text-red-800"};if(n===0)return{t:"Today"+(d.time?" "+d.time:""),c:"bg-yellow-100 text-yellow-900"};if(n===1)return{t:"Tomorrow"+(d.time?" "+d.time:""),c:"bg-orange-100 text-orange-800"};return{t:"in "+n+" days",c:"bg-gray-100 text-gray-700"}}
 var BASE=location.origin+location.pathname;
+/* Owner-only analytics (PostHog). Off unless web/config.json has a posthogKey. Counts only: never message text, titles, dates or file contents. No cookies, no autocapture, no session replay. Respects Do Not Track and an in-app switch. */
+var PH=null;
+function track(ev,props){try{if(!PH||!PH.key||navigator.doNotTrack==="1"||localStorage.getItem("dpk_noanalytics")==="1")return;
+ var id=localStorage.getItem("dpk_aid");if(!id){id=(crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random());localStorage.setItem("dpk_aid",id)}
+ var p=props||{};p.standalone=!!(window.matchMedia&&matchMedia("(display-mode: standalone)").matches);
+ fetch(PH.host+"/capture/",{method:"POST",keepalive:true,headers:{"Content-Type":"application/json"},body:JSON.stringify({api_key:PH.key,event:ev,distinct_id:id,properties:Object.assign({$process_person_profile:false,$ip:null},p)})}).catch(function(){})}catch(e){}}
+try{var aq=new URLSearchParams(location.search).get("analytics");if(aq==="off")localStorage.setItem("dpk_noanalytics","1");if(aq==="on")localStorage.removeItem("dpk_noanalytics")}catch(e){}
+try{track("app_open",{src:new URLSearchParams(location.search).get("src")||""})}catch(e){}
 /* One message for the class group: readable lines plus a link that fills the deadlines into a classmate's app. */
 function classMsg(list){var line=function(d){return "• "+d.title+" — "+DC.describeDate(d.date)+(d.time?" "+d.time:"")},cs=[];list.forEach(function(d){if(d.course&&cs.indexOf(d.course)<0)cs.push(d.course)});
  var body=cs.length>1?cs.concat([""]).map(function(c){var g=list.filter(function(d){return(d.course||"")===c});return g.length?(c?"*"+c+"*\n":"")+g.map(line).join("\n"):""}).filter(Boolean).join("\n\n"):list.map(line).join("\n");
  return "📌 "+(list.length>1?"Deadlines":"Deadline")+"\n"+body+"\n\nTap to add "+(list.length>1?"them":"it")+" to your calendar: "+DC.shareLink(BASE,list)}
+var courseF="";
+function key(d){return (d.title||"").toLowerCase().replace(/\s+/g," ").trim()+"|"+d.date}
 function add(items){var n=0,have={};mine.forEach(function(d){have[key(d)]=1});
- items.forEach(function(it){if(!it||!it.title||!DC.isValidISO(it.date))return;var d={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),title:String(it.title).slice(0,120),date:it.date,time:DC.isValidTime(it.time)?it.time:null,type:it.type||"Other",course:String(it.course||"").replace(/[^A-Za-z0-9-]/g,"").slice(0,10).toUpperCase(),original:String(it.original||"").slice(0,300),done:false};if(have[key(d)])return;have[key(d)]=1;mine.push(d);n++});
+ items.forEach(function(it){if(!it||!it.title||!DC.isValidISO(it.date))return;var d={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),title:String(it.title).slice(0,120),date:it.date,time:DC.isValidTime(it.time)?it.time:null,type:it.type||"Other",course:String(it.course||"").replace(/[^A-Za-z0-9-]/g,"").slice(0,10).toUpperCase(),original:String(it.original||"").slice(0,300),done:false};if(have[key(d)])return;have[key(d)]=1;mine.push(d);n++});if(n)track("deadline_saved",{n:n});
  if(n){save();sv("dpk_seen",1);render();notifyCheck()}return n}
 window.__dpkPin=function(it){propose([it]);var s=$("mine");if(s&&s.scrollIntoView)s.scrollIntoView({behavior:"smooth",block:"start"})};
 function say(t,ok){var m=$("quickMsg");m.textContent=t;m.className="mt-1 min-h-5 text-sm "+(ok?"text-green-700":"text-red-700")}
@@ -1946,7 +1956,7 @@ function render(){
    if(dd<0)[["+1 day",1],["+1 week",7]].forEach(function(p){var rb=el("button","min-h-9 rounded-full border-2 border-gray-800 bg-white px-3 py-1 font-semibold","Missed? "+p[0]);rb.type="button";
     rb.onclick=function(){d.date=DC.toISO(DC.addDays(new Date(),p[1]));save();render()};qa.appendChild(rb)});
    var g=el("a","min-h-9 rounded-full border-2 border-gray-800 bg-white px-3 py-1.5 font-semibold","📅 Calendar");g.href=DC.gcalUrl(d)||"#";g.target="_blank";g.rel="noopener";qa.appendChild(g);
-   var sh=el("a","min-h-9 rounded-full border border-gray-300 bg-white px-3 py-1.5 font-semibold","💬 Share");sh.href=DC.waUrl(classMsg([d]),"");sh.target="_blank";sh.rel="noopener";qa.appendChild(sh);
+   var sh=el("a","min-h-9 rounded-full border border-gray-300 bg-white px-3 py-1.5 font-semibold","💬 Share");sh.href=DC.waUrl(classMsg([d]),"");sh.target="_blank";sh.rel="noopener";sh.addEventListener("click",function(){track("share_clicked",{n:1})});qa.appendChild(sh);
    mid.appendChild(qa)}
   if(d.original&&d.original.trim()!==d.title){t.className="font-semibold"+(d.done?" line-through":"");t.style.cursor="pointer";t.setAttribute("role","button");t.setAttribute("tabindex","0");
    var src=el("p","mt-1 hidden rounded-lg bg-gray-50 p-2 text-xs text-gray-600","From: “"+d.original+"”");src.dir="auto";mid.insertBefore(src,row.nextSibling);
@@ -1957,7 +1967,7 @@ function render(){
   act.appendChild(x);
   li.appendChild(cb);li.appendChild(mid);li.appendChild(act);list.appendChild(li)});
  var wk=open_().filter(function(d){return daysTo(d.date)<=7}).sort(sorter);
- $("shareWeek").href=wk.length?DC.waUrl(classMsg(wk),""):DC.waUrl("📌 Nothing due this week 🎉","");
+ $("shareWeek").onclick=function(){track("share_clicked",{n:wk.length})};$("shareWeek").href=wk.length?DC.waUrl(classMsg(wk),""):DC.waUrl("📌 Nothing due this week 🎉","");
  var n=open_().filter(function(d){return daysTo(d.date)<=0}).length;
  document.title=(n?"("+n+") ":"")+"DeadlineSync PK — Drop your syllabus. Get your calendar.";
  try{if(navigator.setAppBadge){if(n)navigator.setAppBadge(n);else navigator.clearAppBadge()}}catch(e){}
@@ -1974,7 +1984,7 @@ function dl(name,type,text){var b=new Blob([text],{type:type}),u=URL.createObjec
 function propose(found){
  var items=found.filter(function(f){return f._manual||DC.isValidISO(f.date)||f.time}).map(function(f){var ok=DC.isValidISO(f.date);return Object.assign({},f,{date:ok?f.date:today(),_assumed:!ok&&!f._manual})});
  if(!items.length){var nb=$("confirm");nb.textContent="";nb.hidden=false;$("saveNote").hidden=true;say("");
-  nb.appendChild(el("p","mb-2 text-sm font-semibold","No deadline in that message. Nothing saved."));
+  nb.appendChild(el("p","mb-2 text-sm font-semibold","No deadline in that message. Nothing saved."));track("no_deadline_found");
   var nr=el("div","flex gap-2"),mb=el("button","rounded-xl bg-brand px-4 py-2.5 font-bold text-white","✍ Add it myself");mb.type="button";
   mb.onclick=function(){propose([{_manual:1,title:"",date:today(),time:null,type:"Other",confidence:"low"}])};
   var nc=el("button","rounded-xl border border-gray-300 bg-white px-4 py-2.5 font-semibold","OK");nc.type="button";nc.onclick=function(){nb.hidden=true};
@@ -2012,19 +2022,19 @@ function propose(found){
  if(orig){var rep=el("a","ml-auto self-center text-xs underline","Wrong date? Tell us");rep.target="_blank";rep.rel="noopener";
   rep.href="https://github.com/Gi-v/deadline-pk/issues/new?title="+encodeURIComponent("Wrong date")+"&body="+encodeURIComponent("Message (remove names if you like):\n"+orig+"\n\nApp read: "+items[0].date+" "+(items[0].time||"")+"\nShould be: ");act.appendChild(rep)}
  act.insertBefore(ok,act.firstChild);act.insertBefore(no,ok.nextSibling);box.appendChild(act);box.scrollIntoView({block:"nearest",behavior:"smooth"})}
-function icsOf(l){return DC.buildICS(l.map(function(d){return{title:d.title,date:d.date,time:d.time,type:d.type,notes:""}}),{calName:"My deadlines",alarmSet:"student",appUrl:BASE})}
+function icsOf(l){track("calendar_added",{n:l.length,via:"ics"});return DC.buildICS(l.map(function(d){return{title:d.title,date:d.date,time:d.time,type:d.type,notes:""}}),{calName:"My deadlines",alarmSet:"student",appUrl:BASE})}
 function offerCalendar(items,n,undo){var s=$("saveNote");s.textContent="";s.hidden=false;
  s.appendChild(el("p","font-semibold",n?"Saved ✓ · Mehfooz ho gaya":"Already in your list"));
  s.appendChild(el("p","mt-1 text-gray-600","Add it to your phone’s calendar so it reminds you even when this app is closed:"));
  var pref=ld("dpk_cal","g"),canG=items.length===1;if(!canG)pref="ics";
  var b=el("a","mt-2 inline-block rounded-xl bg-brand px-4 py-2.5 font-bold text-white hover:bg-brand-dark","📅 Add to calendar · Calendar mein daalein"+(items.length>1?" ("+items.length+")":""));b.href="#";
- b.onclick=function(e){e.preventDefault();if(pref==="g"&&canG){window.open(DC.gcalUrl(items[0]),"_blank","noopener")}else{dl("deadlines.ics","text/calendar",icsOf(items))}};
+ b.onclick=function(e){e.preventDefault();if(pref==="g"&&canG){track("calendar_added",{n:1,via:"google"});window.open(DC.gcalUrl(items[0]),"_blank","noopener")}else{dl("deadlines.ics","text/calendar",icsOf(items))}};
  s.appendChild(b);
  if(canG){var i=el("button","ml-2 mt-2 rounded-xl border border-gray-300 px-4 py-2.5 font-semibold",pref==="g"?"⬇ .ics file instead":"Google Calendar instead");i.type="button";
   i.onclick=function(){sv("dpk_cal",pref==="g"?"ics":"g");offerCalendar(items,n,undo)};s.appendChild(i)}
  if(undo){var u=el("button","ml-2 mt-2 rounded-xl border border-gray-300 px-4 py-2.5 font-semibold","↩ Undo");u.type="button";u.onclick=undo;s.appendChild(u)}}
 /* Whole-chat import: .txt or .zip from WhatsApp "Export chat"; read in the browser only */
-function importChat(text){var days=14,show=function(){var r=DC.parseChatExport(text,{today:new Date(),days:days});
+function importChat(text){track("chat_imported");var days=14,show=function(){var r=DC.parseChatExport(text,{today:new Date(),days:days});
   if(!r.stats.messages){say("That doesn’t look like a WhatsApp chat export. Use Export chat → Without media.",false);return}
   if(!r.items.length){propose([]);var c0=$("confirm");c0.firstChild.textContent="Read "+r.stats.scanned+" messages from the last "+days+" days — no upcoming deadlines found.";chips(c0,r);return}
   propose(r.items.map(function(i){return Object.assign({},i,{fromChat:true})}));var box=$("confirm");

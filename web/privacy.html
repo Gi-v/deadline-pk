@@ -23,7 +23,7 @@ small{color:#5b564a}
 <h1>Privacy</h1>
 <small>Last updated 23 November 2026 · applies to the DeadlineSync PK website and the DeadlinePinPK Chrome extension</small>
 
-<div class="card"><strong>Short version:</strong> your deadlines stay on your device. We have no accounts, no server that stores your messages, no ads and no tracking.</div>
+<div class="card"><strong>Short version:</strong> your deadlines stay on your device. We have no accounts, no server that stores your messages, no ads and no tracking of what you write.</div>
 
 <h2>What stays on your device</h2>
 <ul>
@@ -36,6 +36,7 @@ small{color:#5b564a}
 <ul>
 <li><strong>Add to calendar</strong> opens Google Calendar with the event filled in, or downloads an .ics file. Google then handles it under its own policy.</li>
 <li><strong>Connect Google Calendar (optional):</strong> you sign in with Google. The app asks only for permission to create and manage its own "DeadlinePK" calendar (scope <code>calendar.app.created</code>); it cannot read your other calendars. The sign-in token stays in your browser. Disconnect any time in More tools.</li>
+<li><strong>Anonymous usage counts (only if the site owner switched it on):</strong> the app can send a few anonymous event names (for example "deadline saved", "calendar added", "page opened") with a random ID kept on your device, to the owner's private PostHog project. It never sends your messages, titles, dates, files or IP address, sets no cookies, and does no session recording. It is off when your browser sends Do Not Track, or if you open the app once with <code>?analytics=off</code> added to the address.</li>
 <li><strong>AI key (optional):</strong> if you paste your own Claude API key, text you ask it to read (a PDF, photo or messages) is sent to Anthropic using your key. Without a key, nothing is sent.</li>
 <li><strong>Sharing:</strong> the WhatsApp buttons create a message and link; you decide who receives it. A shared deadline link contains the title and date inside the link itself.</li>
 <li><strong>Reporting a wrong date:</strong> the "Wrong date? Tell us" link opens a GitHub issue form pre-filled with the message. Nothing is sent until you press submit. Remove names first if you like.</li>
