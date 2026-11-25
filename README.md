@@ -65,10 +65,10 @@ flowchart LR
 
 | | What | Where |
 |---|---|---|
-| 📱 **Web app / PWA** | paste, share-target, list, calendar, backup | [gi-v.github.io/deadline-pk](https://gi-v.github.io/deadline-pk/) |
+| 📱 **Web app / PWA** | paste, **whole-chat import**, share-target, list, calendar, backup | [gi-v.github.io/deadline-pk](https://gi-v.github.io/deadline-pk/) |
 | 💻 **Chrome extension** | 📌 beside every message on WhatsApp Web, right-click pin anywhere | `extension/` (Web Store listing pending) |
 | 🖨 **Flyer** | one page with a QR code, in English and Roman Urdu, for class notice boards | [flyer.html](https://gi-v.github.io/deadline-pk/flyer.html) |
-| 📄 **Syllabus scanner** | optional: PDFs and photos via your own Claude key | *More tools* in the web app |
+| 📄 **Syllabus scanner** | PDFs and photos read on your phone (free, no key); a Claude key is an optional upgrade | *More tools* in the web app |
 
 ## The privacy promise, and how it is enforced
 
@@ -82,6 +82,7 @@ Your list lives in your browser (`localStorage`). There is no server and no acco
 ## What it will not do (honest list)
 
 - It does **not** ring on its own when the app is closed. The calendar does. Real push notifications need a server this project deliberately does not have.
+- The offline scanner is good at clean text PDFs and clear photos; handwriting and messy tables need a human glance, so every row is shown for checking before saving.
 - It is **not** tested on real students yet. The parser is checked on ~125 messages I wrote myself (about 94% exact); the misses are mostly deliberate ambiguity. [LAUNCH.md](LAUNCH.md) has the pilot plan.
 - iPhone cannot receive Share-from-WhatsApp (Apple limitation); paste works.
 - WhatsApp cannot be auto-sent without the paid Business API; the app opens a message and **you** press send.
@@ -104,7 +105,7 @@ The parser is deliberately **offline and rule-based**: Roman Urdu day words (`ka
 ```powershell
 npm install
 npm run build      # icons + extension/core.js + web app + flyer
-npm test           # 106 core · 24 extension · 9 web
+npm test           # 110 core · 24 extension · 10 web
 node tools/serve.mjs   # http://127.0.0.1:5173
 ```
 

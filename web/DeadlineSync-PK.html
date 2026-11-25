@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https:; object-src 'none'; base-uri 'self'; form-action 'self'; manifest-src 'self'; worker-src 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https:; object-src 'none'; base-uri 'self'; form-action 'self'; manifest-src 'self'; worker-src 'self' blob:">
 <title>DeadlineSync PK — Drop your syllabus. Get your calendar.</title>
 <meta name="description" content="Free, no-login tool that extracts every deadline from a university syllabus (scanned PDF, WhatsApp image, Urdu or English) and exports a calendar file.">
 <meta property="og:type" content="website">
@@ -305,8 +305,8 @@ h1,h2,h3,#mineTitle{font-family:Georgia,"Iowan Old Style","Times New Roman",seri
         </div>
       </div>
       <div>
-        <h3 class="font-semibold">Scan a syllabus (PDF or photo) <span class="text-xs font-normal text-gray-500">— needs your own Claude API key</span></h3>
-        <p class="text-xs text-gray-500">Pasting text works for everyone with no key. Photos and PDFs need a key in ⚙ AI key.</p>
+        <h3 class="font-semibold">Scan a syllabus (PDF or photo) <span class="text-xs font-normal text-gray-500">— free, read on your phone</span></h3>
+        <p class="text-xs text-gray-500">PDFs and photos are read on your device (nothing is uploaded; the first photo scan downloads a ~10 MB reader once). Check every row before saving. For better accuracy you can add your own Claude key under ⚙ AI key.</p>
       </div>
     </div>
   </details>
@@ -1605,6 +1605,50 @@ Extract all deadlines from this syllabus. If a date has no year, use the semeste
     };
   }
 
+  /* ------------------------------------------------------------ offline reading (no key): pdf.js for text PDFs, tesseract.js for photos/scans. Loaded only when used. */
+  let pdfjsP = null, tessP = null;
+  const loadScript = (src) => new Promise((ok, bad) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = () => bad(new Error('Could not load the offline reader. Open the site over the internet once, or add a Claude key.')); document.head.appendChild(s); });
+  async function ocr(source) {
+    if (!tessP) tessP = (async () => {
+      await loadScript('vendor/tess/tesseract.min.js');
+      return window.Tesseract.createWorker('eng', 1, { workerPath: 'vendor/tess/worker.min.js', corePath: 'vendor/tess/', langPath: 'vendor/tess/', workerBlobURL: false, gzip: true });
+    })();
+    const w = await tessP;
+    const r = await w.recognize(source);
+    return r.data.text || '';
+  }
+  async function pdfPages(f) {
+    if (!pdfjsP) pdfjsP = import('./vendor/pdf/pdf.min.js').then((m) => { m.GlobalWorkerOptions.workerSrc = 'vendor/pdf/pdf.worker.min.js'; return m; });
+    const pdfjs = await pdfjsP;
+    const doc = await pdfjs.getDocument({ data: new Uint8Array(await f.arrayBuffer()) }).promise;
+    return doc;
+  }
+  async function offlineText(f) {
+    if (fileKind(f) === 'image') return ocr(f);
+    const doc = await pdfPages(f);
+    let text = '';
+    const lim = Math.min(doc.numPages, 12);
+    for (let p = 1; p <= lim; p++) {
+      const pg = await doc.getPage(p);
+      const tc = await pg.getTextContent();
+      const rowsY = new Map();
+      tc.items.forEach((it) => { if (!it.str || !it.str.trim()) return; const y = Math.round(it.transform[5] / 3); (rowsY.get(y) || rowsY.set(y, []).get(y)).push(it); });
+      const ys = [...rowsY.keys()].sort((a, b) => b - a);
+      ys.forEach((y) => { text += rowsY.get(y).sort((a, b) => a.transform[4] - b.transform[4]).map((i) => i.str).join('  ') + '\n'; });
+    }
+    if (text.replace(/\s/g, '').length < 40) { // scanned PDF: render pages and OCR them
+      text = '';
+      for (let p = 1; p <= Math.min(doc.numPages, 6); p++) {
+        const pg = await doc.getPage(p);
+        const vp = pg.getViewport({ scale: 2 });
+        const c = document.createElement('canvas'); c.width = vp.width; c.height = vp.height;
+        await pg.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise;
+        text += (await ocr(c)) + '\n';
+      }
+    }
+    return text;
+  }
+
   /* ------------------------------------------------------------ extract */
   function setBusy(on) {
     busy = on;
@@ -1626,10 +1670,7 @@ Extract all deadlines from this syllabus. If a date has no year, use the semeste
     const text = $('pasteText').value.trim();
     if (!files.length && !text) return message('error', 'Add a syllabus file or paste some text first.');
     const hasKey = !!settings.apiKey;
-    if (files.length && !hasKey) {
-      message('error', 'Reading PDFs and photos needs a Claude API key. Open “⚙ AI key” above and add one — or paste the text into the box instead (that works offline).');
-      if (!text) return;
-    }
+    if (files.length && !hasKey) message('info', 'Reading your files on this device — nothing is uploaded. Photos can take 10–30 seconds.');
 
     setBusy(true);
     const start = $('semStart').value;
@@ -1643,6 +1684,14 @@ Extract all deadlines from this syllabus. If a date has no year, use the semeste
           (async () => askClaude([await fileBlock(f), { type: 'text', text: userText('') }], f.name))()
         ));
         if (text) jobs.push(askClaude([{ type: 'text', text: userText(text) }], 'pasted text'));
+      } else {
+        files.forEach((f) => jobs.push((async () => {
+          const t = await offlineText(f);
+          const evs = DC.extractFromText(t, { semesterStart: start || null })
+            .filter((o) => (DC.isValidISO(o.date) || /^RELATIVE/.test(o.date)))
+            .map((o) => ({ title: o.title, date: DC.isValidISO(o.date) ? o.date : 'UNKNOWN', time: o.time, type: o.type, confidence: o.confidence === 'high' ? 'medium' : 'low', notes: o.original.slice(0, 140) }));
+          return { label: f.name, events: evs };
+        })()));
       }
       const settled = await Promise.allSettled(jobs);
       settled.forEach((r) => {

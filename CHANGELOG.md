@@ -2,6 +2,7 @@
 
 Newest first. Everything before v2.0 was built on 2026-11-23, all in one long session; test counts are those at the time.
 
+- **v4.0.0** — closes the four gaps: **import a whole WhatsApp chat** (`.txt` or iPhone `.zip`, any Android/iPhone format; each message read as of the day it was sent; past and duplicate reminders dropped; review screen with 7/14/30/60-day chips); **free syllabus scanner** with no API key (pdf.js for text PDFs, tesseract.js OCR for photos and scanned pages, loaded only when used; a Claude key is now an optional upgrade); **receiver card** for shared links (a classmate adds to calendar in one tap, no install); Chrome Web Store kit in `store/LISTING.md`. CSP now allows `wasm-unsafe-eval` and blob workers for the OCR worker. Tests: 110 core, 24 extension, 10 web.
 - **v3.0.0** — from a student dogfood session: fast-save only for clear single messages (no cancellations, questions, thanks, multi-time lists); "cancel" clauses ignored and make-up classes use their own day; "tonight/aj raat" = today 23:59; chatter shows "No deadline in that message" with Add-it-myself; noisy words trimmed from titles and the original message is kept (tap a title); sticky Today/Tomorrow/Overdue bar, floating Paste button, app-icon badge; labelled row buttons, delete with Undo; backup nudge.
 - **v2.7.2** — the landing hero is shown to everyone in the browser again; only the installed app (and `?new=1`) skips it.
 - **v2.7.1** — Content-Security-Policy meta tag (no off-site scripts/frames/objects; connections HTTPS only). Found by an OWASP ZAP scan.

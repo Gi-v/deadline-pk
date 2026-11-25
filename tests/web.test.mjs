@@ -61,5 +61,12 @@ t('device detection', () => {
   assert.equal(w.dpkDevice('Mozilla/5.0 (Windows NT 10.0) Chrome/120'), 'desktop');
 });
 
+t('offline scanner assets vendored and allowed by CSP', () => {
+  const root = join(dirname(fileURLToPath(import.meta.url)), '..', 'web', 'vendor');
+  ['pdf/pdf.min.js', 'pdf/pdf.worker.min.js', 'tess/tesseract.min.js', 'tess/worker.min.js', 'tess/tesseract-core-simd-lstm.wasm.js', 'tess/eng.traineddata.gz'].forEach((f) => assert.ok(existsSync(join(root, f)), f));
+  assert.ok(html.includes("'wasm-unsafe-eval'") && html.includes('worker-src'));
+  assert.ok(html.includes('async function offlineText'));
+});
+
 console.log(`web tests: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
