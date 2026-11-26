@@ -24,9 +24,7 @@ let html = readFileSync(tplPath, 'utf8');
 const core = readFileSync(join(root, 'shared', 'deadline-core.js'), 'utf8').replace(/<\/script/gi, '<\\/script');
 let gcid = '';
 try { gcid = String(JSON.parse(readFileSync(join(root, 'web', 'config.json'), 'utf8')).googleClientId || '').replace(/[^A-Za-z0-9._-]/g, ''); } catch (e) { /* no config: users paste their own Client ID */ }
-let ph = 'null';
-try { const c = JSON.parse(readFileSync(join(root, 'web', 'config.json'), 'utf8')); const key = String(c.posthogKey || '').replace(/[^A-Za-z0-9_-]/g, ''); const host = String(c.posthogHost || 'https://us.i.posthog.com').replace(/\/+$/, ''); if (key && /^https:\/\/[a-z0-9.-]+$/i.test(host)) ph = JSON.stringify({ key, host }); } catch (e) { /* analytics off */ }
-for (const [marker, value] of [['/*__CSS__*/', css.css], ['/*__CORE__*/', core], ['/*__GCID__*/', gcid], ['/*__PH__*/', ph]]) {
+for (const [marker, value] of [['/*__CSS__*/', css.css], ['/*__CORE__*/', core], ['/*__GCID__*/', gcid]]) {
   if (!html.includes(marker)) throw new Error('marker missing in template: ' + marker);
   html = html.split(marker).join(value); // split/join: no $-pattern surprises like String.replace
 }

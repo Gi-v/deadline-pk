@@ -17,11 +17,7 @@ t('self-contained: no external scripts/styles/images', () => {
   assert.ok(!/<(script|img|link|iframe|video|source|audio)\b[^>]*\b(src|href)=["']https?:\/\//i.test(html));
 });
 t('every variable the UI reads is declared (regression: courseF)', () => {
-  for (const v of ['courseF', 'key', 'BASE', 'PH', 'track']) assert.ok(new RegExp('(var|function) ' + v + '\\b').test(html), v + ' missing'); //\b').test(html), v + ' missing');
-});
-t('analytics off by default and never sends text', () => {
-  assert.ok(html.includes('var PH=null'), 'ships with analytics off until a key is set');
-  assert.ok(!/track\([^)]*(title|text|original)/.test(html), 'track() must not receive message text');
+  for (const v of ['courseF', 'key', 'BASE']) assert.ok(new RegExp('(var|function) ' + v + '\\b').test(html), v + ' missing'); //\b').test(html), v + ' missing');
 });
 t('inline scripts parse', () => {
   const blocks = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1]);
